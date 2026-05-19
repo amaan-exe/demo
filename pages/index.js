@@ -6,6 +6,8 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [frontPhoto, setFrontPhoto] = useState(2)
+  const [isNavOpen, setIsNavOpen] = useState(false)
 
   // Persist cart to localStorage so it survives reloads
   useEffect(() => {
@@ -25,6 +27,24 @@ export default function Home() {
       // ignore write errors (quota/privacy)
     }
   }, [cartItems])
+
+  // Scroll Reveal Animations
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -50px 0px" });
+
+    const reveals = document.querySelectorAll('.reveal');
+    reveals.forEach((reveal) => observer.observe(reveal));
+
+    return () => {
+      reveals.forEach((reveal) => observer.unobserve(reveal));
+    };
+  }, []);
 
   const addToCart = (item) => {
     setCartItems((currentItems) => {
@@ -132,8 +152,17 @@ export default function Home() {
     const words = document.querySelectorAll('.hero-title .word')
     words.forEach((w, i) => setTimeout(() => w.classList.add('pop'), 120 + i * 140))
 
-    const plate = document.querySelector('.plate')
-    if (plate) plate.classList.add('animate')
+    const plate = document.querySelector('#heroPlate')
+    if (plate) {
+      plate.classList.add('served')
+      window.addEventListener('scroll', () => {
+        const scrollY = window.scrollY
+        const rotateX = Math.max(-45, Math.min(scrollY * 0.15, 60))
+        const rotateZ = scrollY * 0.05
+        const scale = 1 + (scrollY * 0.0005)
+        plate.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg) scale(${scale})`
+      })
+    }
 
     const heroBtn = document.querySelector('#hero .btn')
     if (heroBtn) heroBtn.classList.add('pulse')
@@ -254,18 +283,18 @@ export default function Home() {
         <nav className="nav container" aria-label="Primary navigation">
           <a href="#top" className="logo" aria-label="Biriyani Express home">BIRIYANI <span>EXPRESS</span></a>
 
-          <button className="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">
+          <button className="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} aria-controls="navLinks" onClick={() => setIsNavOpen(!isNavOpen)}>
             <span></span>
             <span></span>
             <span></span>
           </button>
 
-          <div className="nav-right" id="navLinks">
-            <a href="#menu">MENU</a>
-            <a href="#about">ABOUT</a>
-            <a href="#order">ORDER</a>
-            <a href="#contact">CONTACT</a>
-            <a href="https://wa.me/910000000000" target="_blank" rel="noopener noreferrer" className="btn cta" aria-label="Hacer pedido">HACER PEDIDO</a>
+          <div className={`nav-right ${isNavOpen ? 'open' : ''}`} id="navLinks">
+            <a href="#menu" onClick={() => setIsNavOpen(false)}>MENU</a>
+            <a href="#about" onClick={() => setIsNavOpen(false)}>ABOUT</a>
+            <a href="#order" onClick={() => setIsNavOpen(false)}>ORDER</a>
+            <a href="#contact" onClick={() => setIsNavOpen(false)}>CONTACT</a>
+            <a href="https://wa.me/910000000000" target="_blank" rel="noopener noreferrer" className="btn cta" aria-label="Hacer pedido" onClick={() => setIsNavOpen(false)}>HACER PEDIDO</a>
             <button type="button" className="btn cart-cta" onClick={() => setCartOpen((open) => !open)} aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? '' : 's'}`}>
               CART {cartCount > 0 ? `(${cartCount})` : ''}
             </button>
@@ -274,33 +303,29 @@ export default function Home() {
       </header>
 
       <main>
-        <section className="hero section-pad" id="hero">
-          <div className="container hero-grid">
-            <div className="hero-copy">
-              <p className="meta">EST. 2024 · BHUBANESWAR</p>
-              <h1 className="hero-title" aria-label="DUM PUKHT. SLOW FIRE.">
-                <span className="line line-one">
-                  <span className="word">DUM</span>
-                  <span className="word">PUKHT.</span>
-                </span>
-                <span className="line line-two">
-                  <span className="word">SLOW</span>
-                  <span className="word">FIRE.</span>
-                </span>
-              </h1>
-              <p className="hero-sub">Hyderabadi Biryani. Cooked the old way.</p>
-              <div className="hero-actions">
-                <a href="#order" className="btn">ORDER NOW</a>
-                <span className="hero-badge">30 MIN AVG DELIVERY</span>
-              </div>
+        <section className="hero-clean-split" id="hero">
+          <div className="hcs-inner">
+            <div className="hcs-left">
+              <span className="hcs-word outline pop">DUM</span>
+              <span className="hcs-word outline pop">PUKHT</span>
             </div>
 
-            <div className="hero-media">
-              <div className="hero-plate plate" role="img" aria-label="Hyderabadi Biryani">
-                <img src="/photo-1563379091339-03b21ab4a4f8.avif" alt="Hyderabadi Biryani" loading="eager" />
-              </div>
+            <div className="hcs-center">
+              <p className="hcs-sub">Hyderabadi Biryani.<br/>Cooked the old way.</p>
             </div>
 
+            <div className="hcs-right">
+              <span className="hcs-word solid pop">SLOW</span>
+              <span className="hcs-word solid pop">FIRE</span>
+            </div>
+          </div>
+
+          <div className="hcs-bottom container">
+            <hr className="subtle-divider" />
+            <div className="hcs-bottom-content">
+              <span className="hcs-badge">EST. 2024 · BHUBANESWAR</span>
+              <a href="#order" className="btn">ORDER NOW</a>
+            </div>
           </div>
         </section>
 
@@ -326,11 +351,11 @@ We don't rush it. We never will. Our speciality : <strong>Biriyani.</strong></p>
 
             <div className="about-media-wrap">
               <div className="about-gallery">
-                <figure className="about-photo">
-                  <img src="/photo-1633945274309-2c16c9682a8c.avif" alt="Paput sign" loading="lazy" />
+                <figure className={`about-photo ${frontPhoto === 1 ? 'front' : 'back'}`} onClick={(e) => { e.stopPropagation(); setFrontPhoto(prev => prev === 1 ? 2 : 1); }} style={{cursor: 'pointer'}}>
+                  <img src="/photo-1633945274309-2c16c9682a8c.avif" alt="Paput sign" loading="lazy" style={{pointerEvents: 'none'}} />
                 </figure>
-                <figure className="about-photo">
-                  <img src="/photo-1631515243349-e0cb75fb8d3a.avif" alt="Paput terrace" loading="lazy" />
+                <figure className={`about-photo ${frontPhoto === 2 ? 'front' : 'back'}`} onClick={(e) => { e.stopPropagation(); setFrontPhoto(prev => prev === 1 ? 2 : 1); }} style={{cursor: 'pointer'}}>
+                  <img src="/photo-1631515243349-e0cb75fb8d3a.avif" alt="Paput terrace" loading="lazy" style={{pointerEvents: 'none'}} />
                 </figure>
               </div>
               <a className="about-signature" href="https://instagram.com/_.amanullah" target="_blank" rel="noopener noreferrer">@_.amanullah</a>
@@ -490,38 +515,59 @@ We don't rush it. We never will. Our speciality : <strong>Biriyani.</strong></p>
 
           
 
-          <section className="order section-pad reveal" id="order">
-            <div className="container">
-              <p className="section-label">FIND US</p>
-              <h2 className="display">DINE IN. OR <span>BRING THE FIRE HOME.</span></h2>
-
-              <div className="order-grid" id="contact">
-                <article className="order-card">
-                  <div className="order-icon" aria-hidden="true">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M7 2v7M11 2v7M5 10c0 2 1.5 3 4 3s4-1 4-3V2" stroke="var(--deep-green)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <h3 className="order-heading">DINE IN</h3>
-                  <div className="order-sub">Plot 42, Saheed Nagar, Bhubaneswar</div>
-                  <div className="order-hours">Mon–Sun: 11:00 AM – 11:00 PM</div>
-                </article>
-
-                <article className="order-card">
-                  <div className="order-icon" aria-hidden="true">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M3 13h6l3-6h6v6" stroke="var(--deep-green)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="7" cy="18" r="1.6" stroke="var(--deep-green)" strokeWidth="1.6"/>
-                      <circle cx="18" cy="18" r="1.6" stroke="var(--deep-green)" strokeWidth="1.6"/>
-                    </svg>
-                  </div>
-                  <h3 className="order-heading">DELIVERY / TAKEAWAY</h3>
-                  <div className="order-sub">Zomato · Swiggy · Direct Order</div>
-                  <div className="order-hours">Free over ₹499 · 30 min avg</div>
-                </article>
-
-                <div className="order-note">Home delivery across the city. For large orders or catering, contact us at <a href="mailto:hola@example.com">hola@example.com</a>.</div>
+          <section className="find-us-section reveal" id="order">
+            {/* Top strip — scrolling location tag */}
+            <div className="find-us-ticker">
+              <div className="find-us-ticker-track">
+                <span>📍 PLOT 42, SAHEED NAGAR · BHUBANESWAR · ODISHA · 📍 PLOT 42, SAHEED NAGAR · BHUBANESWAR · ODISHA · 📍 PLOT 42, SAHEED NAGAR · BHUBANESWAR · ODISHA · </span>
+                <span>📍 PLOT 42, SAHEED NAGAR · BHUBANESWAR · ODISHA · 📍 PLOT 42, SAHEED NAGAR · BHUBANESWAR · ODISHA · 📍 PLOT 42, SAHEED NAGAR · BHUBANESWAR · ODISHA · </span>
               </div>
+            </div>
+
+            {/* Big headline */}
+            <div className="find-us-hero">
+              <p className="section-label" style={{color: 'var(--yellow)'}}>FIND US</p>
+              <h2 className="find-us-headline">
+                DINE IN.<br/>
+                <em>OR BRING</em><br/>
+                THE FIRE HOME.
+              </h2>
+            </div>
+
+            {/* Two big cards */}
+            <div className="find-us-cards" id="contact">
+
+              {/* Dine In */}
+              <article className="fuc-card fuc-dine stagger">
+                <div className="fuc-number">01</div>
+                <div className="fuc-content">
+                  <h3 className="fuc-title">DINE IN</h3>
+                  <div className="fuc-divider"/>
+                  <p className="fuc-address">Plot 42, Saheed Nagar<br/>Bhubaneswar, Odisha</p>
+                  <p className="fuc-hours">🕐 Mon–Sun: 11:00 AM – 11:00 PM</p>
+                  <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="fuc-cta">GET DIRECTIONS →</a>
+                </div>
+                <div className="fuc-bg-text" aria-hidden="true">EAT</div>
+              </article>
+
+              {/* Delivery */}
+              <article className="fuc-card fuc-delivery stagger" style={{transitionDelay: '0.2s'}}>
+                <div className="fuc-number">02</div>
+                <div className="fuc-content">
+                  <h3 className="fuc-title">DELIVERY</h3>
+                  <div className="fuc-divider"/>
+                  <p className="fuc-address">Zomato · Swiggy<br/>Direct WhatsApp Order</p>
+                  <p className="fuc-hours">🛵 Free over ₹499 · ~30 min avg</p>
+                  <a href="https://wa.me/910000000000" target="_blank" rel="noreferrer" className="fuc-cta">ORDER NOW →</a>
+                </div>
+                <div className="fuc-bg-text" aria-hidden="true">GO</div>
+              </article>
+
+            </div>
+
+            {/* Bottom note */}
+            <div className="find-us-note">
+              <p>For large orders & catering — <a href="mailto:hello@biriyaniexpress.in">hello@biriyaniexpress.in</a></p>
             </div>
           </section>
 
@@ -674,70 +720,47 @@ We don't rush it. We never will. Our speciality : <strong>Biriyani.</strong></p>
           </section>
         </div>
 
-        <footer className="site-footer" role="contentinfo">
-          <div className="footer-top container">
-            <div className="footer-left footer-column">
-              <a href="#top" className="logo">BIRIYANI <span>EXPRESS</span></a>
-              <p>Slow-cooked dum biryani with a sharper, cleaner ordering flow.</p>
-
-              <div className="socials" aria-label="Social links">
-                <a href="#" aria-label="Instagram" title="Instagram">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.6" />
-                    <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="1.6" />
-                    <circle cx="17.5" cy="6.5" r="0.7" fill="currentColor" />
-                  </svg>
-                </a>
-                <a href="#" aria-label="WhatsApp" title="WhatsApp">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M21 11.5A9.5 9.5 0 1 0 11.5 21L7 22l1.2-4.6A9.5 9.5 0 0 0 21 11.5z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M15.5 14.2c-.4-.2-1-.3-1.6-.1-.3.1-.6.1-.9-.2-.6-.5-1.6-1.6-1.7-1.7-.2-.3-.2-.6-.1-.9.2-.6.1-1.2-.1-1.6-.2-.4-.6-.7-1-.7-.2 0-.4 0-.6.1-.6.2-1.3.9-1.5 1.5-.2.6 0 1.3.5 2.1.8 1 1.9 2.1 3.5 3 .9.4 1.6.6 2.1.5.6-.1 1.3-.6 1.5-1.1.2-.4.1-.8-.1-1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-                <a href="#" aria-label="Delivery" title="Delivery">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M3 13h6l3-6h6v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="7" cy="18" r="1.6" stroke="currentColor" strokeWidth="1.6" />
-                    <circle cx="18" cy="18" r="1.6" stroke="currentColor" strokeWidth="1.6" />
-                  </svg>
-                </a>
-                <a href="#" aria-label="TikTok" title="TikTok">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M17 8v6a3 3 0 0 1-3-3V8h3z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M8 12a4 4 0 0 0 4 4h0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 4v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-              </div>
+        <footer className="footer-brutalist" role="contentinfo">
+          <div className="marquee marquee-footer" aria-label="Order ticker">
+            <div className="marquee-track">
+              <span>HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • </span>
+              <span>HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • </span>
             </div>
-
-            <nav className="footer-center footer-column" aria-label="Footer navigation">
-              <ul className="footer-nav-list">
-                <li><a href="#order">PLACE ORDER</a></li>
-                <li><a href="#order">LARGE ORDERS</a></li>
-                <li><a href="#order">DELIVERY</a></li>
-                <li><a href="#menu">STORE</a></li>
-                <li><a href="#events">EVENTS</a></li>
-              </ul>
+          </div>
+          
+          <div className="footer-massive-nav container">
+            <nav className="massive-links">
+              <a href="#menu" data-text="MENU">MENU</a>
+              <a href="#about" data-text="ABOUT">ABOUT</a>
+              <a href="#order" data-text="ORDER">ORDER</a>
             </nav>
-
-            <div className="footer-right footer-column">
-              <span className="footer-kicker">CONTACT</span>
-              <div className="footer-meta">
+            <div className="footer-info-grid">
+              <div className="info-block">
+                <span>📍 LOCATION</span>
                 <p>West platform S/N, Port of Mahón, Menorca</p>
+              </div>
+              <div className="info-block">
+                <span>💬 CONTACT</span>
                 <p><a href="mailto:hello@paputmenorca.com">hello@paputmenorca.com</a></p>
               </div>
-
-              <div className="legal-links footer-legal">
-                <a href="#">COOKIES</a>
-                <a href="#">PRIVACY POLICY</a>
-                <a href="#">ALL LEGAL</a>
+              <div className="info-block socials-brutalist">
+                <a href="#">INSTAGRAM</a>
+                <a href="#">WHATSAPP</a>
+                <a href="#">TIKTOK</a>
               </div>
             </div>
           </div>
 
-          <div className="footer-bottom container">
+          <div className="footer-bleeding-edge">
+            BIRIYANI EXPRESS
+          </div>
+          
+          <div className="footer-bottom-bar container">
             <p>© 2024 Biriyani Express · Bhubaneswar, Odisha</p>
+            <div className="legal-links">
+              <a href="#">COOKIES</a>
+              <a href="#">PRIVACY POLICY</a>
+            </div>
             <p>MADE WITH FIRE 🔥</p>
           </div>
         </footer>
