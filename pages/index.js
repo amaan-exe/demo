@@ -759,7 +759,10 @@ We don't rush it. We never will. Our speciality : <strong>Biriyani.</strong></p>
         <div className="co-overlay" aria-hidden={checkoutOpen ? 'false' : 'true'}>
           <button type="button" className="co-backdrop" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)} />
           <div className="co-panel" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-
+            <button type="button" className="co-close" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            </button>
+            
             {/* Left — dark green branding pane */}
             <div className="co-left">
               <div className="co-left-top">
@@ -800,9 +803,6 @@ We don't rush it. We never will. Our speciality : <strong>Biriyani.</strong></p>
 
             {/* Right — delivery form pane */}
             <div className="co-right">
-              <button type="button" className="co-close" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              </button>
 
               <p className="co-form-eyebrow">Step 2 of 2</p>
               <h3 className="co-form-title">Delivery Details</h3>

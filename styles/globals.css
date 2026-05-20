@@ -5449,3 +5449,70 @@ html, body {
   background: rgba(0,0,0,0.04) !important;
   border-color: rgba(0,0,0,0.22) !important;
 }
+
+
+/* === MODAL MOBILE FIX === */
+@media (max-width: 768px) {
+  .product-modal-panel {
+    grid-template-columns: 1fr !important;
+    width: 92vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .product-modal-visual {
+    min-height: 240px !important;
+    height: 240px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .product-modal-body {
+    padding: 20px 16px !important;
+    overflow-y: visible !important;
+  }
+
+  .product-modal-close {
+    top: 10px !important;
+    right: 10px !important;
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .product-modal-actions {
+    margin-top: 16px !important;
+  }
+}
+
+
+
+/* === CHECKOUT CLOSE BUTTON FIX === */
+.co-panel {
+  position: relative !important;
+}
+.co-close {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 100 !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  color: var(--ink) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+}
+.co-close:hover {
+  background: var(--deep-green) !important;
+  color: var(--yellow) !important;
+  border-color: var(--deep-green) !important;
+  transform: rotate(90deg) !important;
+}
