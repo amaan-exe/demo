@@ -3,3 +3,5 @@ node_modules/
 .env.local
 .env
 *.mp4
+.vercel
+.env*

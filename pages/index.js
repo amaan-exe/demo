@@ -413,7 +413,13 @@ export default function Home() {
             loop
             muted
             playsInline
-            preload="metadata"
+            preload="auto"
+            ref={(el) => {
+              if (el) {
+                el.muted = true
+                el.play().catch(() => {})
+              }
+            }}
             poster="/photo-1633945274309-2c16c9682a8c.avif"
             className="hero-video-bg"
           >
