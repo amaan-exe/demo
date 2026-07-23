@@ -1,4 +1,4 @@
-# Biriyani Express — Next.js migration
+# Biriyani Station — Next.js Migration
 
 This workspace contains a pragmatic Next.js migration of the original static site.
 

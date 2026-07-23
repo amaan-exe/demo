@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
-import { FEATURED_DISHES } from '../data/menuData'
+import { ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import UpiPaymentBox from '../components/UpiPaymentBox'
 
-export default function Home() {
+export default function MenuPage() {
   const router = useRouter()
-  const { user, isAdmin, openAuthModal, logout } = useAuth()
+  const { user, openAuthModal, logout } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [frontPhoto, setFrontPhoto] = useState(2)
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [toast, setToast] = useState(null)
-  const [showFloater, setShowFloater] = useState(true)
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Order checkout form state
   const [coName, setCoName] = useState('')
@@ -28,7 +28,7 @@ export default function Home() {
   const [paymentMethod, setPaymentMethod] = useState('COD')
   const [coLoading, setCoLoading] = useState(false)
 
-  // Persist cart to localStorage so it survives reloads
+  // Persist cart to localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem('biriyani_cart_v1')
@@ -41,24 +41,6 @@ export default function Home() {
       localStorage.setItem('biriyani_cart_v1', JSON.stringify(cartItems))
     } catch (e) {}
   }, [cartItems])
-
-  // Scroll Reveal Animations
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
-    }, { threshold: 0.12, rootMargin: "0px 0px -50px 0px" });
-
-    const reveals = document.querySelectorAll('.reveal');
-    reveals.forEach((reveal) => observer.observe(reveal));
-
-    return () => {
-      reveals.forEach((reveal) => observer.unobserve(reveal));
-    };
-  }, []);
 
   const addToCart = (item) => {
     setCartItems((currentItems) => {
@@ -94,14 +76,6 @@ export default function Home() {
 
   const removeFromCart = (title) => {
     setCartItems((currentItems) => currentItems.filter((entry) => entry.title !== title))
-  }
-
-  const openProduct = (product) => {
-    setSelectedProduct(product)
-  }
-
-  const closeProduct = () => {
-    setSelectedProduct(null)
   }
 
   const cartCount = cartItems.reduce((sum, entry) => sum + entry.qty, 0)
@@ -207,75 +181,62 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    const header = document.querySelector('.site-header')
-    const onScroll = () => {
-      if (window.scrollY > 32) header?.classList.add('scrolled')
-      else header?.classList.remove('scrolled')
-    }
-    window.addEventListener('scroll', onScroll)
-    onScroll()
-
-    const words = document.querySelectorAll('.hero-title .word')
-    words.forEach((w, i) => setTimeout(() => w.classList.add('pop'), 120 + i * 140))
-
-    const plate = document.querySelector('#heroPlate')
-    if (plate) {
-      plate.classList.add('served')
-      window.addEventListener('scroll', () => {
-        const scrollY = window.scrollY
-        const rotateX = Math.max(-45, Math.min(scrollY * 0.15, 60))
-        const rotateZ = scrollY * 0.05
-        const scale = 1 + (scrollY * 0.0005)
-        plate.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg) scale(${scale})`
-      })
-    }
-
-    const onEscapeProduct = (event) => {
-      if (event.key === 'Escape') closeProduct()
-    }
-
-    document.addEventListener('keydown', onEscapeProduct)
-
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      document.removeEventListener('keydown', onEscapeProduct)
-    }
-  }, [])
-
-  useEffect(() => {
-    const footer = document.querySelector('.footer-brutalist')
-    if (!footer) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => setShowFloater(!entry.isIntersecting))
-      },
-      { threshold: 0, rootMargin: '0px 0px 180px 0px' }
-    )
-    observer.observe(footer)
-    return () => observer.disconnect()
-  }, [])
-
+  // Lock body scroll when drawer/modals open
   useEffect(() => {
     const locked = cartOpen || checkoutOpen || Boolean(selectedProduct)
     document.body.style.overflow = locked ? 'hidden' : ''
-    document.body.classList.toggle('cart-locked', locked)
     return () => {
       document.body.style.overflow = ''
-      document.body.classList.remove('cart-locked')
     }
   }, [cartOpen, checkoutOpen, selectedProduct])
+
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    return {
+      all: ALL_MENU_ITEMS.length,
+      kawab: ALL_MENU_ITEMS.filter(d => d.category.includes('kawab') && !d.category.includes('biryani')).length,
+      biryani: ALL_MENU_ITEMS.filter(d => d.category.includes('biryani')).length,
+      gravy: ALL_MENU_ITEMS.filter(d => d.category.includes('gravy')).length,
+      bread: ALL_MENU_ITEMS.filter(d => d.category.includes('bread')).length,
+      bestseller: ALL_MENU_ITEMS.filter(d => d.category.includes('bestseller')).length
+    }
+  }, [])
+
+  // Filtered menu items calculation
+  const filteredDishes = useMemo(() => {
+    return ALL_MENU_ITEMS.filter((dish) => {
+      const q = searchQuery.trim().toLowerCase()
+      const matchesSearch = !q || 
+                            dish.title.toLowerCase().includes(q) ||
+                            dish.description.toLowerCase().includes(q) ||
+                            dish.categoryName.toLowerCase().includes(q) ||
+                            dish.tags.some(t => t.toLowerCase().includes(q))
+
+      if (!matchesSearch) return false
+
+      if (activeFilter === 'all') return true
+      if (activeFilter === 'kawab') return dish.category.includes('kawab') && !dish.category.includes('biryani')
+      if (activeFilter === 'biryani') return dish.category.includes('biryani')
+      if (activeFilter === 'gravy') return dish.category.includes('gravy')
+      if (activeFilter === 'bread') return dish.category.includes('bread')
+      if (activeFilter === 'bestseller') return dish.category.includes('bestseller')
+      return true
+    })
+  }, [activeFilter, searchQuery])
 
   return (
     <>
       <Head>
-        <title>Biriyani Station Patna | Charcoal Kawabs & Dum Biryanis</title>
-        <meta name="description" content="Biriyani Station - Authentic tandoori kawabs, kawab biryanis, gravies, and fresh clay-oven tandoori breads." />
+        <title>The Complete Menu | Biriyani Station Patna</title>
+        <meta name="description" content="Explore 19 authentic clay-oven tandoori kawabs, kawab biryanis, gravies, and fresh breads at Biriyani Station." />
       </Head>
 
-      <header className="site-header" id="top">
+      {/* Sticky Header */}
+      <header className="site-header scrolled" id="top">
         <nav className="nav container" aria-label="Primary navigation">
-          <Link href="/" className="logo" aria-label="Biriyani Station home">BIRIYANI <span>STATION</span></Link>
+          <Link href="/" className="logo" aria-label="Biriyani Station home">
+            BIRIYANI <span>STATION</span>
+          </Link>
 
           <button className="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
             <span></span>
@@ -285,10 +246,9 @@ export default function Home() {
 
           <div className={`nav-right ${isNavOpen ? 'open' : ''}`} id="navLinks">
             <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
-            <Link href="/menu" onClick={() => setIsNavOpen(false)}>MENU</Link>
-            <a href="#about" onClick={() => setIsNavOpen(false)}>ABOUT</a>
-            <a href="#order" onClick={() => setIsNavOpen(false)}>ORDER</a>
-            <a href="#contact" onClick={() => setIsNavOpen(false)}>CONTACT</a>
+            <Link href="/menu" className="active" onClick={() => setIsNavOpen(false)} style={{color: 'var(--yellow)'}}>MENU</Link>
+            <Link href="/#about" onClick={() => setIsNavOpen(false)}>ABOUT</Link>
+            <Link href="/#order" onClick={() => setIsNavOpen(false)}>ORDER</Link>
             <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="btn cta" onClick={() => setIsNavOpen(false)}>Order on Whatsapp</a>
 
             {user ? (
@@ -406,342 +366,257 @@ export default function Home() {
       </header>
 
       <main>
-        <section className="hero-clean-split" id="hero">
-          {/* Fast-loading auto-playing background video */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            poster="/photo-1633945274309-2c16c9682a8c.avif"
-            className="hero-video-bg"
-          >
-            <source src="/hero-video.mp4" type="video/mp4" />
-          </video>
+        {/* Luxury Hero Header Section */}
+        <section className="menu-hero-seamless" style={{
+          paddingTop: '40px',
+          paddingBottom: '30px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div className="container">
+            {/* Header badges and breadcrumb */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', borderRadius: '999px', background: 'rgba(13,90,58,0.08)', border: '1px solid rgba(13,90,58,0.15)' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--deep-green)' }}></span>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.18em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
+                  EST. 2026 · PATNA SPECIALITY
+                </span>
+              </div>
 
-          {/* Dark gradient overlay for crystal clear text readability */}
-          <div className="hero-video-overlay" />
-
-          <div className="hcs-inner">
-            <div className="hcs-left">
-              <span className="hcs-word outline pop">ZAIQA</span>
-              <span className="hcs-word outline pop">LAZEEZ</span>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>
+                <Link href="/" style={{ color: 'var(--deep-green)', textDecoration: 'none' }}>Home</Link> / <span style={{ color: 'var(--ink)' }}>Menu</span>
+              </div>
             </div>
 
-            <div className="hcs-center">
-              <p className="hcs-sub">ORDER NOW.<br/>EAT NOW.</p>
-            </div>
-
-            <div className="hcs-right">
-              <span className="hcs-word solid pop">SLOW</span>
-              <span className="hcs-word solid pop">FIRE</span>
-            </div>
-          </div>
-
-          <div className="hcs-bottom container">
-            <hr className="subtle-divider" />
-            <div className="hcs-bottom-content">
-              <span className="hcs-badge">EST. 2026 · PATNA</span>
-              <Link href="/menu" className="btn">EXPLORE MENU</Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="marquee marquee-one" aria-label="Announcement ticker">
-          <div className="marquee-track reverse">
-            <span>BIRIYANI STATION · TANDOORI KAWABS · DUM BIRYANI · GRAVIES & BREADS · PATNA · ORDER NOW ·</span>
-            <span>BIRIYANI STATION · TANDOORI KAWABS · DUM BIRYANI · GRAVIES & BREADS · PATNA · ORDER NOW ·</span>
-          </div>
-        </section>
-
-        <section className="about section-pad reveal" id="about">
-          <div className="container about-grid">
-            <div className="about-copy">
-              <span className="about-eyebrow">THE PHILOSOPHY · CRAFT & FIRE</span>
+            {/* Main Headline */}
+            <div style={{ textAlign: 'center', maxWidth: '840px', margin: '0 auto' }}>
+              <p className="section-label" style={{ marginBottom: '12px', letterSpacing: '0.3em', color: 'var(--deep-green)' }}>
+                HANDCRAFTED DUM & TANDOOR
+              </p>
               
-              <h2 className="about-display">
-                BIRYANI EK <br/>
-                <span className="gold-italic">IBADAT HAI</span> <br/>
-                <span className="green-italic">SHIDDAT HAI</span>
-              </h2>
-
-              <p className="about-lead">
-                Biriyani Station started with one obsession — the perfect dum biryani and smoky clay-oven tandoori kawabs. 
-                Every piece marinated for 12 hours. Every spice measured by hand. Every pot sealed with dough and slow-cooked over live hardwood coals. We don't rush it. We never will.
-              </p>
-
-              <div className="about-pillars">
-                <div className="about-pillar-card">
-                  <span className="pillar-icon">🪵</span>
-                  <div>
-                    <strong>Slow Coal Dum</strong>
-                    <p>Sealed in traditional heavy pots over live charcoal</p>
-                  </div>
-                </div>
-                <div className="about-pillar-card">
-                  <span className="pillar-icon">🔥</span>
-                  <div>
-                    <strong>Clay Tandoor</strong>
-                    <p>Char-grilled at 500°C for intense smoky aroma</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="about-media-wrap">
-              <div className="about-gallery-redesigned">
-                <figure
-                  className={`about-photo-card card-primary ${frontPhoto === 1 ? 'is-front' : 'is-back'}`}
-                  onClick={() => setFrontPhoto(prev => prev === 1 ? 2 : 1)}
-                >
-                  <img src="/menu/Chicken tandoori kawab biryani.jpeg" alt="Tandoori Kawab Biryani" loading="lazy" />
-                  <figcaption className="photo-card-caption">
-                    <span className="caption-tag">SIGNATURE DUM</span>
-                    <strong>Tandoori Kawab Biryani</strong>
-                  </figcaption>
-                </figure>
-
-                <figure
-                  className={`about-photo-card card-secondary ${frontPhoto === 2 ? 'is-front' : 'is-back'}`}
-                  onClick={() => setFrontPhoto(prev => prev === 1 ? 2 : 1)}
-                >
-                  <img src="/menu/Chicken tandoori kawab.jpeg" alt="Clay Oven Tandoori Kawab" loading="lazy" />
-                  <figcaption className="photo-card-caption">
-                    <span className="caption-tag">CHAR-GRILLED</span>
-                    <strong>Chicken Tandoori Kawab</strong>
-                  </figcaption>
-                </figure>
-              </div>
-
-              <div className="about-signature-badge">
-                <span className="signature-sub">PATNA SPECIALITY</span>
-                <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" className="about-signature">
-                  @_.hussain29
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="social-proof section-pad reveal" aria-label="Customer highlights">
-          <div className="container">
-            <div className="proof-header-center">
-              <span className="proof-badge-pill">PATNA'S TOP RATED BIRYANI & KAWAB HOUSE</span>
-              <h2 className="proof-headline-display">
-                BUILT FOR REPEAT ORDERS.<br/>
-                <span className="gold-italic">MADE FOR MEMORY.</span>
-              </h2>
-              <p className="proof-headline-sub">
-                A sharper spice balance, charcoal smoky clay-oven kawabs, and delivery that still feels like the kitchen packed it moments ago.
-              </p>
-            </div>
-
-            <div className="proof-stats-row">
-              <div className="proof-stat-card">
-                <div className="stat-top">
-                  <span className="stat-num">4.9</span>
-                  <span className="stat-stars">⭐⭐⭐⭐⭐</span>
-                </div>
-                <strong>Spice Balance Rating</strong>
-                <p>Loved for the smoky kawab aroma & authentic whole spices</p>
-              </div>
-
-              <div className="proof-stat-card highlight">
-                <div className="stat-top">
-                  <span className="stat-num">1.5K+</span>
-                  <span className="stat-pill-tag">DAILY VOLUME</span>
-                </div>
-                <strong>Pots Cooked Daily</strong>
-                <p>Served fresh across Patna with 82% repeat customer rate</p>
-              </div>
-
-              <div className="proof-stat-card">
-                <div className="stat-top">
-                  <span className="stat-num">25m</span>
-                  <span className="stat-stars">🛵 FAST DELIVERY</span>
-                </div>
-                <strong>Average Delivery Time</strong>
-                <p>Piping hot tandoori kawabs & biryanis delivered to your door</p>
-              </div>
-            </div>
-
-            <div className="proof-reviews-grid">
-              <article className="review-card">
-                <div className="review-card-header">
-                  <div className="review-avatar">AV</div>
-                  <div>
-                    <strong>Aman Verma</strong>
-                    <span className="review-meta">Patna Foodie Guide · ⭐⭐⭐⭐⭐</span>
-                  </div>
-                </div>
-                <p className="review-text">
-                  “The Tandoori Kawab Biryani & Reshmi Kawabs are unmatched in Patna! Every single grain of rice is fragrant with ghee and star anise.”
-                </p>
-                <span className="review-dish-tag">Ordered: Tandoori Kawab Biryani</span>
-              </article>
-
-              <article className="review-card featured-review">
-                <div className="review-card-header">
-                  <div className="review-avatar gold">SZ</div>
-                  <div>
-                    <strong>Syed Zain</strong>
-                    <span className="review-meta">Verified Order · ⭐⭐⭐⭐⭐</span>
-                  </div>
-                </div>
-                <p className="review-text">
-                  “Ordered 10 plates for a family dinner. The Chicken Dehati and Butter Naans arrived sizzling hot. Best clay-oven tandoori in Phulwari Shareef!”
-                </p>
-                <span className="review-dish-tag gold">Ordered: Chicken Dehati & Naan</span>
-              </article>
-
-              <article className="review-card">
-                <div className="review-card-header">
-                  <div className="review-avatar">RR</div>
-                  <div>
-                    <strong>Ritu Raj</strong>
-                    <span className="review-meta">Zomato Reviewer · ⭐⭐⭐⭐⭐</span>
-                  </div>
-                </div>
-                <p className="review-text">
-                  “The smoky charcoal aroma in the Patyala Leg Kawab Biryani is authentic dum pukht perfection. Generous portions and incredible flavor!”
-                </p>
-                <span className="review-dish-tag">Ordered: Patyala Leg Biryani</span>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        {/* ── FEATURED 6 BEST DISHES HOME MENU SECTION ──────────────── */}
-        <section className="menu section-pad reveal" id="menu">
-          <div className="container">
-            <div className="menu-header-flex">
-              <div className="menu-header-titles">
-                <p className="section-label menu-label">CHEF'S SPECIAL SELECTION</p>
-                <h2 className="display menu-title">FEATURED <span className="highlight-italic">6 DISHES.</span></h2>
-              </div>
-              <div style={{ alignSelf: 'center' }}>
-                <Link href="/menu" className="chip active" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-                  VIEW FULL MENU (19 ITEMS) →
-                </Link>
-              </div>
-            </div>
-
-            <div className="menu-grid premium-grid">
-              {FEATURED_DISHES.map((dish) => (
-                <article
-                  key={dish.id}
-                  className="menu-card"
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Open ${dish.title} details`}
-                  onClick={() => openProduct(dish)}
-                >
-                  <div className="dish-media">
-                    <img src={dish.image} alt={dish.title} loading="lazy" />
-                    <span className="dish-tag">{dish.categoryName.toUpperCase()}</span>
-                    <span className="price-badge">{dish.priceLabel}</span>
-                    <div className="dish-overlay"></div>
-                  </div>
-                  <div className="menu-body">
-                    <div className="menu-head">
-                      <h3 className="dish-title">{dish.title.toUpperCase()}</h3>
-                      <strong className="dish-price">{dish.priceLabel}</strong>
-                    </div>
-                    <p className="dish-desc">{dish.description}</p>
-                    <div className="menu-actions">
-                      <button
-                        type="button"
-                        className="btn-order"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          addToCart({ title: dish.title, price: dish.price, image: dish.image })
-                        }}
-                      >
-                        ADD TO CART
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            {/* Explore Full Menu CTA */}
-            <div style={{ textAlign: 'center', marginTop: '48px' }}>
-              <Link href="/menu" className="btn" style={{
-                display: 'inline-flex',
-                fontSize: '1rem',
-                padding: '16px 36px',
-                background: 'var(--deep-green)',
-                color: '#fff',
-                borderRadius: '999px',
-                boxShadow: '0 8px 24px rgba(13,90,58,0.2)'
+              <h1 className="display" style={{
+                fontSize: 'clamp(2.4rem, 5vw, 4.2rem)',
+                lineHeight: '1.05',
+                margin: '0 0 20px 0',
+                color: 'var(--ink)',
+                textTransform: 'uppercase',
+                fontWeight: 900
               }}>
-                EXPLORE ALL 19 DISHES (FULL MENU) →
-              </Link>
+                THE COMPLETE <br/>
+                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>19 DISHES</span> MENU.
+              </h1>
+
+              <p style={{
+                fontSize: 'clamp(1rem, 1.8vw, 1.18rem)',
+                color: 'var(--text-muted)',
+                lineHeight: '1.65',
+                maxWidth: '680px',
+                margin: '0 auto 32px auto'
+              }}>
+                Smoky clay-oven charcoal kawabs, royal dum kawab biryanis, rich Punjabi butter gravies, and fresh tandoori rotis cooked over live fire.
+              </p>
+
+              {/* Quick stats pills */}
+              <div style={{
+                display: 'inline-flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: '12px',
+                padding: '12px 24px',
+                background: 'rgba(255, 255, 255, 0.75)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: '20px',
+                border: '1px solid rgba(13,90,58,0.12)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
+              }}>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🔥 5 Kawabs</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍛 5 Kawab Biryanis</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍲 5 Gravies</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🫓 4 Breads</span>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="marquee marquee-two" aria-label="Cuisine ticker">
-          <div className="marquee-track">
-            <span>TANDOORI KAWAB · KAWAB BIRYANI · BUTTER MASALA · DEHATI CHICKEN · FRESH TANDOORI NAAN ·</span>
-            <span>TANDOORI KAWAB · KAWAB BIRYANI · BUTTER MASALA · DEHATI CHICKEN · FRESH TANDOORI NAAN ·</span>
+        {/* Ticker marquee strip */}
+        <section className="marquee marquee-one" aria-label="Menu ticker" style={{ marginBlock: '20px' }}>
+          <div className="marquee-track reverse">
+            <span>TANDOORI KAWABS · DUM KAWAB BIRYANI · CHICKEN DEHATI · PANEER BUTTER MASALA · BUTTER NAAN ·</span>
+            <span>TANDOORI KAWABS · DUM KAWAB BIRYANI · CHICKEN DEHATI · PANEER BUTTER MASALA · BUTTER NAAN ·</span>
           </div>
         </section>
 
-        <section className="find-us-section reveal" id="order">
-          <div className="find-us-ticker">
-            <div className="find-us-ticker-track">
-              <span>📍 ALBA COLONY , PHULWARI SHAREEF · PATNA · BIHAR · 📍 ALBA COLONY , PHULWARI SHAREEF · PATNA · BIHAR ·</span>
-              <span>📍 ALBA COLONY , PHULWARI SHAREEF · PATNA · BIHAR · 📍 ALBA COLONY , PHULWARI SHAREEF · PATNA · BIHAR ·</span>
+        {/* Main Controls & Menu Grid */}
+        <section className="menu section-pad" id="menu" style={{ paddingTop: '20px' }}>
+          <div className="container">
+            
+            {/* Search and Category Filter Bar */}
+            <div className="menu-controls-wrapper" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              marginBottom: '40px',
+              alignItems: 'center'
+            }}>
+              
+              {/* Glassmorphic Search Bar */}
+              <div className="search-bar-container" style={{ width: '100%', maxWidth: '580px', position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Search kawabs, biryani, chicken dehati, naan..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '16px 24px 16px 54px',
+                    borderRadius: '999px',
+                    border: '2px solid rgba(13,90,58,0.18)',
+                    background: '#ffffff',
+                    fontSize: '1.02rem',
+                    color: 'var(--ink)',
+                    outline: 'none',
+                    boxShadow: '0 10px 30px rgba(13,90,58,0.06)',
+                    transition: 'all 0.25s ease',
+                    fontWeight: '500'
+                  }}
+                />
+                <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '1.2rem' }}>🔍</span>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '18px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'rgba(0,0,0,0.06)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      color: 'var(--ink)'
+                    }}
+                  >✕</button>
+                )}
+              </div>
+
+              {/* Category Filter Chips */}
+              <div className="menu-chips" role="tablist" style={{ justifyContent: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                {[
+                  { id: 'all', label: `All (${categoryCounts.all})` },
+                  { id: 'kawab', label: `Kawabs (${categoryCounts.kawab})` },
+                  { id: 'biryani', label: `Kawab Biryanis (${categoryCounts.biryani})` },
+                  { id: 'gravy', label: `Gravies (${categoryCounts.gravy})` },
+                  { id: 'bread', label: `Breads (${categoryCounts.bread})` },
+                  { id: 'bestseller', label: `⭐ Bestsellers (${categoryCounts.bestseller})` }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    className={`chip ${activeFilter === tab.id ? 'active' : ''}`}
+                    type="button"
+                    onClick={() => setActiveFilter(tab.id)}
+                    style={{ transition: 'all 0.2s ease' }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="find-us-hero">
-            <p className="section-label" style={{color: 'var(--yellow)'}}>FIND US</p>
-            <h2 className="find-us-headline">
-              DINE IN.<br/>
-              <em>OR BRING</em><br/>
-              THE FIRE HOME.
-            </h2>
-          </div>
+            {/* Results Counter */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid rgba(13,90,58,0.1)', paddingBottom: '16px' }}>
+              <span style={{ fontSize: '0.92rem', color: 'var(--deep-green)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                {activeFilter === 'all' ? 'All Dishes' : activeFilter.toUpperCase()} ({filteredDishes.length})
+              </span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>
+                Click any dish for ingredients & details
+              </span>
+            </div>
 
-          <div className="find-us-cards" id="contact">
-            <article className="fuc-card fuc-dine stagger">
-              <div className="fuc-number">01</div>
-              <div className="fuc-content">
-                <h3 className="fuc-title">DINE IN</h3>
-                <div className="fuc-divider"/>
-                <p className="fuc-address">Alba Colony, Phulwari Shareef<br/>Patna, Bihar</p>
-                <p className="fuc-hours">🕐 Mon–Sun: 11:00 AM – 11:00 PM</p>
-                <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="fuc-cta">GET DIRECTIONS →</a>
+            {/* Menu Grid */}
+            {filteredDishes.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '70px 20px', background: '#fff', borderRadius: '28px', border: '1px dashed rgba(13,90,58,0.2)', boxShadow: '0 12px 36px rgba(0,0,0,0.03)' }}>
+                <div style={{ fontSize: '3.5rem', marginBottom: '14px' }}>🍲</div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)' }}>No matching dishes found</h3>
+                <p style={{ color: 'var(--muted)', marginTop: '8px', maxWidth: '420px', marginInline: 'auto' }}>We couldn't find any dish matching "{searchQuery}". Try selecting another category or resetting filters.</p>
+                <button className="btn" onClick={() => { setActiveFilter('all'); setSearchQuery(''); }} style={{ marginTop: '24px' }}>
+                  Reset Search & Filters
+                </button>
               </div>
-              <div className="fuc-bg-text" aria-hidden="true">EAT</div>
-            </article>
+            ) : (
+              <div className="menu-grid premium-grid">
+                {filteredDishes.map((dish) => (
+                  <article
+                    key={dish.id}
+                    className="menu-card"
+                    tabIndex={0}
+                    role="button"
+                    onClick={() => setSelectedProduct(dish)}
+                  >
+                    <div className="dish-media" style={{ height: '240px', overflow: 'hidden', position: 'relative' }}>
+                      <img
+                        src={dish.image}
+                        alt={dish.title}
+                        loading="lazy"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                      />
+                      <span className="dish-tag">{dish.categoryName.toUpperCase()}</span>
+                      <span className="price-badge">{dish.priceLabel}</span>
+                      <div className="dish-overlay"></div>
+                    </div>
 
-            <article className="fuc-card fuc-delivery stagger" style={{transitionDelay: '0.2s'}}>
-              <div className="fuc-number">02</div>
-              <div className="fuc-content">
-                <h3 className="fuc-title">DELIVERY</h3>
-                <div className="fuc-divider"/>
-                <p className="fuc-address">Zomato · Swiggy<br/>Direct WhatsApp Order</p>
-                <p className="fuc-hours">🛵 Free over ₹499 · ~30 min avg</p>
-                <a href="https://wa.me/918271301179" target="_blank" rel="noreferrer" className="fuc-cta">ORDER NOW →</a>
+                    <div className="menu-body">
+                      <div className="menu-head">
+                        <h3 className="dish-title">{dish.title.toUpperCase()}</h3>
+                        <strong className="dish-price">{dish.priceLabel}</strong>
+                      </div>
+                      
+                      <p className="dish-desc">{dish.description}</p>
+                      
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '14px 0 18px 0' }}>
+                        <span style={{ fontSize: '0.76rem', background: 'rgba(13,90,58,0.08)', color: 'var(--deep-green)', padding: '4px 10px', borderRadius: '8px', fontWeight: 700 }}>
+                          🌶️ {dish.spice}
+                        </span>
+                        <span style={{ fontSize: '0.76rem', background: 'rgba(0,0,0,0.04)', color: 'var(--ink)', padding: '4px 10px', borderRadius: '8px', fontWeight: 600 }}>
+                          ⏱️ {dish.time}
+                        </span>
+                        <span style={{ fontSize: '0.76rem', background: 'rgba(245, 200, 66, 0.2)', color: '#8a6200', padding: '4px 10px', borderRadius: '8px', fontWeight: 700 }}>
+                          {dish.portion}
+                        </span>
+                      </div>
+
+                      <div className="menu-actions">
+                        <button
+                          type="button"
+                          className="btn-order"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            addToCart({ title: dish.title, price: dish.price, image: dish.image })
+                          }}
+                        >
+                          ADD TO CART
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
-              <div className="fuc-bg-text" aria-hidden="true">GO</div>
-            </article>
-          </div>
-
-          <div className="find-us-note">
-            <p className="contact-sub">For large orders & catering — <a href="mailto:hello@biriyanistation.in">hello@biriyanistation.in</a></p>
+            )}
           </div>
         </section>
       </main>
 
+      {/* Floating Cart Button */}
       <button
         type="button"
-        className={`cart-floater ${cartOpen || !showFloater ? 'is-hidden' : ''}`}
+        className={`cart-floater ${cartOpen ? 'is-hidden' : ''}`}
         onClick={() => setCartOpen(true)}
         aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? '' : 's'}`}
       >
@@ -778,18 +653,18 @@ export default function Home() {
                   <p className="citem-name">{item.title}</p>
                   <p className="citem-unit">₹{item.price.toFixed(0)} each</p>
                   <div className="citem-stepper">
-                    <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, -1)} aria-label={`Decrease ${item.title}`}>
+                    <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, -1)}>
                       <svg width="10" height="2" viewBox="0 0 10 2"><rect width="10" height="2" rx="1" fill="currentColor"/></svg>
                     </button>
                     <span className="stepper-qty">{item.qty}</span>
-                    <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, 1)} aria-label={`Increase ${item.title}`}>
+                    <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, 1)}>
                       <svg width="10" height="10" viewBox="0 0 10 10"><rect x="4" width="2" height="10" rx="1" fill="currentColor"/><rect y="4" width="10" height="2" rx="1" fill="currentColor"/></svg>
                     </button>
                   </div>
                 </div>
                 <div className="citem-right">
                   <p className="citem-subtotal">₹{(item.price * item.qty).toFixed(0)}</p>
-                  <button type="button" className="citem-remove" onClick={() => removeFromCart(item.title)} aria-label={`Remove ${item.title}`}>
+                  <button type="button" className="citem-remove" onClick={() => removeFromCart(item.title)}>
                     <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </button>
                 </div>
@@ -818,21 +693,21 @@ export default function Home() {
 
       {cartOpen ? <button type="button" className="cart-backdrop" aria-label="Close cart overlay" onClick={() => setCartOpen(false)} /> : null}
 
-      {/* Product Detail Modal */}
+      {/* Detail Modal */}
       {selectedProduct ? (
         <div className="product-modal" aria-hidden="false">
-          <button type="button" className="product-modal-backdrop" aria-label="Close product details" onClick={closeProduct} />
+          <button type="button" className="product-modal-backdrop" aria-label="Close product details" onClick={() => setSelectedProduct(null)} />
           <section className="product-modal-panel" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
-            <button type="button" className="modal-close product-modal-close" aria-label="Close product details" onClick={closeProduct}>×</button>
+            <button type="button" className="modal-close product-modal-close" aria-label="Close product details" onClick={() => setSelectedProduct(null)}>×</button>
 
             <div className="product-modal-visual">
-              <div className="product-modal-ribbon">{selectedProduct.categoryName || 'Signature dish'}</div>
+              <div className="product-modal-ribbon">{selectedProduct.categoryName}</div>
               <img src={selectedProduct.image} alt={selectedProduct.title} className="product-modal-image" />
               <div className="product-modal-glow" aria-hidden="true" />
             </div>
 
             <div className="product-modal-body">
-              <p className="section-label">CHEF'S SPECIAL</p>
+              <p className="section-label">{selectedProduct.categoryName.toUpperCase()}</p>
               <h2 id="productModalTitle">{selectedProduct.title}</h2>
               <p className="product-modal-copy">{selectedProduct.description}</p>
 
@@ -862,8 +737,17 @@ export default function Home() {
               </div>
 
               <div className="product-modal-actions">
-                <button type="button" className="btn" onClick={() => { addToCart({ title: selectedProduct.title, price: selectedProduct.price, image: selectedProduct.image }); closeProduct() }}>ADD TO CART</button>
-                <button type="button" className="btn secondary" onClick={closeProduct}>CLOSE</button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    addToCart({ title: selectedProduct.title, price: selectedProduct.price, image: selectedProduct.image })
+                    setSelectedProduct(null)
+                  }}
+                >
+                  ADD TO CART
+                </button>
+                <button type="button" className="btn secondary" onClick={() => setSelectedProduct(null)}>CLOSE</button>
               </div>
             </div>
           </section>
@@ -1040,6 +924,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Footer */}
       <footer className="footer-brutalist" role="contentinfo">
         <div className="marquee marquee-footer" aria-label="Order ticker">
           <div className="marquee-track">
@@ -1050,9 +935,10 @@ export default function Home() {
         
         <div className="footer-massive-nav container">
           <nav className="massive-links">
+            <Link href="/" data-text="HOME">HOME</Link>
             <Link href="/menu" data-text="MENU">MENU</Link>
-            <a href="#about" data-text="ABOUT">ABOUT</a>
-            <a href="#order" data-text="ORDER">ORDER</a>
+            <a href="/#about" data-text="ABOUT">ABOUT</a>
+            <a href="/#order" data-text="ORDER">ORDER</a>
           </nav>
           <div className="footer-info-grid">
             <div className="info-block">
