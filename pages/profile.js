@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [address, setAddress] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [isNavOpen, setIsNavOpen] = useState(false)
 
   useEffect(() => {
     if (userProfile) {
@@ -21,14 +22,40 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div style={{ minHeight: '80vh', display: 'grid', placeItems: 'center', background: 'var(--cream)', padding: '120px 20px' }}>
-        <div style={{ textAlignment: 'center', background: '#ffffff', padding: '40px 32px', borderRadius: '24px', textAlign: 'center', maxWidth: '400px' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>👤</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)' }}>Authentication Required</h2>
-          <p style={{ color: 'var(--muted)', marginBottom: '20px' }}>Please sign in to view and edit your profile.</p>
-          <button onClick={openAuthModal} className="btn">SIGN IN</button>
+      <>
+        <Head>
+          <title>My Profile | Biriyani Station Patna</title>
+        </Head>
+        <header className="site-header scrolled" id="top">
+          <nav className="nav container">
+            <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
+            <div className="nav-right">
+              <Link href="/">HOME</Link>
+              <Link href="/menu">MENU</Link>
+              {!user && (
+                <button className="btn" onClick={() => openAuthModal()}>
+                  SIGN IN
+                </button>
+              )}
+            </div>
+          </nav>
+        </header>
+        <div style={{ minHeight: '80vh', display: 'grid', placeItems: 'center', background: 'var(--cream)', padding: '120px 20px' }}>
+          <div className="empty-state" style={{ maxWidth: '400px' }}>
+            <span className="empty-state-icon">{'\u{1F464}'}</span>
+            <h2>Authentication Required</h2>
+            <p>Please sign in to view and edit your profile.</p>
+            <button onClick={openAuthModal} className="btn">SIGN IN</button>
+          </div>
         </div>
-      </div>
+        <div className="mobile-bottom-bar">
+          <nav>
+            <Link href="/"><span className="tab-icon">{'\u{1F3E0}'}</span>Home</Link>
+            <Link href="/menu"><span className="tab-icon">{'\u{1F35B}'}</span>Menu</Link>
+            <button type="button" onClick={openAuthModal}><span className="tab-icon">{'\u{1F510}'}</span>Sign In</button>
+          </nav>
+        </div>
+      </>
     )
   }
 
@@ -42,7 +69,7 @@ export default function ProfilePage() {
         phone,
         defaultAddress: address,
       })
-      setMessage('Profile updated successfully! ✨')
+      setMessage('Profile updated successfully! \u2728')
       setTimeout(() => setMessage(''), 4000)
     } catch (err) {
       console.error(err)
@@ -61,38 +88,68 @@ export default function ProfilePage() {
       <header className="site-header scrolled" id="top">
         <nav className="nav container">
           <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
-          <div className="nav-right">
-            <Link href="/">HOME</Link>
-            <Link href="/menu">MENU</Link>
-            <Link href="/my-orders">MY ORDERS</Link>
-            <Link href="/profile" className="active" style={{ color: 'var(--yellow)' }}>PROFILE</Link>
+
+          <button className="nav-toggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div className={`nav-backdrop ${isNavOpen ? 'visible' : ''}`} onClick={() => setIsNavOpen(false)} />
+
+          <div className={`nav-right ${isNavOpen ? 'open' : ''}`}>
+            <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
+            <Link href="/menu" onClick={() => setIsNavOpen(false)}>MENU</Link>
+            <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
+            <Link href="/profile" className="active" style={{ color: 'var(--yellow)' }} onClick={() => setIsNavOpen(false)}>PROFILE</Link>
           </div>
         </nav>
       </header>
 
-      <main style={{ minHeight: '80vh', padding: '120px 0 80px 0', background: 'var(--cream)' }}>
+      <main style={{ minHeight: '80vh', padding: '100px 0 80px 0', background: 'var(--cream)' }}>
         <div className="container" style={{ maxWidth: '640px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '28px', padding: '36px 32px', border: '1px solid rgba(13,90,58,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
+          <div className="profile-card-mobile" style={{ background: '#ffffff', borderRadius: '28px', padding: '36px 32px', border: '1px solid rgba(13,90,58,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.04)' }}>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            {/* Profile Avatar Section */}
+            <div className="profile-avatar-section" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
               {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName} style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover' }} />
+                <img src={user.photoURL} alt={user.displayName} style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
               ) : (
-                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--deep-green)', color: '#ffffff', fontSize: '2rem', fontWeight: 800, display: 'grid', placeItems: 'center' }}>
+                <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--deep-green)', color: '#ffffff', fontSize: '2rem', fontWeight: 800, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                   {user.displayName?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
               <div>
-                <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--ink)', margin: '0 0 4px 0' }}>
+                <h1 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.6rem)', fontWeight: 900, color: 'var(--ink)', margin: '0 0 4px 0' }}>
                   {userProfile?.name || user.displayName}
                 </h1>
-                <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{user.email}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--muted)', wordBreak: 'break-all' }}>{user.email}</span>
                 <div style={{ marginTop: '6px' }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, background: 'rgba(13,90,58,0.1)', color: 'var(--deep-green)', padding: '4px 10px', borderRadius: '999px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  <span className="status-badge" style={{ fontSize: '0.65rem', background: 'rgba(13,90,58,0.1)', color: 'var(--deep-green)' }}>
                     ROLE: {userProfile?.role || 'Customer'}
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div className="quick-actions-grid" style={{ marginBottom: '24px' }}>
+              <Link href="/my-orders" className="quick-action-card">
+                <span className="qa-icon">{'\u{1F4E6}'}</span>
+                <span className="qa-label">My Orders</span>
+              </Link>
+              <Link href="/menu" className="quick-action-card">
+                <span className="qa-icon">{'\u{1F35B}'}</span>
+                <span className="qa-label">Order Food</span>
+              </Link>
+              <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="quick-action-card">
+                <span className="qa-icon">{'\u{1F4AC}'}</span>
+                <span className="qa-label">Contact Us</span>
+              </a>
+              <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="quick-action-card">
+                <span className="qa-icon">{'\u{1F4CD}'}</span>
+                <span className="qa-label">Find Us</span>
+              </a>
             </div>
 
             {message && (
@@ -151,31 +208,17 @@ export default function ProfilePage() {
                 type="submit"
                 className="btn"
                 disabled={saving}
-                style={{ marginTop: '10px', width: '100%', padding: '16px' }}
+                style={{ marginTop: '10px', width: '100%', padding: '16px', minHeight: '52px' }}
               >
                 {saving ? 'SAVING CHANGES...' : 'UPDATE PROFILE'}
               </button>
             </form>
 
-            <div style={{ marginTop: '24px', background: 'rgba(13,90,58,0.06)', borderRadius: '18px', padding: '20px', border: '1px solid rgba(13,90,58,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>
-                  📦 Order History & Live Tracking
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
-                  View real-time status updates & UPI payment verification for your orders.
-                </p>
-              </div>
-              <Link href="/my-orders" className="btn" style={{ padding: '10px 18px', fontSize: '0.82rem', background: 'var(--deep-green)', color: '#ffffff' }}>
-                VIEW MY ORDERS →
-              </Link>
-            </div>
-
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
+            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
               <button
                 type="button"
                 onClick={logout}
-                style={{ background: 'none', border: 'none', color: '#dc2626', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+                className="btn-danger"
               >
                 Sign Out of Account
               </button>
@@ -184,6 +227,16 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Tab Bar */}
+      <div className="mobile-bottom-bar">
+        <nav>
+          <Link href="/"><span className="tab-icon">{'\u{1F3E0}'}</span>Home</Link>
+          <Link href="/menu"><span className="tab-icon">{'\u{1F35B}'}</span>Menu</Link>
+          <Link href="/my-orders"><span className="tab-icon">{'\u{1F4E6}'}</span>Orders</Link>
+          <Link href="/profile" className="active"><span className="tab-icon">{'\u{1F464}'}</span>Profile</Link>
+        </nav>
+      </div>
     </>
   )
 }

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { db, storage } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import { ALL_MENU_ITEMS } from '../../data/menuData'
 
@@ -23,6 +24,49 @@ export default function AdminMenuDesk() {
   const [spice, setSpice] = useState('Medium')
   const [available, setAvailable] = useState(true)
   const [popular, setPopular] = useState(false)
+  
+  // Image Upload State
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadProgress(20)
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        // Create canvas and resize image
+        const canvas = document.createElement('canvas')
+        const MAX_WIDTH = 600
+        const scaleSize = MAX_WIDTH / img.width
+        canvas.width = MAX_WIDTH
+        canvas.height = img.height * scaleSize
+
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        
+        // Convert to WebP base64
+        const dataUrl = canvas.toDataURL('image/webp', 0.8)
+        
+        setImage(dataUrl)
+        setUploadProgress(100)
+        setTimeout(() => setUploading(false), 500)
+      }
+      img.src = event.target.result
+    }
+    
+    reader.onerror = (error) => {
+      alert('Error reading file: ' + error)
+      setUploading(false)
+    }
+    
+    reader.readAsDataURL(file)
+  }
 
   // Real-time Firestore sync
   useEffect(() => {
@@ -51,7 +95,7 @@ export default function AdminMenuDesk() {
           rating: item.rating || 4.8,
           preparationTime: item.time || '20-25 mins',
           popular: item.category.includes('bestseller'),
-          vegNonVeg: item.title.toLowerCase().includes('paneer') ? 'veg' : 'non-veg',
+          vegNonVeg: (item.title.toLowerCase().includes('paneer') || item.category.toLowerCase().includes('bread') || item.title.toLowerCase().includes('roti') || item.title.toLowerCase().includes('naan') || item.title.toLowerCase().includes('kulcha') || item.title.toLowerCase().includes('paratha')) ? 'veg' : 'non-veg',
           ingredients: ['Spices', 'Marination', 'Ghee'],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -174,9 +218,7 @@ export default function AdminMenuDesk() {
             <Link href="/admin/menu" style={{ padding: '12px 16px', borderRadius: '12px', background: 'var(--yellow)', color: 'var(--ink)', fontWeight: 800, textDecoration: 'none' }}>
               🍲 Menu Items ({menuItems.length})
             </Link>
-            <Link href="/admin/categories" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-              📁 Categories
-            </Link>
+
             <Link href="/admin/coupons" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
               🏷️ Coupons
             </Link>
@@ -240,8 +282,8 @@ export default function AdminMenuDesk() {
                       <td style={{ padding: '12px', textTransform: 'capitalize' }}>{item.category}</td>
                       <td style={{ padding: '12px', fontWeight: 800, color: 'var(--deep-green)' }}>₹{item.price}</td>
                       <td style={{ padding: '12px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: (item.vegNonVeg === 'veg' || item.title?.toLowerCase().includes('paneer')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: (item.vegNonVeg === 'veg' || item.title?.toLowerCase().includes('paneer')) ? '#16a34a' : '#dc2626' }}>
-                          {(item.vegNonVeg === 'veg' || item.title?.toLowerCase().includes('paneer')) ? '🟢 VEG' : '🔴 NON-VEG'}
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '#16a34a' : '#dc2626' }}>
+                          {(item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '🟢 VEG' : '🔴 NON-VEG'}
                         </span>
                       </td>
                       <td style={{ padding: '12px' }}>
@@ -278,7 +320,7 @@ export default function AdminMenuDesk() {
       {showModal && (
         <div className="co-overlay" aria-hidden="false" style={{ opacity: 1, visibility: 'visible', zIndex: 3000 }}>
           <button type="button" className="co-backdrop" onClick={() => setShowModal(false)} />
-          <div className="auth-modal-panel" style={{ width: 'min(560px, 94vw)', background: '#ffffff', borderRadius: '28px', padding: '32px' }}>
+          <div className="auth-modal-panel" style={{ width: 'min(560px, 94vw)', background: '#ffffff', borderRadius: '28px', padding: '32px', position: 'relative', zIndex: 100, boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)', margin: 0 }}>
                 {editingItem ? 'Edit Food Item' : 'Add New Food Item'}
@@ -314,8 +356,32 @@ export default function AdminMenuDesk() {
               </div>
 
               <div className="co-field">
-                <label>Image URL Path</label>
-                <input type="text" value={image} onChange={e => setImage(e.target.value)} placeholder="/menu/Chicken tandoori kawab.jpeg" required />
+                <label>Food Image</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  {image && (
+                    <img src={image} alt="Preview" style={{ width: '64px', height: '64px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.1)' }} />
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{
+                        padding: '10px',
+                        border: '1px dashed rgba(0,0,0,0.2)',
+                        borderRadius: '12px',
+                        width: '100%',
+                        cursor: 'pointer',
+                        background: '#f9f9f9'
+                      }}
+                    />
+                    {uploading && (
+                      <div style={{ marginTop: '8px', background: 'rgba(13,90,58,0.1)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--deep-green)', transition: 'width 0.2s ease' }}></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>

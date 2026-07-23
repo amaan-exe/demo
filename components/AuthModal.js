@@ -84,6 +84,7 @@ export default function AuthModal() {
           overflow: 'hidden'
         }}
       >
+        <div className="sheet-handle" />
         <button
           type="button"
           onClick={closeAuthModal}

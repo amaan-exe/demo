@@ -47,7 +47,7 @@ export default function AdminDashboard() {
     o.orderStatus === 'Preparing'
   ).length
   const completedCount = orders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered').length
-  const totalRevenue = orders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered' || o.paymentStatus === 'paid' || o.paymentStatus === 'Paid').reduce((sum, o) => sum + (o.grandTotal || 0), 0)
+  const totalRevenue = orders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered').reduce((sum, o) => sum + (o.grandTotal || 0), 0)
 
   if (!mounted) return null
 
@@ -112,9 +112,6 @@ export default function AdminDashboard() {
               </Link>
               <Link href="/admin/menu" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
                 🍲 Menu Items ({menuItems.length})
-              </Link>
-              <Link href="/admin/categories" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-                📁 Categories
               </Link>
               <Link href="/admin/coupons" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
                 🏷️ Coupons

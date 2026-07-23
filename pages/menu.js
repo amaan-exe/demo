@@ -2,15 +2,16 @@ import { useEffect, useState, useMemo } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
-import UpiPaymentBox from '../components/UpiPaymentBox'
+import { useSettings } from '../context/SettingsContext'
+import CheckoutModal from '../components/CheckoutModal'
 
 export default function MenuPage() {
   const router = useRouter()
-  const { user, openAuthModal, logout } = useAuth()
+  const { user, userProfile, openAuthModal, logout } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
@@ -20,6 +21,15 @@ export default function MenuPage() {
   const [toast, setToast] = useState(null)
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Order checkout form state
   const [coName, setCoName] = useState('')
@@ -78,9 +88,10 @@ export default function MenuPage() {
     setCartItems((currentItems) => currentItems.filter((entry) => entry.title !== title))
   }
 
+  const { settings } = useSettings()
   const cartCount = cartItems.reduce((sum, entry) => sum + entry.qty, 0)
   const cartTotal = cartItems.reduce((sum, entry) => sum + (entry.price * entry.qty), 0)
-  const deliveryFee = cartTotal > 0 ? 40 : 0
+  const deliveryFee = cartTotal > 0 ? (settings?.deliveryCharge ?? 40) : 0
   const grandTotal = cartTotal + deliveryFee
 
   const handleProceedToCheckout = () => {
@@ -99,37 +110,44 @@ export default function MenuPage() {
     setCheckoutOpen(true)
   }
 
-  const handlePlaceOrder = async (e, utrString = null) => {
-    if (e && e.preventDefault) e.preventDefault()
+  const handlePlaceOrder = async (orderData = {}, utrString = null) => {
+    const finalName = orderData.name || coName || user?.displayName || user?.email?.split('@')[0]
+    const finalPhone = orderData.phone || coPhone
+    const finalAddress = orderData.address || coAddress
+    const isUpi = orderData.isUpi !== undefined ? orderData.isUpi : paymentMethod === 'UPI'
+
     if (!user) {
       openAuthModal()
       return
     }
 
-    if (!coPhone || !coAddress) {
+    if (!finalPhone || !finalAddress) {
       alert('Please enter your phone number and delivery address.')
       return
     }
 
     try {
       setCoLoading(true)
-      const isUpi = paymentMethod === 'UPI'
       const orderId = `BS-PATNA-${Math.floor(100000 + Math.random() * 900000)}`
+
+      const discountValue = orderData.coupon ? orderData.coupon.discount : 0
+      const finalGrandTotal = Math.max(0, grandTotal - discountValue)
 
       const payload = {
         orderId,
         userId: user.uid,
         userEmail: user.email,
-        customerName: coName || user.displayName || user.email.split('@')[0],
+        customerName: finalName,
         customerEmail: user.email,
-        customerPhone: coPhone,
-        deliveryAddress: coAddress,
+        customerPhone: finalPhone,
+        deliveryAddress: finalAddress,
         items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
         subtotal: cartTotal,
         deliveryCharge: deliveryFee,
         tax: 0,
-        discount: 0,
-        grandTotal,
+        discount: discountValue,
+        appliedCoupon: orderData.coupon ? orderData.coupon.code : null,
+        grandTotal: finalGrandTotal,
         paymentMethod: isUpi ? 'UPI' : 'COD',
         paymentStatus: isUpi ? 'verification_pending' : 'pending',
         orderStatus: isUpi ? 'payment_verification_pending' : 'pending',
@@ -163,7 +181,8 @@ export default function MenuPage() {
         `*Payment Method:* ${isUpi ? '📲 Pay via UPI (Verification Pending)' : '💵 Cash on Delivery (COD)'}\n\n` +
         `*Items:*\n` +
         cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
-        `\n\n*Total: ₹${grandTotal.toFixed(0)}*`
+        (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
+        `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
 
       window.open(`https://wa.me/918271301179?text=${encodeURIComponent(message)}`, '_blank')
 
@@ -190,39 +209,81 @@ export default function MenuPage() {
     }
   }, [cartOpen, checkoutOpen, selectedProduct])
 
+  const [liveMenu, setLiveMenu] = useState([])
+  const [loadingMenu, setLoadingMenu] = useState(true)
+
+  // Real-time Firestore sync for Menu
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'menu'), (snapshot) => {
+      if (!snapshot.empty) {
+        const docs = snapshot.docs.map(d => {
+          const data = d.data()
+          return {
+            id: d.id,
+            ...data,
+            title: data.name || data.title || 'Unknown Item',
+            priceLabel: `₹${data.price || 0}`,
+            price: data.price || 0,
+            category: data.category || 'kawab',
+            categoryName: data.categoryName || (data.category === 'biryani' ? 'Biryani' : data.category === 'kawab' ? 'Kawabs' : 'Dishes'),
+            tags: data.tags || (data.popular ? ['Bestseller'] : []),
+            spice: data.spice || 'Medium',
+            time: data.preparationTime || '20-25 min',
+            portion: data.portion || 'Serves 1-2',
+            description: data.description || '',
+            image: data.image || '/menu/Chicken tandoori kawab.jpeg'
+          }
+        })
+        // Filter out unavailable items for the public storefront
+        setLiveMenu(docs.filter(item => item.available !== false))
+      } else {
+        setLiveMenu(ALL_MENU_ITEMS)
+      }
+      setLoadingMenu(false)
+    }, (err) => {
+      console.warn('Menu live sync notice:', err.message)
+      setLiveMenu(ALL_MENU_ITEMS)
+      setLoadingMenu(false)
+    })
+
+    return () => unsub()
+  }, [])
+
   // Category counts
   const categoryCounts = useMemo(() => {
+    const source = liveMenu.length > 0 ? liveMenu : ALL_MENU_ITEMS
     return {
-      all: ALL_MENU_ITEMS.length,
-      kawab: ALL_MENU_ITEMS.filter(d => d.category.includes('kawab') && !d.category.includes('biryani')).length,
-      biryani: ALL_MENU_ITEMS.filter(d => d.category.includes('biryani')).length,
-      gravy: ALL_MENU_ITEMS.filter(d => d.category.includes('gravy')).length,
-      bread: ALL_MENU_ITEMS.filter(d => d.category.includes('bread')).length,
-      bestseller: ALL_MENU_ITEMS.filter(d => d.category.includes('bestseller')).length
+      all: source.length,
+      kawab: source.filter(d => (d.category || '').includes('kawab') && !(d.category || '').includes('biryani')).length,
+      biryani: source.filter(d => (d.category || '').includes('biryani')).length,
+      gravy: source.filter(d => (d.category || '').includes('gravy')).length,
+      bread: source.filter(d => (d.category || '').includes('bread')).length,
+      bestseller: source.filter(d => (d.category || '').includes('bestseller') || d.popular).length
     }
-  }, [])
+  }, [liveMenu])
 
   // Filtered menu items calculation
   const filteredDishes = useMemo(() => {
-    return ALL_MENU_ITEMS.filter((dish) => {
+    const source = liveMenu.length > 0 ? liveMenu : ALL_MENU_ITEMS
+    return source.filter((dish) => {
       const q = searchQuery.trim().toLowerCase()
-      const matchesSearch = !q ||
-        dish.title.toLowerCase().includes(q) ||
-        dish.description.toLowerCase().includes(q) ||
-        dish.categoryName.toLowerCase().includes(q) ||
-        dish.tags.some(t => t.toLowerCase().includes(q))
+      const title = (dish.name || dish.title || '').toLowerCase()
+      const desc = (dish.description || '').toLowerCase()
+      const catName = (dish.categoryName || '').toLowerCase()
+      
+      const matchesSearch = !q || title.includes(q) || desc.includes(q) || catName.includes(q)
 
       if (!matchesSearch) return false
 
       if (activeFilter === 'all') return true
-      if (activeFilter === 'kawab') return dish.category.includes('kawab') && !dish.category.includes('biryani')
-      if (activeFilter === 'biryani') return dish.category.includes('biryani')
-      if (activeFilter === 'gravy') return dish.category.includes('gravy')
-      if (activeFilter === 'bread') return dish.category.includes('bread')
-      if (activeFilter === 'bestseller') return dish.category.includes('bestseller')
+      if (activeFilter === 'kawab') return (dish.category || '').includes('kawab') && !(dish.category || '').includes('biryani')
+      if (activeFilter === 'biryani') return (dish.category || '').includes('biryani')
+      if (activeFilter === 'gravy') return (dish.category || '').includes('gravy')
+      if (activeFilter === 'bread') return (dish.category || '').includes('bread')
+      if (activeFilter === 'bestseller') return (dish.category || '').includes('bestseller') || dish.popular
       return true
     })
-  }, [activeFilter, searchQuery])
+  }, [activeFilter, searchQuery, liveMenu])
 
   return (
     <>
@@ -243,6 +304,8 @@ export default function MenuPage() {
             <span></span>
             <span></span>
           </button>
+
+          <div className={`nav-backdrop ${isNavOpen ? 'visible' : ''}`} onClick={() => setIsNavOpen(false)} aria-hidden="true" />
 
           <div className={`nav-right ${isNavOpen ? 'open' : ''}`} id="navLinks">
             <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
@@ -281,34 +344,42 @@ export default function MenuPage() {
                   <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>▼</span>
                 </button>
 
+                {userMenuOpen && isMobile && (
+                  <div className="user-menu-backdrop" onClick={() => setUserMenuOpen(false)} />
+                )}
                 {userMenuOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    right: 0,
-                    background: '#ffffff',
-                    borderRadius: '16px',
-                    padding: '12px 16px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    minWidth: '200px',
-                    zIndex: 2000
-                  }}>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '6px' }}>
+                  <div
+                    className={isMobile ? 'user-menu-mobile' : ''}
+                    style={isMobile ? {
+                      background: '#ffffff',
+                    } : {
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      right: 0,
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '12px 16px',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      minWidth: '200px',
+                      zIndex: 2000
+                    }}
+                  >
+                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '10px' }}>
                       Logged in as<br />
-                      <strong style={{ color: 'var(--ink)' }}>{user.email}</strong>
+                      <strong style={{ color: 'var(--ink)', fontSize: '0.92rem' }}>{user.email}</strong>
                     </div>
                     <Link
                       href="/my-orders"
                       onClick={() => setUserMenuOpen(false)}
-                      style={{ display: 'block', padding: '6px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--ink)', textDecoration: 'none' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', fontSize: '0.95rem', fontWeight: '700', color: 'var(--ink)', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)' }}
                     >
                       📦 My Orders
                     </Link>
                     <Link
                       href="/profile"
                       onClick={() => setUserMenuOpen(false)}
-                      style={{ display: 'block', padding: '6px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--ink)', textDecoration: 'none' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', fontSize: '0.95rem', fontWeight: '700', color: 'var(--ink)', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)' }}
                     >
                       👤 My Profile
                     </Link>
@@ -316,14 +387,15 @@ export default function MenuPage() {
                       <Link
                         href="/admin"
                         onClick={() => setUserMenuOpen(false)}
-                        style={{ display: 'block', padding: '6px 0', fontSize: '0.85rem', fontWeight: '800', color: 'var(--deep-green)', textDecoration: 'none' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', fontSize: '0.95rem', fontWeight: '800', color: 'var(--deep-green)', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)' }}
                       >
                         🛡️ Admin Portal
                       </Link>
                     )}
                     <button
                       onClick={() => { logout(); setUserMenuOpen(false); }}
-                      style={{ width: '100%', background: 'none', border: 'none', color: '#dc3232', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', textAlign: 'left', padding: '6px 0', borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: '4px', paddingTop: '8px' }}
+                      className="btn-danger"
+                      style={{ marginTop: '12px' }}
                     >
                       Sign Out
                     </button>
@@ -365,6 +437,14 @@ export default function MenuPage() {
         </nav>
       </header>
 
+      {/* Store Closed Banner */}
+      {settings?.isStoreOpen === false && (
+        <div style={{ background: '#dc2626', color: '#ffffff', textAlign: 'center', padding: '10px 20px', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <span>🔴</span>
+          <span>STORE CLOSED: Online ordering is currently suspended. Hours: {settings?.openingTime || '11:00 AM'} – {settings?.closingTime || '11:30 PM'}. Support: {settings?.supportPhone || '+91 82713 01179'}</span>
+        </div>
+      )}
+
       <main>
         {/* Luxury Hero Header Section */}
         <section className="menu-hero-seamless" style={{
@@ -403,7 +483,7 @@ export default function MenuPage() {
                 fontWeight: 900
               }}>
                 THE COMPLETE <br />
-                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>19 DISHES</span> MENU.
+                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>{liveMenu.length} DISHES</span> MENU.
               </h1>
 
               <p style={{
@@ -508,7 +588,7 @@ export default function MenuPage() {
               </div>
 
               {/* Category Filter Chips */}
-              <div className="menu-chips" role="tablist" style={{ justifyContent: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div className="menu-chips mobile-scroll-chips" role="tablist" style={{ justifyContent: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 {[
                   { id: 'all', label: `All (${categoryCounts.all})` },
                   { id: 'kawab', label: `Kawabs (${categoryCounts.kawab})` },
@@ -755,176 +835,55 @@ export default function MenuPage() {
       ) : null}
 
       {/* Checkout Modal */}
-      <div className="co-overlay" aria-hidden={checkoutOpen ? 'false' : 'true'}>
-        <button type="button" className="co-backdrop" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)} />
-        <div className="co-panel" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-          <button type="button" className="co-close" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          </button>
-
-          <div className="co-left">
-            <div className="co-left-top">
-              <p className="co-eyebrow">Biriyani Station</p>
-              <h2 id="checkoutTitle" className="co-headline">Your<br />Order</h2>
-              <p className="co-tagline">We'll cook it fresh. You just tell us where.</p>
-            </div>
-
-            <div className="co-items">
-              {cartItems.length === 0 ? (
-                <p className="co-no-items">Your cart is empty.</p>
-              ) : (
-                cartItems.map((item) => (
-                  <div className="co-item" key={item.title}>
-                    <img src={item.image} alt={item.title} className="co-item-img" />
-                    <div className="co-item-info">
-                      <p className="co-item-name">{item.title}</p>
-                      <p className="co-item-qty">x{item.qty}</p>
-                    </div>
-                    <p className="co-item-price">₹{(item.price * item.qty).toFixed(0)}</p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="co-totals">
-              <div className="co-total-row">
-                <span>Subtotal</span><span>₹{cartTotal.toFixed(0)}</span>
-              </div>
-              <div className="co-total-row">
-                <span>Delivery</span><span>{deliveryFee > 0 ? `₹${deliveryFee}` : 'Free 🎉'}</span>
-              </div>
-              <div className="co-total-row co-total-grand">
-                <span>Total</span><strong>₹{grandTotal.toFixed(0)}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="co-right">
-            <p className="co-form-eyebrow">Step 2 of 2</p>
-            <h3 className="co-form-title">Delivery Details</h3>
-            <p className="co-form-sub">We'll send your order confirmation on WhatsApp.</p>
-
-            <form className="co-form" onSubmit={handlePlaceOrder}>
-              <div className="co-field">
-                <label htmlFor="co-name">Full Name</label>
-                <input
-                  id="co-name"
-                  type="text"
-                  placeholder="Muhammad Amanullah"
-                  value={coName}
-                  onChange={(e) => setCoName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="co-field">
-                <label htmlFor="co-phone">Phone Number</label>
-                <input
-                  id="co-phone"
-                  type="tel"
-                  placeholder="+91 82713 01179"
-                  value={coPhone}
-                  onChange={(e) => setCoPhone(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="co-field">
-                <label htmlFor="co-address">Delivery Address</label>
-                <textarea
-                  id="co-address"
-                  rows={3}
-                  placeholder="House no, Street, Landmark, Patna…"
-                  value={coAddress}
-                  onChange={(e) => setCoAddress(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Payment Method Selector */}
-              <div style={{ marginTop: '14px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 800, fontSize: '0.85rem', color: 'var(--ink)' }}>
-                  SELECT PAYMENT METHOD
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('COD')}
-                    style={{
-                      padding: '14px 12px',
-                      borderRadius: '14px',
-                      border: paymentMethod === 'COD' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.12)',
-                      background: paymentMethod === 'COD' ? 'rgba(13,90,58,0.08)' : '#ffffff',
-                      color: paymentMethod === 'COD' ? 'var(--deep-green)' : 'var(--ink)',
-                      fontWeight: '800',
-                      fontSize: '0.86rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <span>💵 Cash on Delivery</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('UPI')}
-                    style={{
-                      padding: '14px 12px',
-                      borderRadius: '14px',
-                      border: paymentMethod === 'UPI' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.12)',
-                      background: paymentMethod === 'UPI' ? 'rgba(13,90,58,0.08)' : '#ffffff',
-                      color: paymentMethod === 'UPI' ? 'var(--deep-green)' : 'var(--ink)',
-                      fontWeight: '800',
-                      fontSize: '0.86rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <span>📲 Pay via UPI</span>
-                  </button>
-                </div>
-              </div>
-
-              {paymentMethod === 'UPI' ? (
-                <UpiPaymentBox
-                  grandTotal={grandTotal}
-                  orderId={`RK${Date.now().toString().slice(-4)}`}
-                  onConfirmPayment={handlePlaceOrder}
-                  loading={coLoading}
-                />
-              ) : (
-                <>
-                  <div style={{ background: '#faf9f5', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px', padding: '12px 14px', marginTop: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                      💵 <strong>Cash or QR Scan on Delivery</strong>: Pay cash or scan QR code when your food is delivered.
-                    </p>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="co-whatsapp"
-                    disabled={coLoading}
-                    style={{ width: '100%', border: 'none', cursor: coLoading ? 'wait' : 'pointer', marginTop: '16px' }}
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-                    {coLoading ? 'Saving Order...' : 'Place Order via WhatsApp'}
-                  </button>
-                </>
-              )}
-            </form>
-
-            <button type="button" className="co-cancel" onClick={() => setCheckoutOpen(false)}>Cancel</button>
-          </div>
-        </div>
-      </div>
+      <CheckoutModal
+        isOpen={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        cartItems={cartItems}
+        cartTotal={cartTotal}
+        deliveryFee={deliveryFee}
+        grandTotal={grandTotal}
+        user={user}
+        userProfile={userProfile}
+        openAuthModal={openAuthModal}
+        onPlaceOrder={handlePlaceOrder}
+        coLoading={coLoading}
+      />
 
       {/* Footer */}
+      {/* Mobile Bottom Tab Bar */}
+      <div className="mobile-bottom-bar">
+        <nav>
+          <Link href="/">
+            <span className="tab-icon">🏠</span>
+            Home
+          </Link>
+          <Link href="/menu" className="active">
+            <span className="tab-icon">🍛</span>
+            Menu
+          </Link>
+          <button type="button" onClick={() => setCartOpen(true)} style={{ position: 'relative' }}>
+            <span className="tab-icon">🛒</span>
+            Cart
+            {cartCount > 0 && <span className="cart-tab-badge">{cartCount}</span>}
+          </button>
+          <Link href="/my-orders">
+            <span className="tab-icon">📦</span>
+            Orders
+          </Link>
+          {user ? (
+            <Link href="/profile">
+              <span className="tab-icon">👤</span>
+              Profile
+            </Link>
+          ) : (
+            <button type="button" onClick={openAuthModal}>
+              <span className="tab-icon">🔐</span>
+              Sign In
+            </button>
+          )}
+        </nav>
+      </div>
+
       <footer className="footer-brutalist" role="contentinfo">
         <div className="marquee marquee-footer" aria-label="Order ticker">
           <div className="marquee-track">

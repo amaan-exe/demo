@@ -51,6 +51,7 @@ export default function UpiPaymentBox({
         <img
           src={qrUrl}
           alt="UPI Payment QR Code"
+          className="upi-qr-image"
           style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.08)' }}
         />
         <div style={{ marginTop: '12px', fontSize: '0.82rem', color: 'var(--ink)' }}>
@@ -93,7 +94,7 @@ export default function UpiPaymentBox({
         <p style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', marginBottom: '8px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           Pay Directly Using
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        <div className="upi-app-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <button type="button" onClick={handleOpenUpiApp} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             🔵 Google Pay
           </button>
