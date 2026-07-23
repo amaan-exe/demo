@@ -33,13 +33,13 @@ export default function MenuPage() {
     try {
       const raw = localStorage.getItem('biriyani_cart_v1')
       if (raw) setCartItems(JSON.parse(raw))
-    } catch (e) {}
+    } catch (e) { }
   }, [])
 
   useEffect(() => {
     try {
       localStorage.setItem('biriyani_cart_v1', JSON.stringify(cartItems))
-    } catch (e) {}
+    } catch (e) { }
   }, [cartItems])
 
   const addToCart = (item) => {
@@ -52,13 +52,13 @@ export default function MenuPage() {
       }
       return [...currentItems, { ...item, qty: 1 }]
     })
-    
+
     setToast({
       title: item.title,
       image: item.image,
       id: Date.now()
     })
-    
+
     setTimeout(() => {
       setToast(null)
     }, 3000)
@@ -206,11 +206,11 @@ export default function MenuPage() {
   const filteredDishes = useMemo(() => {
     return ALL_MENU_ITEMS.filter((dish) => {
       const q = searchQuery.trim().toLowerCase()
-      const matchesSearch = !q || 
-                            dish.title.toLowerCase().includes(q) ||
-                            dish.description.toLowerCase().includes(q) ||
-                            dish.categoryName.toLowerCase().includes(q) ||
-                            dish.tags.some(t => t.toLowerCase().includes(q))
+      const matchesSearch = !q ||
+        dish.title.toLowerCase().includes(q) ||
+        dish.description.toLowerCase().includes(q) ||
+        dish.categoryName.toLowerCase().includes(q) ||
+        dish.tags.some(t => t.toLowerCase().includes(q))
 
       if (!matchesSearch) return false
 
@@ -246,7 +246,7 @@ export default function MenuPage() {
 
           <div className={`nav-right ${isNavOpen ? 'open' : ''}`} id="navLinks">
             <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
-            <Link href="/menu" className="active" onClick={() => setIsNavOpen(false)} style={{color: 'var(--yellow)'}}>MENU</Link>
+            <Link href="/menu" className="active" onClick={() => setIsNavOpen(false)} style={{ color: 'var(--yellow)' }}>MENU</Link>
             <Link href="/#about" onClick={() => setIsNavOpen(false)}>ABOUT</Link>
             <Link href="/#order" onClick={() => setIsNavOpen(false)}>ORDER</Link>
             <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="btn cta" onClick={() => setIsNavOpen(false)}>Order on Whatsapp</a>
@@ -295,7 +295,7 @@ export default function MenuPage() {
                     zIndex: 2000
                   }}>
                     <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '6px' }}>
-                      Logged in as<br/>
+                      Logged in as<br />
                       <strong style={{ color: 'var(--ink)' }}>{user.email}</strong>
                     </div>
                     <Link
@@ -393,7 +393,7 @@ export default function MenuPage() {
               <p className="section-label" style={{ marginBottom: '12px', letterSpacing: '0.3em', color: 'var(--deep-green)' }}>
                 HANDCRAFTED DUM & TANDOOR
               </p>
-              
+
               <h1 className="display" style={{
                 fontSize: 'clamp(2.4rem, 5vw, 4.2rem)',
                 lineHeight: '1.05',
@@ -402,7 +402,7 @@ export default function MenuPage() {
                 textTransform: 'uppercase',
                 fontWeight: 900
               }}>
-                THE COMPLETE <br/>
+                THE COMPLETE <br />
                 <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>19 DISHES</span> MENU.
               </h1>
 
@@ -452,7 +452,7 @@ export default function MenuPage() {
         {/* Main Controls & Menu Grid */}
         <section className="menu section-pad" id="menu" style={{ paddingTop: '20px' }}>
           <div className="container">
-            
+
             {/* Search and Category Filter Bar */}
             <div className="menu-controls-wrapper" style={{
               display: 'flex',
@@ -461,7 +461,7 @@ export default function MenuPage() {
               marginBottom: '40px',
               alignItems: 'center'
             }}>
-              
+
               {/* Glassmorphic Search Bar */}
               <div className="search-bar-container" style={{ width: '100%', maxWidth: '580px', position: 'relative' }}>
                 <input
@@ -577,9 +577,9 @@ export default function MenuPage() {
                         <h3 className="dish-title">{dish.title.toUpperCase()}</h3>
                         <strong className="dish-price">{dish.priceLabel}</strong>
                       </div>
-                      
+
                       <p className="dish-desc">{dish.description}</p>
-                      
+
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '14px 0 18px 0' }}>
                         <span style={{ fontSize: '0.76rem', background: 'rgba(13,90,58,0.08)', color: 'var(--deep-green)', padding: '4px 10px', borderRadius: '8px', fontWeight: 700 }}>
                           🌶️ {dish.spice}
@@ -629,10 +629,10 @@ export default function MenuPage() {
         <div className="cart-hd">
           <div className="cart-hd-left">
             <span className="cart-hd-eyebrow">YOUR CART</span>
-            <h2 className="cart-hd-title">Fresh from<br/>the Pot 🍲</h2>
+            <h2 className="cart-hd-title">Fresh from<br />the Pot 🍲</h2>
           </div>
           <button type="button" className="cart-x" aria-label="Close cart" onClick={() => setCartOpen(false)}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1l16 16M17 1L1 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1l16 16M17 1L1 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         </div>
 
@@ -654,18 +654,18 @@ export default function MenuPage() {
                   <p className="citem-unit">₹{item.price.toFixed(0)} each</p>
                   <div className="citem-stepper">
                     <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, -1)}>
-                      <svg width="10" height="2" viewBox="0 0 10 2"><rect width="10" height="2" rx="1" fill="currentColor"/></svg>
+                      <svg width="10" height="2" viewBox="0 0 10 2"><rect width="10" height="2" rx="1" fill="currentColor" /></svg>
                     </button>
                     <span className="stepper-qty">{item.qty}</span>
                     <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, 1)}>
-                      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="4" width="2" height="10" rx="1" fill="currentColor"/><rect y="4" width="10" height="2" rx="1" fill="currentColor"/></svg>
+                      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="4" width="2" height="10" rx="1" fill="currentColor" /><rect y="4" width="10" height="2" rx="1" fill="currentColor" /></svg>
                     </button>
                   </div>
                 </div>
                 <div className="citem-right">
                   <p className="citem-subtotal">₹{(item.price * item.qty).toFixed(0)}</p>
                   <button type="button" className="citem-remove" onClick={() => removeFromCart(item.title)}>
-                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                   </button>
                 </div>
               </div>
@@ -686,7 +686,7 @@ export default function MenuPage() {
             disabled={cartItems.length === 0}
           >
             <span>Proceed to Checkout</span>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
       </aside>
@@ -759,13 +759,13 @@ export default function MenuPage() {
         <button type="button" className="co-backdrop" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)} />
         <div className="co-panel" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
           <button type="button" className="co-close" aria-label="Close checkout" onClick={() => setCheckoutOpen(false)}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
-          
+
           <div className="co-left">
             <div className="co-left-top">
               <p className="co-eyebrow">Biriyani Station</p>
-              <h2 id="checkoutTitle" className="co-headline">Your<br/>Order</h2>
+              <h2 id="checkoutTitle" className="co-headline">Your<br />Order</h2>
               <p className="co-tagline">We'll cook it fresh. You just tell us where.</p>
             </div>
 
@@ -912,7 +912,7 @@ export default function MenuPage() {
                     disabled={coLoading}
                     style={{ width: '100%', border: 'none', cursor: coLoading ? 'wait' : 'pointer', marginTop: '16px' }}
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
                     {coLoading ? 'Saving Order...' : 'Place Order via WhatsApp'}
                   </button>
                 </>
@@ -932,7 +932,7 @@ export default function MenuPage() {
             <span>HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • </span>
           </div>
         </div>
-        
+
         <div className="footer-massive-nav container">
           <nav className="massive-links">
             <Link href="/" data-text="HOME">HOME</Link>
@@ -948,7 +948,7 @@ export default function MenuPage() {
             <div className="info-block">
               <span>💬 CONTACT</span>
               <p><span className="aman">
-          <a href="https://igniusstudios.vercel.app" target="_blank" rel="noopener noreferrer" >   igniusstudios.com</a> </span></p>
+                <a href="https://igniusstudios.vercel.app" target="_blank" rel="noopener noreferrer" >   igniusstudios.com</a> </span></p>
             </div>
             <div className="info-block socials-brutalist">
               <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" >INSTAGRAM</a>
@@ -961,17 +961,17 @@ export default function MenuPage() {
         <div className="footer-bleeding-edge">
           BIRIYANI STATION
         </div>
-        
+
         <div className="footer-bottom-bar container">
           <p>© 2026 Biriyani Station · Patna, Bihar</p>
           <div className="legal-links">
             <a href="#">COOKIES</a>
             <a href="#">PRIVACY POLICY</a>
           </div>
-          <p>Made by 
-          <span className="aman">
-          <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" >   Amanullah</a> </span>
-          <span> with ❤️ </span></p>
+          <p>Made by
+            <span className="aman">
+              <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" >   Amanullah</a> </span>
+            <span> with ❤️ </span></p>
         </div>
       </footer>
 

@@ -157,7 +157,21 @@ export default function ProfilePage() {
               </button>
             </form>
 
-            <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
+            <div style={{ marginTop: '24px', background: 'rgba(13,90,58,0.06)', borderRadius: '18px', padding: '20px', border: '1px solid rgba(13,90,58,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: 800, color: 'var(--ink)' }}>
+                  📦 Order History & Live Tracking
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+                  View real-time status updates & UPI payment verification for your orders.
+                </p>
+              </div>
+              <Link href="/my-orders" className="btn" style={{ padding: '10px 18px', fontSize: '0.82rem', background: 'var(--deep-green)', color: '#ffffff' }}>
+                VIEW MY ORDERS →
+              </Link>
+            </div>
+
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
               <button
                 type="button"
                 onClick={logout}
