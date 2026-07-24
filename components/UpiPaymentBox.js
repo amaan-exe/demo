@@ -2,17 +2,25 @@ import { useState } from 'react'
 
 export default function UpiPaymentBox({
   grandTotal,
-  orderId,
+  amount,
+  orderId = '',
   restaurantName = 'Biriyani Station',
   upiId = '8271301179@paytm',
   onConfirmPayment,
+  onVerify,
   loading = false
 }) {
   const [copied, setCopied] = useState(false)
   const [step, setStep] = useState('idle') // 'idle' | 'confirm' | 'utr'
   const [utrNumber, setUtrNumber] = useState('')
 
-  const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${grandTotal.toFixed(0)}&cu=INR&tn=${orderId}`
+  const rawTotal = grandTotal !== undefined && grandTotal !== null ? grandTotal : (amount !== undefined && amount !== null ? amount : 0)
+  const numericTotal = typeof rawTotal === 'number' && !isNaN(rawTotal) ? rawTotal : (parseFloat(rawTotal) || 0)
+  const totalFormatted = numericTotal.toFixed(0)
+
+  const displayOrderId = orderId || 'PATNA-' + Math.floor(100000 + Math.random() * 900000)
+
+  const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${totalFormatted}&cu=INR&tn=${displayOrderId}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(upiUri)}&size=240x240&margin=10`
 
   const handleCopyUpi = () => {
@@ -27,7 +35,10 @@ export default function UpiPaymentBox({
 
   const handleFinalSubmit = (e, utrValue) => {
     setStep('idle')
-    onConfirmPayment(e, utrValue)
+    const confirmFn = onConfirmPayment || onVerify
+    if (typeof confirmFn === 'function') {
+      confirmFn(e, utrValue)
+    }
   }
 
   return (
@@ -39,7 +50,7 @@ export default function UpiPaymentBox({
           AMOUNT DUE
         </span>
         <h3 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--deep-green)', margin: '2px 0 0 0' }}>
-          ₹{grandTotal.toFixed(0)}
+          ₹{totalFormatted}
         </h3>
       </div>
 
@@ -85,7 +96,7 @@ export default function UpiPaymentBox({
               {copied ? '✓ Copied' : 'Copy'}
             </button>
           </div>
-          <strong style={{ fontSize: '0.88rem', color: 'var(--deep-green)' }}>#{orderId}</strong>
+          <strong style={{ fontSize: '0.88rem', color: 'var(--deep-green)' }}>#{displayOrderId}</strong>
         </div>
       </div>
 
@@ -164,7 +175,7 @@ export default function UpiPaymentBox({
               Confirm Payment
             </h3>
             <p style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.5, marginBottom: '24px' }}>
-              Have you successfully completed your UPI payment of <strong style={{ color: 'var(--deep-green)', fontSize: '1rem' }}>₹{grandTotal.toFixed(0)}</strong>?
+              Have you successfully completed your UPI payment of <strong style={{ color: 'var(--deep-green)', fontSize: '1rem' }}>₹{totalFormatted}</strong>?
               <br/>
               <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Only continue if you have already transferred the payment.</span>
             </p>

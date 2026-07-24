@@ -450,7 +450,12 @@ export default function CheckoutModal({
 
               {paymentMethod === 'UPI' && (
                 <UpiPaymentBox
+                  grandTotal={finalTotal}
                   amount={finalTotal}
+                  loading={coLoading}
+                  onConfirmPayment={(e, utr) => {
+                    onPlaceOrder({ name, phone, address, paymentMethod: 'UPI', isUpi: true, coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: appliedCoupon.discountValue } : null }, utr)
+                  }}
                   onVerify={(utr) => {
                     onPlaceOrder({ name, phone, address, paymentMethod: 'UPI', isUpi: true, coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: appliedCoupon.discountValue } : null }, utr)
                   }}
