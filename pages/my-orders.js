@@ -82,7 +82,16 @@ export default function MyOrdersPage() {
       const res = await fetch(`/api/orders/user?userId=${user.uid}`)
       if (res.ok) {
         const data = await res.json()
-        setOrders(data.orders || [])
+        const fetchedList = data.orders || []
+        if (fetchedList.length > 0) {
+          setOrders(prev => {
+            const map = new Map()
+            // First load fetched, then let existing (or Firestore synced) items update/override
+            fetchedList.forEach(item => map.set(item.orderId || item.id, item))
+            prev.forEach(item => map.set(item.orderId || item.id, { ...map.get(item.orderId || item.id), ...item }))
+            return Array.from(map.values())
+          })
+        }
       }
     } catch (e) {}
     setLoading(false)

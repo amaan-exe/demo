@@ -24,9 +24,22 @@ export default function UpiPaymentBox({
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(upiUri)}&size=240x240&margin=10`
 
   const handleCopyUpi = () => {
-    navigator.clipboard.writeText(upiId)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(upiId)
+      } else {
+        const input = document.createElement('input')
+        input.value = upiId
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand('copy')
+        document.body.removeChild(input)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch (e) {
+      console.warn('Clipboard copy error:', e)
+    }
   }
 
   const handleOpenUpiApp = () => {

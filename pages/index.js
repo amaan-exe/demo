@@ -43,13 +43,13 @@ export default function Home() {
     try {
       const raw = localStorage.getItem('biriyani_cart_v1')
       if (raw) setCartItems(JSON.parse(raw))
-    } catch (e) {}
+    } catch (e) { }
   }, [])
 
   useEffect(() => {
     try {
       localStorage.setItem('biriyani_cart_v1', JSON.stringify(cartItems))
-    } catch (e) {}
+    } catch (e) { }
   }, [cartItems])
 
   // Scroll Reveal Animations
@@ -80,13 +80,13 @@ export default function Home() {
       }
       return [...currentItems, { ...item, qty: 1 }]
     })
-    
+
     setToast({
       title: item.title,
       image: item.image,
       id: Date.now()
     })
-    
+
     setTimeout(() => {
       setToast(null)
     }, 3000)
@@ -201,9 +201,9 @@ export default function Home() {
       // WhatsApp redirection
       const message = `🍛 *New Order — Biriyani Station*\n` +
         `*Order ID:* ${orderId}\n` +
-        `*Customer:* ${coName || user.displayName || user.email}\n` +
-        `*Phone:* ${coPhone}\n` +
-        `*Address:* ${coAddress}\n` +
+        `*Customer:* ${finalName || user.displayName || user.email}\n` +
+        `*Phone:* ${finalPhone}\n` +
+        `*Address:* ${finalAddress}\n` +
         `*Payment Method:* ${isUpi ? '📲 Pay via UPI (Verification Pending)' : '💵 Cash on Delivery (COD)'}\n\n` +
         `*Items:*\n` +
         cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
@@ -239,15 +239,17 @@ export default function Home() {
     words.forEach((w, i) => setTimeout(() => w.classList.add('pop'), 120 + i * 140))
 
     const plate = document.querySelector('#heroPlate')
+    let onPlateScroll = null
     if (plate) {
       plate.classList.add('served')
-      window.addEventListener('scroll', () => {
+      onPlateScroll = () => {
         const scrollY = window.scrollY
         const rotateX = Math.max(-45, Math.min(scrollY * 0.15, 60))
         const rotateZ = scrollY * 0.05
         const scale = 1 + (scrollY * 0.0005)
         plate.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg) scale(${scale})`
-      })
+      }
+      window.addEventListener('scroll', onPlateScroll)
     }
 
     const onEscapeProduct = (event) => {
@@ -258,6 +260,7 @@ export default function Home() {
 
     return () => {
       window.removeEventListener('scroll', onScroll)
+      if (onPlateScroll) window.removeEventListener('scroll', onPlateScroll)
       document.removeEventListener('keydown', onEscapeProduct)
     }
   }, [])
@@ -316,7 +319,6 @@ export default function Home() {
             <a href="#order" onClick={() => setIsNavOpen(false)}>ORDER</a>
             <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
             <a href="#contact" onClick={() => setIsNavOpen(false)}>CONTACT</a>
-            <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="btn cta" onClick={() => setIsNavOpen(false)}>Order on Whatsapp</a>
 
             {user ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -371,7 +373,7 @@ export default function Home() {
                     }}
                   >
                     <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '10px' }}>
-                      Logged in as<br/>
+                      Logged in as<br />
                       <strong style={{ color: 'var(--ink)', fontSize: '0.92rem' }}>{user.email}</strong>
                     </div>
                     <Link
@@ -428,16 +430,6 @@ export default function Home() {
                 SIGN IN
               </button>
             )}
-
-            <button
-              type="button"
-              className="nav-logo-button"
-              onClick={() => setCartOpen((open) => !open)}
-              aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            >
-              <img className="nav-logo-mark" src="/cart.png" alt="Cart" />
-              {cartCount > 0 ? <span className="nav-logo-count">{cartCount}</span> : null}
-            </button>
           </div>
         </nav>
       </header>
@@ -454,7 +446,7 @@ export default function Home() {
             ref={(el) => {
               if (el) {
                 el.muted = true
-                el.play().catch(() => {})
+                el.play().catch(() => { })
               }
             }}
             poster="/photo-1633945274309-2c16c9682a8c.avif"
@@ -466,19 +458,28 @@ export default function Home() {
           {/* Dark gradient overlay for crystal clear text readability */}
           <div className="hero-video-overlay" />
 
-          <div className="hcs-inner">
+          <div className="hcs-inner container">
             <div className="hcs-left">
-              <span className="hcs-word outline pop">ZAIQA</span>
-              <span className="hcs-word outline pop">LAZEEZ</span>
+              <span className="hcs-eyebrow mobile-only">AUTHENTIC DUM & KAWABS</span>
+              <div className="hcs-heading">
+                <span className="hcs-word outline">ZAIQA</span>
+                <span className="hcs-word outline">LAZEEZ</span>
+              </div>
             </div>
 
             <div className="hcs-center">
-              <p className="hcs-sub">ORDER NOW.<br/>EAT NOW.</p>
+              <p className="hcs-sub desktop-only">ORDER NOW.<br />EAT NOW.</p>
+              <div className="hcs-divider-pill mobile-only">
+                <span>🔥 SLOW DUM OVER HARDWOOD COALS</span>
+              </div>
             </div>
 
             <div className="hcs-right">
-              <span className="hcs-word solid pop">SLOW</span>
-              <span className="hcs-word solid pop">FIRE</span>
+              <span className="hcs-eyebrow right-eyebrow mobile-only">TRADITIONAL CLAY OVEN</span>
+              <div className="hcs-heading">
+                <span className="hcs-word solid">SLOW</span>
+                <span className="hcs-word solid">FIRE</span>
+              </div>
             </div>
           </div>
 
@@ -486,7 +487,7 @@ export default function Home() {
             <hr className="subtle-divider" />
             <div className="hcs-bottom-content">
               <span className="hcs-badge">EST. 2026 · PATNA</span>
-              <Link href="/menu" className="btn">EXPLORE MENU</Link>
+              <Link href="/menu" className="btn hcs-btn">EXPLORE MENU</Link>
             </div>
           </div>
         </section>
@@ -502,15 +503,15 @@ export default function Home() {
           <div className="container about-grid">
             <div className="about-copy">
               <span className="about-eyebrow">THE PHILOSOPHY · CRAFT & FIRE</span>
-              
+
               <h2 className="about-display">
-                BIRYANI EK <br/>
-                <span className="gold-italic">IBADAT HAI</span> <br/>
+                BIRYANI EK <br />
+                <span className="gold-italic">IBADAT HAI</span> <br />
                 <span className="green-italic">SHIDDAT HAI</span>
               </h2>
 
               <p className="about-lead">
-                Biriyani Station started with one obsession — the perfect dum biryani and smoky clay-oven tandoori kawabs. 
+                Biriyani Station started with one obsession — the perfect dum biryani and smoky clay-oven tandoori kawabs.
                 Every piece marinated for 12 hours. Every spice measured by hand. Every pot sealed with dough and slow-cooked over live hardwood coals. We don't rush it. We never will.
               </p>
 
@@ -559,8 +560,8 @@ export default function Home() {
 
               <div className="about-signature-badge">
                 <span className="signature-sub">PATNA SPECIALITY</span>
-                <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" className="about-signature">
-                  @_.hussain29
+                <a href="https://www.instagram.com/ibn_ishfaq" target="_blank" rel="noopener noreferrer" className="about-signature">
+                  @ibn_ishfaq
                 </a>
               </div>
             </div>
@@ -572,7 +573,7 @@ export default function Home() {
             <div className="proof-header-center">
               <span className="proof-badge-pill">PATNA'S TOP RATED BIRYANI & KAWAB HOUSE</span>
               <h2 className="proof-headline-display">
-                BUILT FOR REPEAT ORDERS.<br/>
+                BUILT FOR REPEAT ORDERS.<br />
                 <span className="gold-italic">MADE FOR MEMORY.</span>
               </h2>
               <p className="proof-headline-sub">
@@ -742,10 +743,10 @@ export default function Home() {
           </div>
 
           <div className="find-us-hero">
-            <p className="section-label" style={{color: 'var(--yellow)'}}>FIND US</p>
+            <p className="section-label" style={{ color: 'var(--yellow)' }}>FIND US</p>
             <h2 className="find-us-headline">
-              DINE IN.<br/>
-              <em>OR BRING</em><br/>
+              DINE IN.<br />
+              <em>OR BRING</em><br />
               THE FIRE HOME.
             </h2>
           </div>
@@ -755,20 +756,20 @@ export default function Home() {
               <div className="fuc-number">01</div>
               <div className="fuc-content">
                 <h3 className="fuc-title">DINE IN</h3>
-                <div className="fuc-divider"/>
-                <p className="fuc-address">Alba Colony, Phulwari Shareef<br/>Patna, Bihar</p>
+                <div className="fuc-divider" />
+                <p className="fuc-address">Alba Colony, Phulwari Shareef<br />Patna, Bihar</p>
                 <p className="fuc-hours">🕐 Mon–Sun: 11:00 AM – 11:00 PM</p>
                 <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="fuc-cta">GET DIRECTIONS →</a>
               </div>
               <div className="fuc-bg-text" aria-hidden="true">EAT</div>
             </article>
 
-            <article className="fuc-card fuc-delivery stagger" style={{transitionDelay: '0.2s'}}>
+            <article className="fuc-card fuc-delivery stagger" style={{ transitionDelay: '0.2s' }}>
               <div className="fuc-number">02</div>
               <div className="fuc-content">
                 <h3 className="fuc-title">DELIVERY</h3>
-                <div className="fuc-divider"/>
-                <p className="fuc-address">Zomato · Swiggy<br/>Direct WhatsApp Order</p>
+                <div className="fuc-divider" />
+                <p className="fuc-address">Zomato · Swiggy<br />Direct WhatsApp Order</p>
                 <p className="fuc-hours">🛵 Free over ₹499 · ~30 min avg</p>
                 <a href="https://wa.me/918271301179" target="_blank" rel="noreferrer" className="fuc-cta">ORDER NOW →</a>
               </div>
@@ -797,10 +798,10 @@ export default function Home() {
         <div className="cart-hd">
           <div className="cart-hd-left">
             <span className="cart-hd-eyebrow">YOUR CART</span>
-            <h2 className="cart-hd-title">Fresh from<br/>the Pot 🍲</h2>
+            <h2 className="cart-hd-title">Fresh from<br />the Pot 🍲</h2>
           </div>
           <button type="button" className="cart-x" aria-label="Close cart" onClick={() => setCartOpen(false)}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1l16 16M17 1L1 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1l16 16M17 1L1 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         </div>
 
@@ -822,18 +823,18 @@ export default function Home() {
                   <p className="citem-unit">₹{item.price.toFixed(0)} each</p>
                   <div className="citem-stepper">
                     <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, -1)} aria-label={`Decrease ${item.title}`}>
-                      <svg width="10" height="2" viewBox="0 0 10 2"><rect width="10" height="2" rx="1" fill="currentColor"/></svg>
+                      <svg width="10" height="2" viewBox="0 0 10 2"><rect width="10" height="2" rx="1" fill="currentColor" /></svg>
                     </button>
                     <span className="stepper-qty">{item.qty}</span>
                     <button type="button" className="stepper-btn" onClick={() => updateCartQty(item.title, 1)} aria-label={`Increase ${item.title}`}>
-                      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="4" width="2" height="10" rx="1" fill="currentColor"/><rect y="4" width="10" height="2" rx="1" fill="currentColor"/></svg>
+                      <svg width="10" height="10" viewBox="0 0 10 10"><rect x="4" width="2" height="10" rx="1" fill="currentColor" /><rect y="4" width="10" height="2" rx="1" fill="currentColor" /></svg>
                     </button>
                   </div>
                 </div>
                 <div className="citem-right">
                   <p className="citem-subtotal">₹{(item.price * item.qty).toFixed(0)}</p>
                   <button type="button" className="citem-remove" onClick={() => removeFromCart(item.title)} aria-label={`Remove ${item.title}`}>
-                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                   </button>
                 </div>
               </div>
@@ -854,7 +855,7 @@ export default function Home() {
             disabled={cartItems.length === 0}
           >
             <span>Proceed to Checkout</span>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
       </aside>
@@ -969,7 +970,7 @@ export default function Home() {
             <span>HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • HUNGRY? ORDER NOW • </span>
           </div>
         </div>
-        
+
         <div className="footer-massive-nav container">
           <nav className="massive-links">
             <Link href="/menu" data-text="MENU">MENU</Link>
@@ -984,10 +985,10 @@ export default function Home() {
             <div className="info-block">
               <span>💬 CONTACT</span>
               <p><span className="aman">
-          <a href="https://igniusstudios.vercel.app" target="_blank" rel="noopener noreferrer" >   igniusstudios.com</a> </span></p>
+                <a href="https://igniusstudios.vercel.app" target="_blank" rel="noopener noreferrer" >   igniusstudios.com</a> </span></p>
             </div>
             <div className="info-block socials-brutalist">
-              <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" >INSTAGRAM</a>
+              <a href="https://www.instagram.com/ibn_ishfaq" target="_blank" rel="noopener noreferrer" >INSTAGRAM</a>
               <a href="https://wa.me/918271301179" target="_blank" rel="noreferrer">WHATSAPP</a>
               <a href="https://github.com/amaan-exe" target="_blank" rel="noopener noreferrer">Github</a>
             </div>
@@ -997,17 +998,17 @@ export default function Home() {
         <div className="footer-bleeding-edge">
           BIRIYANI STATION
         </div>
-        
+
         <div className="footer-bottom-bar container">
           <p>© 2026 Biriyani Station · Patna, Bihar</p>
           <div className="legal-links">
             <a href="#">COOKIES</a>
             <a href="#">PRIVACY POLICY</a>
           </div>
-          <p>Made by 
-          <span className="aman">
-          <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" >   Amanullah</a> </span>
-          <span> with ❤️ </span></p>
+          <p>Made by
+            <span className="aman">
+              <a href="https://www.instagram.com/ibn_ishfaq" target="_blank" rel="noopener noreferrer" >   Amanullah</a> </span>
+            <span> with ❤️ </span></p>
         </div>
       </footer>
 

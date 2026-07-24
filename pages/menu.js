@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -11,7 +11,7 @@ import CheckoutModal from '../components/CheckoutModal'
 
 export default function MenuPage() {
   const router = useRouter()
-  const { user, userProfile, openAuthModal, logout } = useAuth()
+  const { user, userProfile, isAdmin, openAuthModal, logout } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
@@ -19,6 +19,7 @@ export default function MenuPage() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [toast, setToast] = useState(null)
+  const toastTimerRef = useRef(null)
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
@@ -63,14 +64,16 @@ export default function MenuPage() {
       return [...currentItems, { ...item, qty: 1 }]
     })
 
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast({
       title: item.title,
       image: item.image,
       id: Date.now()
     })
 
-    setTimeout(() => {
+    toastTimerRef.current = setTimeout(() => {
       setToast(null)
+      toastTimerRef.current = null
     }, 3000)
   }
 
@@ -175,9 +178,9 @@ export default function MenuPage() {
       // WhatsApp redirection
       const message = `🍛 *New Order — Biriyani Station*\n` +
         `*Order ID:* ${orderId}\n` +
-        `*Customer:* ${coName || user.displayName || user.email}\n` +
-        `*Phone:* ${coPhone}\n` +
-        `*Address:* ${coAddress}\n` +
+        `*Customer:* ${finalName || user.displayName || user.email}\n` +
+        `*Phone:* ${finalPhone}\n` +
+        `*Address:* ${finalAddress}\n` +
         `*Payment Method:* ${isUpi ? '📲 Pay via UPI (Verification Pending)' : '💵 Cash on Delivery (COD)'}\n\n` +
         `*Items:*\n` +
         cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
@@ -313,7 +316,6 @@ export default function MenuPage() {
             <Link href="/#about" onClick={() => setIsNavOpen(false)}>ABOUT</Link>
             <Link href="/#order" onClick={() => setIsNavOpen(false)}>ORDER</Link>
             <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
-            <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="btn cta" onClick={() => setIsNavOpen(false)}>Order on Whatsapp</a>
 
             {user ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -424,16 +426,6 @@ export default function MenuPage() {
                 SIGN IN
               </button>
             )}
-
-            <button
-              type="button"
-              className="nav-logo-button"
-              onClick={() => setCartOpen((open) => !open)}
-              aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? '' : 's'}`}
-            >
-              <img className="nav-logo-mark" src="/cart.png" alt="Cart" />
-              {cartCount > 0 ? <span className="nav-logo-count">{cartCount}</span> : null}
-            </button>
           </div>
         </nav>
       </header>
