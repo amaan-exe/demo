@@ -314,7 +314,7 @@ export default function Home() {
             <Link href="/menu" onClick={() => setIsNavOpen(false)}>MENU</Link>
             <a href="#about" onClick={() => setIsNavOpen(false)}>ABOUT</a>
             <a href="#order" onClick={() => setIsNavOpen(false)}>ORDER</a>
-            <Link href="/my-orders" style={{ fontWeight: 800, color: 'var(--deep-green)', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>📦 MY ORDERS</Link>
+            <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
             <a href="#contact" onClick={() => setIsNavOpen(false)}>CONTACT</a>
             <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="btn cta" onClick={() => setIsNavOpen(false)}>Order on Whatsapp</a>
 

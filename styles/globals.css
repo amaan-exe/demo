@@ -144,40 +144,49 @@ a {
   position: sticky;
   top: 0;
   z-index: 1000;
+  width: 100%;
 }
 .nav-right a {
-  font-size: 0.92rem;
-  letter-spacing: 0.14em;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
   font-weight: 700;
   color: var(--ink);
   transition: color 160ms ease;
+  white-space: nowrap;
 }
 .nav-right a:hover { color: color-mix(in srgb, var(--ink) 85%, var(--deep-green) 15%); }
 
 .nav-right a.cta {
   background: var(--deep-green);
   color: #fff;
-  padding: 12px 18px;
+  padding: 8px 16px;
+  font-size: 0.78rem;
   border-radius: 999px;
   box-shadow: 0 10px 28px rgba(9,58,42,0.14);
+  white-space: nowrap;
 }
 
 .nav {
-  min-height: 84px;
+  min-height: 76px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .logo {
-  font-size: 2rem;
+  font-size: 1.8rem;
   line-height: 0.9;
   letter-spacing: 0.02em;
   color: var(--deep-green);
   font-style: italic;
   font-weight: 800;
   text-transform: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .logo span {
@@ -191,27 +200,28 @@ a {
 }
 
 /* Mobile navigation: show toggle and slide-in menu */
-@media (max-width: 980px) {
+@media (max-width: 1180px) {
   .nav-toggle { display: block; }
   .nav-right {
     position: fixed;
     right: 0;
-    top: 84px;
-    height: calc(100vh - 84px);
+    top: 76px;
+    height: calc(100vh - 76px);
     width: min(360px, 86vw);
     background: var(--nav-bg);
     flex-direction: column;
-    gap: 18px;
-    padding: 28px;
+    gap: 16px;
+    padding: 24px;
     transform: translateX(100%);
     transition: transform 260ms cubic-bezier(.2,.9,.2,1);
     box-shadow: -20px 24px 60px rgba(9,58,42,0.08);
     z-index: 1200;
+    overflow-y: auto;
   }
 
   .nav-right.open { transform: translateX(0); }
 
-  .nav-right a { font-size: 1.02rem; }
+  .nav-right a { font-size: 0.98rem; }
 }
 
 .site-header.scrolled {
@@ -223,15 +233,16 @@ a {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: clamp(10px, 1.2vw, 18px);
 }
 
 .nav-right a {
-  font-size: 0.86rem;
-  letter-spacing: 0.18em;
+  font-size: clamp(0.74rem, 0.82vw, 0.84rem);
+  letter-spacing: 0.08em;
   font-weight: 700;
   color: var(--deep-green);
   transition: color 160ms ease;
+  white-space: nowrap;
 }
 
 .nav-right a:hover { color: color-mix(in srgb, var(--deep-green) 75%, black 25%); }

@@ -312,6 +312,7 @@ export default function MenuPage() {
             <Link href="/menu" className="active" onClick={() => setIsNavOpen(false)} style={{ color: 'var(--yellow)' }}>MENU</Link>
             <Link href="/#about" onClick={() => setIsNavOpen(false)}>ABOUT</Link>
             <Link href="/#order" onClick={() => setIsNavOpen(false)}>ORDER</Link>
+            <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
             <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="btn cta" onClick={() => setIsNavOpen(false)}>Order on Whatsapp</a>
 
             {user ? (
