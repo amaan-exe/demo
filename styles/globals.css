@@ -7768,6 +7768,713 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   COMPLETE GROUND-UP REDESIGN — CHECKOUT MODAL V2 (DESKTOP & MOBILE)
+   ========================================================================== */
+
+/* 1. Modal Overlay & Backdrop */
+.chk-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(8, 20, 15, 0.65) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  animation: chkFadeIn 0.22s ease !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.chk-backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+}
+
+/* 2. Main Checkout Panel Surface */
+.chk-panel {
+  position: relative !important;
+  z-index: 2 !important;
+  width: min(920px, 94vw) !important;
+  max-height: min(88vh, 840px) !important;
+  background: #ffffff !important;
+  border-radius: 28px !important;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(13, 90, 58, 0.12) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  animation: chkSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes chkFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes chkSlideUp {
+  from { transform: translateY(24px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.chk-drag-handle {
+  display: none;
+}
+
+/* 3. Header Bar */
+.chk-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 20px 28px 16px 28px !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.chk-brand-tag {
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.22em !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  text-transform: uppercase !important;
+  display: block !important;
+  margin-bottom: 2px !important;
+}
+
+.chk-title {
+  font-family: "Playfair Display", serif !important;
+  font-size: 1.8rem !important;
+  font-weight: 900 !important;
+  color: var(--ink, #0c0c0b) !important;
+  margin: 0 !important;
+}
+
+.chk-close-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: none !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 1.1rem !important;
+  color: var(--ink, #0c0c0b) !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+.chk-close-btn:hover {
+  background: var(--deep-green, #0d5a3a) !important;
+  color: #ffffff !important;
+}
+
+/* 4. Stepper Bar */
+.chk-stepper-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #f9f8f3 !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 10px 28px !important;
+  gap: 12px !important;
+}
+
+.chk-step-tab {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  padding: 8px 16px !important;
+  border-radius: 999px !important;
+  color: var(--muted, #7a7a6f) !important;
+  font-family: "DM Sans", sans-serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.chk-step-tab.active {
+  background: var(--deep-green, #0d5a3a) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 14px rgba(13, 90, 58, 0.25) !important;
+}
+
+.chk-step-tab.completed {
+  background: rgba(13, 90, 58, 0.1) !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  font-weight: 800 !important;
+}
+
+.step-number {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+}
+
+.chk-step-tab.active .step-number {
+  background: var(--yellow, #f5c842) !important;
+  color: var(--deep-green, #0d5a3a) !important;
+}
+
+.step-line-divider {
+  flex: 1 !important;
+  height: 2px !important;
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 5. Main Body Grid */
+.chk-body-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+}
+
+/* Left Column: Summary */
+.chk-summary-col {
+  background: #fbfaf5 !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 24px 28px !important;
+}
+
+.chk-summary-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.chk-summary-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  background: #ffffff !important;
+  border: 1.5px solid rgba(13, 90, 58, 0.12) !important;
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  cursor: pointer !important;
+  color: var(--ink, #0c0c0b) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+}
+
+.toggle-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-align: left !important;
+}
+
+.cart-icon-badge {
+  font-size: 1.3rem !important;
+}
+
+.toggle-price {
+  display: block !important;
+  font-size: 0.85rem !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  font-weight: 800 !important;
+}
+
+.chk-summary-expand {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.chk-item-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  max-height: 220px !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+}
+
+.chk-item-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 10px !important;
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.chk-item-thumb {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 10px !important;
+  object-fit: cover !important;
+}
+
+.chk-item-meta {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.chk-item-title {
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+  color: var(--ink, #0c0c0b) !important;
+}
+
+.chk-item-qty {
+  font-size: 0.74rem !important;
+  color: var(--muted, #7a7a6f) !important;
+}
+
+.chk-item-subtotal {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: var(--deep-green, #0d5a3a) !important;
+}
+
+/* Coupon Box */
+.chk-coupon-box {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.coupon-input-row {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.coupon-input {
+  flex: 1 !important;
+  padding: 10px 14px !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+  border-radius: 12px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  outline: none !important;
+}
+
+.coupon-input:focus {
+  border-color: var(--deep-green, #0d5a3a) !important;
+}
+
+.coupon-apply-btn {
+  background: var(--deep-green, #0d5a3a) !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  cursor: pointer !important;
+}
+
+.applied-coupon-pill {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: rgba(13, 90, 58, 0.08) !important;
+  border: 1px solid rgba(13, 90, 58, 0.2) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+}
+
+.applied-code {
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  display: block !important;
+}
+
+.applied-savings {
+  margin: 2px 0 0 0 !important;
+  font-size: 0.72rem !important;
+  color: var(--muted) !important;
+}
+
+.coupon-remove-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #dc3232 !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+
+.coupon-err-msg {
+  color: #dc3232 !important;
+  font-size: 0.75rem !important;
+  margin: 8px 0 0 0 !important;
+}
+
+/* Bill Details Breakdown */
+.chk-bill-details {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.bill-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.82rem !important;
+  color: var(--muted, #7a7a6f) !important;
+}
+
+.bill-row.discount {
+  color: var(--deep-green, #0d5a3a) !important;
+  font-weight: 800 !important;
+}
+
+.free-badge {
+  color: var(--deep-green, #0d5a3a) !important;
+  font-weight: 900 !important;
+}
+
+.bill-row.total {
+  border-top: 1px dashed rgba(0, 0, 0, 0.12) !important;
+  padding-top: 10px !important;
+  margin-top: 4px !important;
+  font-size: 1.05rem !important;
+  color: var(--ink, #0c0c0b) !important;
+  font-weight: 800 !important;
+}
+
+.bill-row.total strong {
+  font-size: 1.35rem !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  font-weight: 900 !important;
+}
+
+/* Right Column: Form Steps */
+.chk-form-col {
+  padding: 24px 28px !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.chk-form-step {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+
+.step-intro h3 {
+  font-family: "Playfair Display", serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  color: var(--ink, #0c0c0b) !important;
+  margin: 4px 0 2px 0 !important;
+}
+
+.step-intro p {
+  font-size: 0.82rem !important;
+  color: var(--muted, #7a7a6f) !important;
+  margin: 0 !important;
+}
+
+.step-badge {
+  font-size: 0.65rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.18em !important;
+  color: var(--deep-green, #0d5a3a) !important;
+}
+
+.auth-prompt-banner {
+  background: #f7f6f0 !important;
+  border: 1px solid rgba(13, 90, 58, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 0.8rem !important;
+}
+
+.auth-btn-link {
+  background: transparent !important;
+  border: none !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+
+/* Input Fields */
+.chk-field-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.chk-field-group label {
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  color: var(--ink, #0c0c0b) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+.input-wrap {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.input-icon {
+  position: absolute !important;
+  left: 14px !important;
+  font-size: 1rem !important;
+  pointer-events: none !important;
+}
+
+.input-wrap input,
+.input-wrap textarea {
+  width: 100% !important;
+  padding: 12px 14px 12px 42px !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: var(--ink, #0c0c0b) !important;
+  font-family: "DM Sans", sans-serif !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  transition: all 0.18s ease !important;
+}
+
+.input-wrap.textarea-wrap textarea {
+  padding-top: 12px !important;
+}
+
+.input-wrap input:focus,
+.input-wrap textarea:focus {
+  border-color: var(--deep-green, #0d5a3a) !important;
+  box-shadow: 0 0 0 3px rgba(13, 90, 58, 0.12) !important;
+}
+
+/* Patna Chips */
+.patna-chips-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.chips-label {
+  font-size: 0.66rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  color: var(--muted, #7a7a6f) !important;
+}
+
+.chips-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+
+.patna-chip {
+  background: #f4f2e6 !important;
+  border: 1px solid rgba(13, 90, 58, 0.15) !important;
+  border-radius: 999px !important;
+  padding: 5px 12px !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  color: var(--deep-green, #0d5a3a) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.patna-chip:hover,
+.patna-chip:active {
+  background: var(--deep-green, #0d5a3a) !important;
+  color: #ffffff !important;
+}
+
+/* Payment Method Cards */
+.payment-options-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.payment-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 14px 16px !important;
+  background: #ffffff !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 16px !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: all 0.2s ease !important;
+}
+
+.payment-card.selected {
+  border-color: var(--deep-green, #0d5a3a) !important;
+  background: rgba(13, 90, 58, 0.04) !important;
+  box-shadow: 0 4px 16px rgba(13, 90, 58, 0.12) !important;
+}
+
+.pm-icon {
+  font-size: 1.6rem !important;
+}
+
+.pm-info strong {
+  display: block !important;
+  font-size: 0.88rem !important;
+  color: var(--ink, #0c0c0b) !important;
+}
+
+.pm-info span {
+  font-size: 0.74rem !important;
+  color: var(--muted, #7a7a6f) !important;
+}
+
+.cod-info-box {
+  background: rgba(13, 90, 58, 0.06) !important;
+  border: 1px solid rgba(13, 90, 58, 0.18) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  font-size: 0.8rem !important;
+  color: var(--ink, #0c0c0b) !important;
+}
+
+/* Submit Action Button */
+.chk-action-btn {
+  width: 100 !important;
+  width: 100% !important;
+  padding: 15px 24px !important;
+  border-radius: 999px !important;
+  background: var(--deep-green, #0d5a3a) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.12em !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 10px 30px rgba(13, 90, 58, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin-top: 6px !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+
+.chk-action-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 14px 36px rgba(13, 90, 58, 0.4) !important;
+}
+
+.chk-action-btn.whatsapp-submit {
+  background: #25D366 !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(37, 211, 102, 0.35) !important;
+}
+
+.chk-action-btn.whatsapp-submit:hover {
+  box-shadow: 0 14px 36px rgba(37, 211, 102, 0.5) !important;
+}
+
+/* ==========================================================================
+   MOBILE BOTTOM SHEET RESPONSIVE OVERRIDES (< 768px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .chk-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .chk-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: calc(93vh - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(93vh - env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: 28px 28px 0 0 !important;
+    border: none !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
+    margin: 0 !important;
+    animation: chkMobileSheetSlide 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  @keyframes chkMobileSheetSlide {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .chk-drag-handle {
+    display: block !important;
+    width: 42px !important;
+    height: 5px !important;
+    background: rgba(0, 0, 0, 0.18) !important;
+    border-radius: 999px !important;
+    margin: 10px auto 2px auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .chk-header {
+    padding: 12px 20px 10px 20px !important;
+  }
+
+  .chk-title {
+    font-size: 1.45rem !important;
+  }
+
+  .chk-stepper-bar {
+    padding: 8px 16px !important;
+    gap: 8px !important;
+  }
+
+  .chk-step-tab {
+    padding: 6px 12px !important;
+    font-size: 0.76rem !important;
+  }
+
+  .chk-body-grid {
+    grid-template-columns: 1fr !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .chk-summary-col {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    padding: 14px 16px !important;
+  }
+
+  .chk-form-col {
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)) 16px !important;
+  }
+
+  .chk-action-btn {
+    position: sticky !important;
+    bottom: 12px !important;
+    z-index: 10 !important;
+  }
+}
+
+
 
 
 
