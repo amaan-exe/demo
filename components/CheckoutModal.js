@@ -174,7 +174,14 @@ export default function CheckoutModal({
     setStep(2)
   }
 
-  const discountAmount = appliedCoupon ? appliedCoupon.discountValue : 0
+  const discountAmount = appliedCoupon ? (
+    appliedCoupon.discount !== undefined
+      ? appliedCoupon.discount
+      : appliedCoupon.discountType === 'percent'
+        ? Math.round((cartTotal * appliedCoupon.discountValue) / 100)
+        : Number(appliedCoupon.discountValue) || 0
+  ) : 0
+
   const finalTotal = Math.max(0, grandTotal - discountAmount)
 
   const handleFinalOrderSubmit = (e, utr = null) => {
@@ -189,7 +196,7 @@ export default function CheckoutModal({
       address,
       paymentMethod,
       isUpi: paymentMethod === 'UPI',
-      coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: appliedCoupon.discountValue } : null
+      coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: discountAmount } : null
     }, utr)
   }
 
@@ -303,7 +310,7 @@ export default function CheckoutModal({
                     <div className="applied-coupon-pill">
                       <div>
                         <span className="applied-code">✓ {appliedCoupon.couponCode} APPLIED</span>
-                        <p className="applied-savings">Saved ₹{appliedCoupon.discountValue} on this order!</p>
+                        <p className="applied-savings">Saved ₹{discountAmount} on this order!</p>
                       </div>
                       <button type="button" onClick={handleRemoveCoupon} className="coupon-remove-btn">REMOVE</button>
                     </div>
@@ -321,7 +328,7 @@ export default function CheckoutModal({
                   {appliedCoupon && (
                     <div className="bill-row discount">
                       <span>Coupon Discount</span>
-                      <span>-₹{appliedCoupon.discountValue}</span>
+                      <span>-₹{discountAmount}</span>
                     </div>
                   )}
 

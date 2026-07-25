@@ -108,15 +108,16 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Failed server validation for promo coupon code.' })
         }
       }
+    }
 
-      const orderId = req.body.orderId || `BS-PATNA-${Math.floor(100000 + Math.random() * 900000)}`
-      const calculatedSubtotal = Number(req.body.subtotal) || 0
-      const calculatedDelivery = Number(req.body.deliveryCharge) || 0
-      const calculatedTax = Number(req.body.tax) || 0
-      const verifiedGrandTotal = Math.max(0, calculatedSubtotal + calculatedDelivery + calculatedTax - verifiedDiscount)
+    const orderId = req.body.orderId || `BS-PATNA-${Math.floor(100000 + Math.random() * 900000)}`
+    const calculatedSubtotal = Number(req.body.subtotal) || 0
+    const calculatedDelivery = Number(req.body.deliveryCharge) || 0
+    const calculatedTax = Number(req.body.tax) || 0
+    const verifiedGrandTotal = Math.max(0, calculatedSubtotal + calculatedDelivery + calculatedTax - verifiedDiscount)
 
-      connectDb().then(async () => {
-        await Order.create({
+    connectDb().then(async () => {
+      await Order.create({
           orderId,
           userId,
           userEmail,
