@@ -6333,6 +6333,7 @@ html, body {
     font-weight: 800 !important;
     display: -webkit-box !important;
     -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
   }
@@ -6349,6 +6350,7 @@ html, body {
     margin-bottom: 8px !important;
     display: -webkit-box !important;
     -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
   }

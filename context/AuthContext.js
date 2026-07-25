@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -117,15 +115,6 @@ export function AuthProvider({ children }) {
       }
     }
     restoreSession()
-
-    // Capture mobile Google Sign-In redirect result
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result && result.user) {
-          await syncWithBackend(result.user)
-        }
-      })
-      .catch((error) => console.error('Google Redirect SignIn Error:', error))
   }, [])
 
   // Sync token & user with backend API after Firebase login
@@ -166,15 +155,10 @@ export function AuthProvider({ children }) {
   // 1. Google Sign-In
   const loginWithGoogle = async () => {
     try {
-      const isMobile = typeof window !== 'undefined' && (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768)
-      
-      if (isMobile) {
-        // Mobile browsers block cross-origin popups and hang. Redirect is the creamy smooth standard for Firebase.
-        await signInWithRedirect(auth, googleProvider)
-      } else {
-        const result = await signInWithPopup(auth, googleProvider)
-        await syncWithBackend(result.user)
-      }
+      // Must use popup because mobile browsers block cross-origin storage required by signInWithRedirect.
+      // The popup MUST be triggered synchronously in the click event to bypass popup blockers.
+      const result = await signInWithPopup(auth, googleProvider)
+      await syncWithBackend(result.user)
     } catch (error) {
       console.error('Google Sign-In Error:', error)
       throw error
