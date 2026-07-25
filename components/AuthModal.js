@@ -14,11 +14,17 @@ export default function AuthModal() {
 
   const formatAuthError = (err) => {
     const code = err?.code || err?.message || ''
-    if (code.includes('popup-closed-by-user')) {
+    if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
       return '' // Silently ignore when user cancels or closes Google popup
     }
     if (code.includes('popup-blocked')) {
-      return 'Google Sign-In popup was blocked by your browser. Please allow popups for this site.'
+      return 'Google Sign-In popup was blocked by your browser. Please tap the Google button again or allow popups.'
+    }
+    if (code.includes('account-exists-with-different-credential')) {
+      return 'An account with this email already exists using a different sign-in method. Please sign in with your email & password.'
+    }
+    if (code.includes('disallowed_useragent') || code.includes('operation-not-supported')) {
+      return 'Google Sign-In is restricted inside in-app webviews. Please tap the top 3 dots (⋮) and select "Open in Safari/Chrome".'
     }
     if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) {
       return 'Invalid email or password. Please check your credentials and try again.'
