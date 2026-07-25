@@ -107,21 +107,21 @@ export default function AdminCouponsDesk() {
 
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>DISCOUNT VALUE</label>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                 <input
                   type="number"
                   value={discountValue}
                   onChange={e => setDiscountValue(e.target.value)}
                   placeholder="e.g. 50 or 20"
                   className="adm-input"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: 0 }}
                   required
                 />
                 <select
                   value={discountType}
                   onChange={e => setDiscountType(e.target.value)}
                   className="adm-input"
-                  style={{ width: '80px', padding: '0 8px' }}
+                  style={{ width: '110px', flexShrink: 0, padding: '12px 12px', cursor: 'pointer' }}
                 >
                   <option value="fixed">₹ OFF</option>
                   <option value="percent">% OFF</option>
