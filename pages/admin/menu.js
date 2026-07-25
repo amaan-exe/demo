@@ -96,13 +96,13 @@ export default function AdminMenuDesk() {
           rating: item.rating || 4.8,
           preparationTime: item.time || '20-25 mins',
           popular: item.category.includes('bestseller'),
-          vegNonVeg: (item.title.toLowerCase().includes('paneer') || item.category.toLowerCase().includes('bread') || item.title.toLowerCase().includes('roti') || item.title.toLowerCase().includes('naan') || item.title.toLowerCase().includes('kulcha') || item.title.toLowerCase().includes('paratha')) ? 'veg' : 'non-veg',
+          vegNonVeg: (item.title.toLowerCase().includes('paneer') || item.title.toLowerCase().includes('mushroom') || item.title.toLowerCase().includes('mashroom') || item.title.toLowerCase().includes('matar') || item.title.toLowerCase().includes('mix veg') || item.title.toLowerCase().includes('palak') || item.category.toLowerCase().includes('bread') || item.category.toLowerCase().includes('veg') || item.title.toLowerCase().includes('roti') || item.title.toLowerCase().includes('naan') || item.title.toLowerCase().includes('kulcha') || item.title.toLowerCase().includes('paratha')) ? 'veg' : 'non-veg',
           ingredients: ['Spices', 'Marination', 'Ghee'],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         })
       }
-      alert('19 initial menu items seeded successfully into Firestore!')
+      alert(`${ALL_MENU_ITEMS.length} menu items seeded successfully into Firestore!`)
     } catch (err) {
       alert('Error seeding menu: ' + err.message)
     }

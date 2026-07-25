@@ -301,7 +301,7 @@ export default function MenuPage() {
     <>
       <Head>
         <title>The Complete Menu | Biriyani Station Patna</title>
-        <meta name="description" content="Explore 19 authentic clay-oven tandoori kawabs, kawab biryanis, gravies, and fresh breads at Biriyani Station." />
+        <meta name="description" content={`Explore ${liveMenu.length || 31} authentic clay-oven tandoori kawabs, kawab biryanis, gravies, and fresh breads at Biriyani Station.`} />
       </Head>
 
       {/* Sticky Header */}
@@ -550,13 +550,13 @@ export default function MenuPage() {
                 border: '1px solid rgba(13,90,58,0.12)',
                 boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
               }}>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🔥 5 Kawabs</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🔥 {categoryCounts.kawab} Kawabs & Starters</span>
                 <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍛 5 Kawab Biryanis</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍛 {categoryCounts.biryani} Biryanis</span>
                 <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍲 5 Gravies</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍲 {categoryCounts.gravy} Gravies & Curries</span>
                 <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🫓 4 Breads</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🫓 {categoryCounts.bread} Breads</span>
               </div>
             </div>
           </div>
