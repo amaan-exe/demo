@@ -6,7 +6,7 @@ import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 
 export default function MyOrdersPage() {
-  const { user, openAuthModal } = useAuth()
+  const { user, isAdmin, openAuthModal } = useAuth()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -350,6 +350,12 @@ export default function MyOrdersPage() {
           <Link href="/"><span className="tab-icon">{'\u{1F3E0}'}</span>Home</Link>
           <Link href="/menu"><span className="tab-icon">{'\u{1F35B}'}</span>Menu</Link>
           <Link href="/my-orders" className="active"><span className="tab-icon">{'\u{1F4E6}'}</span>Orders</Link>
+          {user && isAdmin && (
+            <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
+              <span className="tab-icon">🛡️</span>
+              Admin
+            </Link>
+          )}
           {user ? (
             <Link href="/profile"><span className="tab-icon">{'\u{1F464}'}</span>Profile</Link>
           ) : (

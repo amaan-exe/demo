@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -115,6 +117,15 @@ export function AuthProvider({ children }) {
       }
     }
     restoreSession()
+
+    // Capture mobile Google Sign-In redirect result
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result && result.user) {
+          await syncWithBackend(result.user)
+        }
+      })
+      .catch((error) => console.error('Google Redirect SignIn Error:', error))
   }, [])
 
   // Sync token & user with backend API after Firebase login
@@ -155,8 +166,15 @@ export function AuthProvider({ children }) {
   // 1. Google Sign-In
   const loginWithGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider)
-      await syncWithBackend(result.user)
+      const isMobile = typeof window !== 'undefined' && (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768)
+      
+      if (isMobile) {
+        // Mobile browsers block cross-origin popups and hang. Redirect is the creamy smooth standard for Firebase.
+        await signInWithRedirect(auth, googleProvider)
+      } else {
+        const result = await signInWithPopup(auth, googleProvider)
+        await syncWithBackend(result.user)
+      }
     } catch (error) {
       console.error('Google Sign-In Error:', error)
       throw error
@@ -218,7 +236,7 @@ export function AuthProvider({ children }) {
 
   const ADMIN_EMAILS = ['amaanullah2607@gmail.com', 'admin@biriyanistation.com', 'admin@gmail.com']
   const currentEmail = (user?.email || userProfile?.email || '').toLowerCase().trim()
-  const isAdmin = userProfile?.role === 'admin' || user?.role === 'admin' || ADMIN_EMAILS.includes(currentEmail)
+  const isAdmin = Boolean(user && currentEmail && (userProfile?.role === 'admin' || user?.role === 'admin' || ADMIN_EMAILS.includes(currentEmail)))
 
   return (
     <AuthContext.Provider

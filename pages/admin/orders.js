@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
+import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminOrdersDesk() {
   const { user, isAdmin } = useAuth()
@@ -245,179 +246,138 @@ export default function AdminOrdersDesk() {
     return true
   })
 
-  if (!mounted) return null
-
-  if (!user || !isAdmin) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--ink)', color: '#ffffff', padding: '20px' }}>
-        <div style={{ background: '#182820', padding: '48px 36px', borderRadius: '28px', border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', maxWidth: '480px' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>🛡️</div>
-          <h1 style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '2rem', color: 'var(--yellow)', margin: '0 0 8px 0', fontWeight: 900 }}>
-            Admin Access Required
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.92rem', marginBottom: '24px', lineHeight: 1.6 }}>
-            {user ? `Logged in as ${user.email}. Authorized Admin permissions required.` : 'Please sign in with an authorized Admin account to access the orders desk.'}
-          </p>
-          <Link href="/" className="btn" style={{ width: '100%', background: 'var(--yellow)', color: 'var(--ink)', padding: '12px', fontWeight: 800 }}>
-            ← Return to Customer Storefront
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  if (!user || !isAdmin) return null
 
   return (
-    <>
-      <Head>
-        <title>Real-Time Orders Desk | Biriyani Station Admin</title>
-      </Head>
-
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f6f5f0' }}>
-        {/* Sidebar Navigation */}
-        <aside style={{ width: '240px', background: '#092419', color: '#ffffff', padding: '28px 18px', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div>
-            <div style={{ paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>
-              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--yellow)', letterSpacing: '0.2em' }}>PATNA DESK</span>
-              <h2 style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1.3rem', color: '#ffffff', margin: '4px 0 0 0', fontWeight: 900 }}>Admin Desk</h2>
-            </div>
-
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <Link href="/admin" style={{ padding: '10px 14px', borderRadius: '10px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
-                📊 Dashboard
-              </Link>
-              <Link href="/admin/orders" style={{ padding: '10px 14px', borderRadius: '10px', background: 'var(--yellow)', color: 'var(--ink)', fontWeight: 800, textDecoration: 'none', fontSize: '0.9rem' }}>
-                🛵 Orders Desk ({orders.length})
-              </Link>
-              <Link href="/admin/menu" style={{ padding: '10px 14px', borderRadius: '10px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
-                🍲 Menu Items
-              </Link>
-              <Link href="/admin/coupons" style={{ padding: '10px 14px', borderRadius: '10px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
-                🏷️ Coupons
-              </Link>
-              <Link href="/admin/users" style={{ padding: '10px 14px', borderRadius: '10px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
-                👥 Users
-              </Link>
-              <Link href="/admin/settings" style={{ padding: '10px 14px', borderRadius: '10px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
-                ⚙️ Settings
-              </Link>
-            </nav>
-          </div>
-
-          <div>
-            <Link href="/" style={{ color: 'var(--yellow)', textDecoration: 'none', fontWeight: 700, fontSize: '0.82rem' }}>
-              ← Main Storefront
-            </Link>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <main style={{ flex: 1, padding: '32px 36px', maxWidth: '1440px', margin: '0 auto' }}>
-          {/* Header & Live Search Bar */}
+    <AdminLayout activePage="orders" title="Live Orders Desk">
+      <div className="admin-page-container">
+        {/* EXECUTIVE ADMIN CONTROL DECK HERO CARD */}
+        <div className="admin-control-hero-card">
+          {/* Header Row: Title & Search Bar */}
           <div className="admin-orders-header">
             <div className="admin-title-area">
               <span className="admin-sync-pill">
                 <span style={{ animation: 'pulse 1.5s infinite' }}>🟢</span> Live Sync Active
               </span>
-              <h1 style={{ fontSize: '1.8rem !important' }}>Orders Management Desk</h1>
+              <h1>Orders Management Desk</h1>
             </div>
 
-            {/* Live Search Input */}
+            {/* Premium Search Box with Clear Button */}
             <div className="admin-search-box">
               <span className="admin-search-icon">🔍</span>
               <input
                 type="text"
                 className="admin-search-input"
-                placeholder="Search Order ID, Name, Phone…"
+                placeholder="Search Order ID, Customer, Phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="admin-search-clear"
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Action Toast Feedback */}
-          {actionFeedback && (
-            <div style={{
-              position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
-              background: '#092419', color: 'var(--yellow)', border: '1px solid rgba(245,200,66,0.3)',
-              padding: '12px 20px', borderRadius: '14px', fontWeight: 800, fontSize: '0.88rem',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
-            }}>
-              {actionFeedback}
+          {/* Quick Metrics Snapshot Strip */}
+          <div className="admin-stats-summary-strip">
+            <div className="admin-stat-chip">
+              📦 Total: <strong>{orders.length}</strong>
             </div>
-          )}
-
-          {/* Firestore Error Banner */}
-          {firestoreError && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '14px', padding: '14px 18px', marginBottom: '20px' }}>
-              <span style={{ color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>⚠️ Firestore Sync Notice: {firestoreError}</span>
+            <div className={`admin-stat-chip ${(countUpiPending + countPending) > 0 ? 'action-needed' : ''}`}>
+              ⚡ Action Required: <strong>{countUpiPending + countPending}</strong>
             </div>
-          )}
-
-          {/* WRAPPED Segmented Status Counter Filters */}
-          <div className="status-filter-wrapped">
-            <button
-              className={`status-counter-btn ${filterStatus === 'all' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('all')}
-            >
-              ALL <span className="status-count-badge">{orders.length}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'UPI Verification Pending' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('UPI Verification Pending')}
-            >
-              💳 UPI VERIFICATION <span className="status-count-badge" style={{ background: countUpiPending > 0 ? '#f59e0b' : undefined, color: countUpiPending > 0 ? '#ffffff' : undefined }}>{countUpiPending}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Pending' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Pending')}
-            >
-              PENDING <span className="status-count-badge">{countPending}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Accepted' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Accepted')}
-            >
-              ACCEPTED <span className="status-count-badge">{countAccepted}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Preparing' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Preparing')}
-            >
-              PREPARING <span className="status-count-badge">{countPreparing}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Ready' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Ready')}
-            >
-              READY <span className="status-count-badge">{countReady}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Out For Delivery' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Out For Delivery')}
-            >
-              OUT FOR DELIVERY <span className="status-count-badge">{countOut}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Delivered' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Delivered')}
-            >
-              DELIVERED <span className="status-count-badge">{countDelivered}</span>
-            </button>
-
-            <button
-              className={`status-counter-btn ${filterStatus === 'Cancelled' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('Cancelled')}
-            >
-              CANCELLED <span className="status-count-badge">{countCancelled}</span>
-            </button>
+            <div className="admin-stat-chip">
+              🚚 Active Kitchen: <strong>{countPreparing + countReady + countOut}</strong>
+            </div>
+            <div className="admin-stat-chip">
+              ✅ Delivered: <strong>{countDelivered}</strong>
+            </div>
           </div>
+
+          {/* Segmented Control Status Tabs */}
+          <div className="status-filter-wrapper-container">
+            <div className="status-filter-wrapped">
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('all')}
+              >
+                ALL <span className="status-count-badge">{orders.length}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'UPI Verification Pending' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('UPI Verification Pending')}
+              >
+                💳 UPI VERIFICATION <span className="status-count-badge" style={{ background: countUpiPending > 0 ? '#f59e0b' : undefined, color: countUpiPending > 0 ? '#ffffff' : undefined }}>{countUpiPending}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Pending' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Pending')}
+              >
+                PENDING <span className="status-count-badge">{countPending}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Accepted' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Accepted')}
+              >
+                ACCEPTED <span className="status-count-badge">{countAccepted}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Preparing' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Preparing')}
+              >
+                PREPARING <span className="status-count-badge">{countPreparing}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Ready' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Ready')}
+              >
+                READY <span className="status-count-badge">{countReady}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Out For Delivery' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Out For Delivery')}
+              >
+                OUT FOR DELIVERY <span className="status-count-badge">{countOut}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Delivered' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Delivered')}
+              >
+                DELIVERED <span className="status-count-badge">{countDelivered}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${filterStatus === 'Cancelled' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('Cancelled')}
+              >
+                CANCELLED <span className="status-count-badge">{countCancelled}</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
           {/* 2-COLUMN RESPONSIVE ORDERS CARD GRID */}
           <div className="admin-orders-grid">
@@ -443,11 +403,11 @@ export default function AdminOrdersDesk() {
                     className={`admin-card-compact ${isDelivered ? 'delivered' : ''} ${isCancelled ? 'cancelled' : ''}`}
                   >
                     {/* Top Header Row: Customer Info & Order Meta */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="admin-card-top-row">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                         <div className="customer-avatar-circle" style={{ width: '38px', height: '38px', fontSize: '0.95rem' }}>{initial}</div>
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                             <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)', margin: 0 }}>{customerName}</h3>
                             {rawPhone && (
                               <a
@@ -467,7 +427,7 @@ export default function AdminOrdersDesk() {
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right' }}>
+                      <div className="admin-card-top-row-right">
                         <span style={{ fontSize: '0.72rem', fontWeight: 900, color: isCancelled ? '#dc2626' : 'var(--deep-green)', background: isCancelled ? 'rgba(239,68,68,0.1)' : 'rgba(13,90,58,0.08)', padding: '3px 8px', borderRadius: '6px' }}>
                           #{ord.orderId || ord.id.slice(0, 8)}
                         </span>
@@ -478,9 +438,9 @@ export default function AdminOrdersDesk() {
                     </div>
 
                     {/* Location Badge */}
-                    <div style={{ background: '#faf9f5', borderRadius: '10px', padding: '8px 12px', marginBottom: '14px', fontSize: '0.8rem', color: 'var(--ink)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ background: '#faf9f5', borderRadius: '10px', padding: '8px 12px', marginBottom: '14px', fontSize: '0.8rem', color: 'var(--ink)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <span>📍</span>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ord.deliveryAddress || 'Patna Delivery Address'}</span>
+                      <span className="admin-truncate" style={{ wordBreak: 'break-word' }}>{ord.deliveryAddress || 'Patna Delivery Address'}</span>
                     </div>
 
                     {/* INNER SPLIT: PAYMENT BOX & ITEMS SUMMARY */}
@@ -597,8 +557,7 @@ export default function AdminOrdersDesk() {
               })
             )}
           </div>
-        </main>
-      </div>
-    </>
+        </div>
+    </AdminLayout>
   )
 }

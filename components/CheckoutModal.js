@@ -101,6 +101,10 @@ export default function CheckoutModal({
 
   const handleStep1Submit = (e) => {
     if (e) e.preventDefault()
+    if (settings?.isStoreOpen === false) {
+      alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
+      return
+    }
     if (!name.trim() || !phone.trim() || !address.trim()) {
       alert('Please fill in your name, phone number, and delivery address.')
       return
@@ -113,6 +117,10 @@ export default function CheckoutModal({
 
   const handleFinalOrderSubmit = (e, utr = null) => {
     if (e) e.preventDefault()
+    if (settings?.isStoreOpen === false) {
+      alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
+      return
+    }
     onPlaceOrder({
       name,
       phone,

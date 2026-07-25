@@ -98,10 +98,14 @@ export default function MenuPage() {
   const grandTotal = cartTotal + deliveryFee
 
   const handleProceedToCheckout = () => {
+    if (settings?.isStoreOpen === false) {
+      alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
+      return
+    }
     if (!user) {
       openAuthModal()
       setToast({
-        title: 'Authentication Required',
+        type: 'warning',
         message: 'Please sign in or create an account to proceed to checkout.',
         id: Date.now()
       })
@@ -114,6 +118,11 @@ export default function MenuPage() {
   }
 
   const handlePlaceOrder = async (orderData = {}, utrString = null) => {
+    if (settings?.isStoreOpen === false) {
+      alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
+      return
+    }
+
     const finalName = orderData.name || coName || user?.displayName || user?.email?.split('@')[0]
     const finalPhone = orderData.phone || coPhone
     const finalAddress = orderData.address || coAddress
@@ -298,9 +307,31 @@ export default function MenuPage() {
       {/* Sticky Header */}
       <header className="site-header scrolled" id="top">
         <nav className="nav container" aria-label="Primary navigation">
-          <Link href="/" className="logo" aria-label="Biriyani Station home">
-            BIRIYANI <span>STATION</span>
-          </Link>
+          <Link href="/" className="logo" aria-label="Biriyani Station home">BIRIYANI <span>STATION</span></Link>
+          {user && isAdmin && (
+            <Link
+              href="/admin"
+              className="admin-header-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'var(--deep-green)',
+                color: 'var(--yellow)',
+                border: '1px solid rgba(245,200,66,0.4)',
+                padding: '5px 11px',
+                borderRadius: '999px',
+                fontSize: '0.72rem',
+                fontWeight: '900',
+                textDecoration: 'none',
+                letterSpacing: '0.06em',
+                boxShadow: '0 4px 14px rgba(13,90,58,0.25)',
+                marginLeft: '6px'
+              }}
+            >
+              🛡️ ADMIN
+            </Link>
+          )}
 
           <button className="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
             <span></span>
@@ -316,6 +347,23 @@ export default function MenuPage() {
             <Link href="/#about" onClick={() => setIsNavOpen(false)}>ABOUT</Link>
             <Link href="/#order" onClick={() => setIsNavOpen(false)}>ORDER</Link>
             <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsNavOpen(false)}
+                style={{
+                  color: 'var(--yellow)',
+                  fontWeight: '900',
+                  letterSpacing: '0.08em',
+                  background: 'rgba(13,90,58,0.15)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(245,200,66,0.3)'
+                }}
+              >
+                🛡️ ADMIN PORTAL
+              </Link>
+            )}
 
             {user ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -863,6 +911,12 @@ export default function MenuPage() {
             <span className="tab-icon">📦</span>
             Orders
           </Link>
+          {user && isAdmin && (
+            <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
+              <span className="tab-icon">🛡️</span>
+              Admin
+            </Link>
+          )}
           {user ? (
             <Link href="/profile">
               <span className="tab-icon">👤</span>

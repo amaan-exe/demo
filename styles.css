@@ -105,13 +105,16 @@ a {
 }
 
 .logo {
-  font-size: 2rem;
+  font-size: 1.8rem;
   line-height: 0.9;
   letter-spacing: 0.02em;
   color: var(--deep-green);
   font-style: italic;
   font-weight: 800;
   text-transform: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: "Playfair Display", serif;
 }
 
 .logo span {
@@ -122,6 +125,11 @@ a {
   letter-spacing: 0.28em;
   margin-left: 0.25em;
   font-weight: 700;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
 }
 
 .nav-right {
@@ -1359,7 +1367,7 @@ a {
 
 @media (max-width: 768px) {
   .nav-toggle {
-    display: block;
+    display: none !important;
   }
 
   /* hide nav links in header but keep CTA visible */
@@ -1488,7 +1496,8 @@ a {
 /* smaller breakpoint for menu single-column */
 @media (max-width: 640px) {
   .menu-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .sticky-actions {

@@ -1,5 +1,7 @@
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../../lib/firebase'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,6 +17,21 @@ export default async function handler(req, res) {
 
     if (!items || !items.length || !userPhone || !deliveryAddress) {
       return res.status(400).json({ error: 'Missing required order details (items, phone, address)' })
+    }
+
+    // Check if store is open in Firestore settings
+    try {
+      const settingsSnap = await getDoc(doc(db, 'settings', 'restaurant'))
+      if (settingsSnap.exists()) {
+        const storeSettings = settingsSnap.data()
+        if (storeSettings.isStoreOpen === false) {
+          return res.status(403).json({
+            error: 'Restaurant is currently closed for online orders. Please check back during operating hours.'
+          })
+        }
+      }
+    } catch (e) {
+      console.warn('Backend store status check notice:', e.message)
     }
 
     const orderId = req.body.orderId || `BS-PATNA-${Math.floor(100000 + Math.random() * 900000)}`

@@ -5,6 +5,7 @@ import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimest
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
+import AdminLayout from '../../components/AdminLayout'
 import { ALL_MENU_ITEMS } from '../../data/menuData'
 
 export default function AdminMenuDesk() {
@@ -195,98 +196,64 @@ export default function AdminMenuDesk() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Menu Management | Biriyani Station Admin</title>
-      </Head>
-
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f6f5f0' }}>
-        {/* Sidebar */}
-        <aside style={{ width: '260px', background: '#092419', color: '#ffffff', padding: '32px 20px', position: 'sticky', top: 0, height: '100vh' }}>
-          <div style={{ paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '24px' }}>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--yellow)', textTransform: 'uppercase' }}>PATNA DESK</span>
-            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.4rem', color: '#ffffff', margin: 0 }}>Admin Portal</h2>
-          </div>
-
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Link href="/admin" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-              📊 Dashboard
-            </Link>
-            <Link href="/admin/orders" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-              🛵 Orders Desk
-            </Link>
-            <Link href="/admin/menu" style={{ padding: '12px 16px', borderRadius: '12px', background: 'var(--yellow)', color: 'var(--ink)', fontWeight: 800, textDecoration: 'none' }}>
-              🍲 Menu Items ({menuItems.length})
-            </Link>
-
-            <Link href="/admin/coupons" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-              🏷️ Coupons
-            </Link>
-            <Link href="/admin/users" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-              👥 Users
-            </Link>
-            <Link href="/admin/settings" style={{ padding: '12px 16px', borderRadius: '12px', color: 'rgba(255,255,255,0.8)', textDecoration: 'none', fontWeight: 700 }}>
-              ⚙️ Settings
-            </Link>
-          </nav>
-        </aside>
-
-        {/* Content */}
-        <main style={{ flex: 1, padding: '40px' }}>
-          <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+    <AdminLayout activePage="menu" title="Dish Menu Management" itemCount={menuItems.length}>
+      <div className="admin-page-container">
+          <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.2em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.18em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
                 FOOD CATALOG CONTROL
               </span>
-              <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.4rem', fontWeight: 900, color: 'var(--ink)', margin: 0 }}>
+              <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: 900, color: 'var(--ink)', margin: 0 }}>
                 Menu Management
               </h1>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               {menuItems.length === 0 && (
-                <button onClick={handleSeedMenu} className="btn secondary" style={{ padding: '12px 20px', fontSize: '0.82rem' }}>
+                <button onClick={handleSeedMenu} className="btn secondary" style={{ padding: '10px 18px', fontSize: '0.82rem', borderRadius: '12px' }}>
                   ⚡ SEED INITIAL 19 DISHES
                 </button>
               )}
-              <button onClick={handleOpenAdd} className="btn" style={{ padding: '12px 24px', fontSize: '0.85rem' }}>
+              <button onClick={handleOpenAdd} className="btn" style={{ padding: '10px 20px', fontSize: '0.82rem', borderRadius: '12px', whiteSpace: 'nowrap' }}>
                 + ADD NEW FOOD ITEM
               </button>
             </div>
           </header>
 
-          {/* Menu Items Table */}
-          <div style={{ background: '#ffffff', borderRadius: '24px', padding: '28px', border: '1px solid rgba(13,90,58,0.1)', boxShadow: '0 6px 20px rgba(0,0,0,0.03)' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+          {/* Menu Items Table Container */}
+          <div style={{ background: '#ffffff', borderRadius: '24px', padding: '20px', border: '1px solid rgba(13,90,58,0.1)', boxShadow: '0 6px 20px rgba(0,0,0,0.03)' }}>
+            <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1.5px solid rgba(0,0,0,0.08)', color: 'var(--muted)' }}>
-                    <th style={{ padding: '12px' }}>ITEM</th>
-                    <th style={{ padding: '12px' }}>CATEGORY</th>
-                    <th style={{ padding: '12px' }}>PRICE</th>
-                    <th style={{ padding: '12px' }}>TYPE</th>
-                    <th style={{ padding: '12px' }}>STATUS</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>ACTIONS</th>
+                    <th style={{ padding: '12px 14px', width: '38%' }}>ITEM</th>
+                    <th style={{ padding: '12px 14px' }}>CATEGORY</th>
+                    <th style={{ padding: '12px 14px' }}>PRICE</th>
+                    <th style={{ padding: '12px 14px' }}>TYPE</th>
+                    <th style={{ padding: '12px 14px' }}>STATUS</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(menuItems.length > 0 ? menuItems : ALL_MENU_ITEMS).map((item) => (
                     <tr key={item.id || item.title} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                      <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img src={item.image} alt={item.name || item.title} style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }} />
-                        <div>
-                          <strong style={{ color: 'var(--ink)', display: 'block' }}>{item.name || item.title}</strong>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{item.preparationTime || item.time || '20 mins'}</span>
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <img src={item.image} alt={item.name || item.title} style={{ width: '46px', height: '46px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
+                          <div>
+                            <strong style={{ color: 'var(--ink)', display: 'block', fontSize: '0.92rem' }}>{item.name || item.title}</strong>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{item.preparationTime || item.time || '20 mins'}</span>
+                          </div>
                         </div>
                       </td>
-                      <td style={{ padding: '12px', textTransform: 'capitalize' }}>{item.category}</td>
-                      <td style={{ padding: '12px', fontWeight: 800, color: 'var(--deep-green)' }}>₹{item.price}</td>
-                      <td style={{ padding: '12px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '#16a34a' : '#dc2626' }}>
+                      <td style={{ padding: '12px 14px', textTransform: 'capitalize', fontWeight: 600 }}>{item.category}</td>
+                      <td style={{ padding: '12px 14px', fontWeight: 900, color: 'var(--deep-green)', fontSize: '0.95rem' }}>₹{item.price}</td>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 900, padding: '4px 10px', borderRadius: '6px', whiteSpace: 'nowrap', background: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '#16a34a' : '#dc2626' }}>
                           {(item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '🟢 VEG' : '🔴 NON-VEG'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px' }}>
+                      <td style={{ padding: '12px 14px' }}>
                         <button
                           onClick={() => item.id && handleToggleAvailability(item)}
                           style={{
@@ -295,6 +262,7 @@ export default function AdminMenuDesk() {
                             borderRadius: '999px',
                             fontWeight: 800,
                             fontSize: '0.75rem',
+                            whiteSpace: 'nowrap',
                             cursor: 'pointer',
                             background: item.available !== false ? 'rgba(13,90,58,0.12)' : 'rgba(0,0,0,0.08)',
                             color: item.available !== false ? 'var(--deep-green)' : '#888'
@@ -303,7 +271,7 @@ export default function AdminMenuDesk() {
                           {item.available !== false ? '● Available' : '○ Unavailable'}
                         </button>
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <button onClick={() => item.id ? handleOpenEdit(item) : alert('Click SEED INITIAL 19 DISHES to manage in Firestore')} style={{ background: 'none', border: 'none', color: '#1a73e8', fontWeight: 800, cursor: 'pointer', marginRight: '12px' }}>Edit</button>
                         {item.id && <button onClick={() => handleDeleteItem(item.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontWeight: 800, cursor: 'pointer' }}>Delete</button>}
                       </td>
@@ -313,10 +281,9 @@ export default function AdminMenuDesk() {
               </table>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
 
-      {/* Add / Edit Food Modal */}
+        {/* Add / Edit Food Modal */}
       {showModal && (
         <div className="co-overlay" aria-hidden="false" style={{ opacity: 1, visibility: 'visible', zIndex: 3000 }}>
           <button type="button" className="co-backdrop" onClick={() => setShowModal(false)} />
@@ -405,6 +372,6 @@ export default function AdminMenuDesk() {
           </div>
         </div>
       )}
-    </>
+    </AdminLayout>
   )
 }
