@@ -618,6 +618,78 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── FEATURED 6 BEST DISHES HOME MENU SECTION ──────────────── */}
+        <section className="menu section-pad reveal" id="menu">
+          <div className="container">
+            <div className="menu-header-flex">
+              <div className="menu-header-titles">
+                <p className="section-label menu-label">CHEF'S SPECIAL SELECTION</p>
+                <h2 className="display menu-title">FEATURED <span className="highlight-italic">6 DISHES.</span></h2>
+              </div>
+              <div style={{ alignSelf: 'center' }}>
+                <Link href="/menu" className="chip active" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+                  VIEW FULL MENU (19 ITEMS) →
+                </Link>
+              </div>
+            </div>
+
+            <div className="menu-grid premium-grid">
+              {FEATURED_DISHES.map((dish) => (
+                <article
+                  key={dish.id}
+                  className="menu-card"
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Open ${dish.title} details`}
+                  onClick={() => openProduct(dish)}
+                >
+                  <div className="dish-media">
+                    <img src={dish.image} alt={dish.title} loading="lazy" />
+                    <span className="dish-tag">{dish.categoryName.toUpperCase()}</span>
+                    <span className="price-badge">{dish.priceLabel}</span>
+                    <div className="dish-overlay"></div>
+                  </div>
+                  <div className="menu-body">
+                    <div className="menu-head">
+                      <h3 className="dish-title">{dish.title.toUpperCase()}</h3>
+                      <strong className="dish-price">{dish.priceLabel}</strong>
+                    </div>
+                    <p className="dish-desc">{dish.description}</p>
+                    <div className="menu-actions">
+                      <button
+                        type="button"
+                        className="btn-order"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          addToCart({ title: dish.title, price: dish.price, image: dish.image })
+                        }}
+                      >
+                        ADD TO CART
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {/* Explore Full Menu CTA */}
+            <div style={{ textAlign: 'center', marginTop: '48px' }}>
+              <Link href="/menu" className="btn" style={{
+                display: 'inline-flex',
+                fontSize: '1rem',
+                padding: '16px 36px',
+                background: 'var(--deep-green)',
+                color: '#fff',
+                borderRadius: '999px',
+                boxShadow: '0 8px 24px rgba(13,90,58,0.2)'
+              }}>
+                EXPLORE ALL 19 DISHES (FULL MENU) →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── CUSTOMER REVIEWS & RATINGS (AFTER FEATURED MENU) ───────── */}
         <section className="social-proof section-pad reveal" aria-label="Customer highlights">
           <div className="container">
             <div className="proof-header-center">
@@ -702,77 +774,6 @@ export default function Home() {
                 </p>
                 <span className="review-dish-tag">Ordered: Patyala Leg Biryani</span>
               </article>
-            </div>
-          </div>
-        </section>
-
-        {/* ── FEATURED 6 BEST DISHES HOME MENU SECTION ──────────────── */}
-        <section className="menu section-pad reveal" id="menu">
-          <div className="container">
-            <div className="menu-header-flex">
-              <div className="menu-header-titles">
-                <p className="section-label menu-label">CHEF'S SPECIAL SELECTION</p>
-                <h2 className="display menu-title">FEATURED <span className="highlight-italic">6 DISHES.</span></h2>
-              </div>
-              <div style={{ alignSelf: 'center' }}>
-                <Link href="/menu" className="chip active" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-                  VIEW FULL MENU (19 ITEMS) →
-                </Link>
-              </div>
-            </div>
-
-            <div className="menu-grid premium-grid">
-              {FEATURED_DISHES.map((dish) => (
-                <article
-                  key={dish.id}
-                  className="menu-card"
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Open ${dish.title} details`}
-                  onClick={() => openProduct(dish)}
-                >
-                  <div className="dish-media">
-                    <img src={dish.image} alt={dish.title} loading="lazy" />
-                    <span className="dish-tag">{dish.categoryName.toUpperCase()}</span>
-                    <span className="price-badge">{dish.priceLabel}</span>
-                    <div className="dish-overlay"></div>
-                  </div>
-                  <div className="menu-body">
-                    <div className="menu-head">
-                      <h3 className="dish-title">{dish.title.toUpperCase()}</h3>
-                      <strong className="dish-price">{dish.priceLabel}</strong>
-                    </div>
-                    <p className="dish-desc">{dish.description}</p>
-                    <div className="menu-actions">
-                      <button
-                        type="button"
-                        className="btn-order"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          addToCart({ title: dish.title, price: dish.price, image: dish.image })
-                        }}
-                      >
-                        ADD TO CART
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            {/* Explore Full Menu CTA */}
-            <div style={{ textAlign: 'center', marginTop: '48px' }}>
-              <Link href="/menu" className="btn" style={{
-                display: 'inline-flex',
-                fontSize: '1rem',
-                padding: '16px 36px',
-                background: 'var(--deep-green)',
-                color: '#fff',
-                borderRadius: '999px',
-                boxShadow: '0 8px 24px rgba(13,90,58,0.2)'
-              }}>
-                EXPLORE ALL 19 DISHES (FULL MENU) →
-              </Link>
             </div>
           </div>
         </section>
