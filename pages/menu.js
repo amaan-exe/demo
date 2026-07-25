@@ -36,7 +36,7 @@ export default function MenuPage() {
   const [coName, setCoName] = useState('')
   const [coPhone, setCoPhone] = useState('')
   const [coAddress, setCoAddress] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('COD')
+  const [paymentMethod, setPaymentMethod] = useState('UPI')
   const [coLoading, setCoLoading] = useState(false)
 
   // Persist cart to localStorage

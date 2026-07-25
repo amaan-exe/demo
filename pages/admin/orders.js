@@ -465,7 +465,7 @@ export default function AdminOrdersDesk() {
                             </p>
                             {ord.transactionReference && (
                               <p style={{ margin: '4px 0 0 0', fontSize: '0.76rem', fontWeight: 700, color: 'var(--ink)' }}>
-                                UTR: <code style={{ background: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)', fontWeight: 800 }}>{ord.transactionReference}</code>
+                                UPI Payer Name: <code style={{ background: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)', fontWeight: 800 }}>{ord.transactionReference}</code>
                               </p>
                             )}
                           </div>

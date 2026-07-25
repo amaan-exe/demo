@@ -12,7 +12,7 @@ export default function UpiPaymentBox({
 }) {
   const [copied, setCopied] = useState(false)
   const [step, setStep] = useState('idle') // 'idle' | 'confirm' | 'utr'
-  const [utrNumber, setUtrNumber] = useState('')
+  const [upiPayerName, setUpiPayerName] = useState('')
 
   const rawTotal = grandTotal !== undefined && grandTotal !== null ? grandTotal : (amount !== undefined && amount !== null ? amount : 0)
   const numericTotal = typeof rawTotal === 'number' && !isNaN(rawTotal) ? rawTotal : (parseFloat(rawTotal) || 0)
@@ -46,11 +46,11 @@ export default function UpiPaymentBox({
     window.location.href = upiUri
   }
 
-  const handleFinalSubmit = (e, utrValue) => {
+  const handleFinalSubmit = (e, nameValue) => {
     setStep('idle')
     const confirmFn = onConfirmPayment || onVerify
     if (typeof confirmFn === 'function') {
-      confirmFn(e, utrValue)
+      confirmFn(e, nameValue)
     }
   }
 
@@ -213,7 +213,7 @@ export default function UpiPaymentBox({
         </>
       )}
 
-      {/* STEP 2 MODAL: Optional UPI Transaction Reference (UTR) */}
+      {/* STEP 2 MODAL: UPI Account Holder Name Input */}
       {step === 'utr' && (
         <>
           <div
@@ -236,19 +236,19 @@ export default function UpiPaymentBox({
               border: '2px solid var(--deep-green)'
             }}
           >
-            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💳</div>
+            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>👤</div>
             <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--ink)', margin: '0 0 6px 0' }}>
-              UPI Transaction ID
+              UPI Account Name
             </h3>
             <p style={{ color: 'var(--muted)', fontSize: '0.82rem', lineHeight: 1.4, marginBottom: '18px' }}>
-              Enter your UPI Transaction Reference (UTR). This is optional but helps us verify your payment faster.
+              Enter the <strong>Name on your UPI App / Bank Account</strong> (GPay, PhonePe, Paytm name) used to send the payment.
             </p>
 
             <input
               type="text"
-              placeholder="e.g. 74648392929"
-              value={utrNumber}
-              onChange={(e) => setUtrNumber(e.target.value)}
+              placeholder="e.g. Amanullah Khan (GPay Name)"
+              value={upiPayerName}
+              onChange={(e) => setUpiPayerName(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -257,7 +257,6 @@ export default function UpiPaymentBox({
                 fontSize: '0.95rem',
                 fontWeight: 700,
                 textAlign: 'center',
-                letterSpacing: '0.08em',
                 marginBottom: '20px',
                 boxSizing: 'border-box'
               }}
@@ -273,10 +272,10 @@ export default function UpiPaymentBox({
               </button>
               <button
                 type="button"
-                onClick={(e) => handleFinalSubmit(e, utrNumber)}
+                onClick={(e) => handleFinalSubmit(e, upiPayerName)}
                 style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--deep-green)', color: '#ffffff', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(13,90,58,0.3)' }}
               >
-                Submit
+                Submit Order
               </button>
             </div>
           </div>
