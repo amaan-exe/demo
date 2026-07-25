@@ -165,6 +165,7 @@ export function AuthProvider({ children }) {
 
   // 1. Google Sign-In via Popup (Synchronous callstack to bypass mobile popup blockers)
   const loginWithGoogle = () => {
+    const startTime = Date.now()
     return signInWithPopup(auth, googleProvider)
       .then(async (result) => {
         if (result?.user) {
@@ -181,9 +182,16 @@ export function AuthProvider({ children }) {
       })
       .catch((error) => {
         console.error('Google Sign-In Error:', error)
+        const duration = Date.now() - startTime
         const code = error?.code || error?.message || ''
+
+        // If popup closed in under 1200ms, it was blocked by mobile browser popup blocker
+        if (duration < 1200 && (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request'))) {
+          throw new Error('Google Sign-In popup was blocked by your browser settings. Please allow popups for demo-z7n1.vercel.app or sign in with Email below.')
+        }
+
         if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
-          return null // Ignore silent user cancellation
+          return null // Ignore manual user cancellation after viewing popup
         }
         if (code.includes('popup-blocked')) {
           throw new Error('Google Sign-In popup was blocked by your browser. Please tap the Google button again or allow popups for this website.')
