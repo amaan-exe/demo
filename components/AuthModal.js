@@ -38,17 +38,10 @@ export default function AuthModal() {
   const handleGoogleSignIn = async () => {
     try {
       setError('')
-      // DO NOT call setLoading(true) before loginWithGoogle!
-      // React state updates are asynchronous and yield the event loop.
-      // This causes mobile browsers (Safari/Chrome) to disconnect the popup action from the user's click event and block it!
-      const loginPromise = loginWithGoogle()
-      setLoading(true)
-      await loginPromise
+      await loginWithGoogle()
     } catch (err) {
       const msg = formatAuthError(err)
       if (msg) setError(msg)
-    } finally {
-      setLoading(false)
     }
   }
 
