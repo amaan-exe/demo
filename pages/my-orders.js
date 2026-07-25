@@ -366,35 +366,42 @@ export default function MyOrdersPage() {
 
       {/* Order Detail Bottom Sheet */}
       {selectedOrder && (
-        <div className="co-overlay" aria-hidden="false" style={{ opacity: 1, visibility: 'visible', zIndex: 3000 }}>
-          <button type="button" className="co-backdrop" onClick={() => setSelectedOrder(null)} />
-          <div className="order-detail-sheet" style={{ width: 'min(540px, 94vw)', background: '#ffffff', borderRadius: '28px', padding: '32px' }}>
-            <div className="sheet-handle" />
+        <div className="co-overlay" aria-hidden="false" style={{ opacity: 1, visibility: 'visible', zIndex: 5000, position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <button type="button" className="co-backdrop" onClick={() => setSelectedOrder(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: 'none', cursor: 'pointer' }} />
+          <div className="order-detail-sheet" style={{ position: 'relative', zIndex: 10, width: 'min(540px, 94vw)', maxHeight: '85vh', overflowY: 'auto', background: '#ffffff', color: '#111827', borderRadius: '28px', padding: '24px 28px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.4)' }}>
+            <div className="sheet-handle" style={{ width: '40px', height: '4px', background: '#e5e7eb', borderRadius: '2px', margin: '0 auto 16px' }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--deep-green)', letterSpacing: '0.2em' }}>ORDER RECEIPT</span>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)', margin: 0 }}>#{selectedOrder.orderId}</h2>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--deep-green)', letterSpacing: '0.15em' }}>ORDER RECEIPT</span>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#111827', margin: 0 }}>#{selectedOrder.orderId}</h2>
               </div>
-              <button onClick={() => setSelectedOrder(null)} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '1.1rem', display: 'grid', placeItems: 'center' }}>{'\u2715'}</button>
+              <button onClick={() => setSelectedOrder(null)} style={{ background: '#f3f4f6', color: '#111827', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', fontSize: '1.1rem', display: 'grid', placeItems: 'center', fontWeight: 700 }}>{'\u2715'}</button>
             </div>
 
-            <div style={{ padding: '14px 18px', background: '#f9f8f5', borderRadius: '16px', marginBottom: '20px' }}>
-              <p style={{ margin: '0 0 6px 0', fontSize: '0.88rem' }}><strong>Customer:</strong> {selectedOrder.customerName || selectedOrder.userName}</p>
-              <p style={{ margin: '0 0 6px 0', fontSize: '0.88rem' }}><strong>Phone:</strong> {selectedOrder.customerPhone || selectedOrder.userPhone}</p>
-              <p style={{ margin: 0, fontSize: '0.88rem' }}><strong>Address:</strong> {selectedOrder.deliveryAddress}</p>
+            <div style={{ padding: '14px 18px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '16px', marginBottom: '20px', color: '#1f2937' }}>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.88rem', color: '#1f2937' }}><strong style={{ color: '#111827' }}>Customer:</strong> {selectedOrder.customerName || selectedOrder.userName}</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.88rem', color: '#1f2937' }}><strong style={{ color: '#111827' }}>Phone:</strong> {selectedOrder.customerPhone || selectedOrder.userPhone}</p>
+              <p style={{ margin: 0, fontSize: '0.88rem', color: '#1f2937' }}><strong style={{ color: '#111827' }}>Address:</strong> {selectedOrder.deliveryAddress}</p>
             </div>
 
-            <h4 style={{ fontSize: '0.85rem', letterSpacing: '0.1em', color: 'var(--deep-green)', marginBottom: '12px' }}>ORDERED ITEMS</h4>
+            <h4 style={{ fontSize: '0.85rem', letterSpacing: '0.1em', color: 'var(--deep-green)', marginBottom: '12px', fontWeight: 800 }}>ORDERED ITEMS</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
               {selectedOrder.items?.map(item => (
-                <div key={item.title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.92rem', padding: '10px 14px', background: '#faf9f6', borderRadius: '12px' }}>
-                  <span>{item.title} <strong>x{item.qty || item.quantity}</strong></span>
-                  <strong>{'\u20B9'}{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(0)}</strong>
+                <div key={item.title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.92rem', padding: '12px 16px', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: '12px', color: '#1f2937' }}>
+                  <span style={{ color: '#1f2937' }}>{item.title} <strong style={{ color: 'var(--deep-green)' }}>x{item.qty || item.quantity}</strong></span>
+                  <strong style={{ color: '#111827' }}>{'\u20B9'}{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(0)}</strong>
                 </div>
               ))}
             </div>
 
-            <div style={{ borderTop: '2px solid rgba(0,0,0,0.08)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: '800' }}>
+            {selectedOrder.appliedCoupon && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.92rem', padding: '10px 14px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', marginBottom: '16px', color: '#065f46', fontWeight: 700 }}>
+                <span>🏷️ Coupon ({selectedOrder.appliedCoupon})</span>
+                <span>-₹{(selectedOrder.discount || 0).toFixed(0)}</span>
+              </div>
+            )}
+
+            <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '800', color: '#111827' }}>
               <span>Total Paid</span>
               <span style={{ color: 'var(--deep-green)' }}>{'\u20B9'}{(selectedOrder.grandTotal || 0).toFixed(0)}</span>
             </div>
