@@ -41,14 +41,12 @@ export default function AuthModal() {
     return err?.message?.replace(/Firebase:\s*/i, '').replace(/Error\s*\(/i, '').replace(/\)\.?/i, '').trim() || 'Authentication failed'
   }
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setError('')
-      await loginWithGoogle()
-    } catch (err) {
+  const handleGoogleSignIn = () => {
+    setError('')
+    loginWithGoogle().catch((err) => {
       const msg = formatAuthError(err)
       if (msg) setError(msg)
-    }
+    })
   }
 
   const handleSubmit = async (e) => {

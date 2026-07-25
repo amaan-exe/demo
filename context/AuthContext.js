@@ -163,24 +163,26 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 1. Google Sign-In via Popup (Supported across Mobile Chrome, Safari & Android WebViews)
-  const loginWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider)
-      if (result?.user) {
-        await syncWithBackend(result.user)
-      }
-    } catch (error) {
-      console.error('Google Sign-In Error:', error)
-      const code = error?.code || error?.message || ''
-      if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
-        return // Ignore silent user cancellation
-      }
-      if (code.includes('popup-blocked')) {
-        throw new Error('Google Sign-In popup was blocked by your browser. Please tap the Google button again or allow popups for this website.')
-      }
-      throw error
-    }
+  // 1. Google Sign-In via Popup (Synchronous callstack to bypass mobile popup blockers)
+  const loginWithGoogle = () => {
+    return signInWithPopup(auth, googleProvider)
+      .then(async (result) => {
+        if (result?.user) {
+          await syncWithBackend(result.user)
+        }
+        return result
+      })
+      .catch((error) => {
+        console.error('Google Sign-In Error:', error)
+        const code = error?.code || error?.message || ''
+        if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
+          return null // Ignore silent user cancellation
+        }
+        if (code.includes('popup-blocked')) {
+          throw new Error('Google Sign-In popup was blocked by your browser. Please tap the Google button again or allow popups for this website.')
+        }
+        throw error
+      })
   }
 
   // 2. Email & Password Auth (Login or Signup)
