@@ -12,6 +12,7 @@ export const defaultSettings = {
   openingTime: '11:00 AM',
   closingTime: '11:30 PM',
   supportPhone: '+91 82713 01179',
+  storeUpiId: 'Q441280679@ybl',
   restaurantAddress: 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001'
 }
 
@@ -31,6 +32,7 @@ export function SettingsProvider({ children }) {
             openingTime: data.openingTime || defaultSettings.openingTime,
             closingTime: data.closingTime || defaultSettings.closingTime,
             supportPhone: data.supportPhone || defaultSettings.supportPhone,
+            storeUpiId: data.storeUpiId || defaultSettings.storeUpiId,
             restaurantAddress: data.restaurantAddress || defaultSettings.restaurantAddress
           })
         }

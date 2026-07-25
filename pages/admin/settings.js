@@ -13,6 +13,7 @@ export default function AdminSettingsDesk() {
   const [openingTime, setOpeningTime] = useState('11:00 AM')
   const [closingTime, setClosingTime] = useState('11:30 PM')
   const [supportPhone, setSupportPhone] = useState('+91 82713 01179')
+  const [storeUpiId, setStoreUpiId] = useState('Q441280679@ybl')
   const [restaurantAddress, setRestaurantAddress] = useState('Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -31,6 +32,7 @@ export default function AdminSettingsDesk() {
           setOpeningTime(data.openingTime || '11:00 AM')
           setClosingTime(data.closingTime || '11:30 PM')
           setSupportPhone(data.supportPhone || '+91 82713 01179')
+          setStoreUpiId(data.storeUpiId || 'Q441280679@ybl')
           setRestaurantAddress(data.restaurantAddress || 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001')
         }
       } catch (e) {}
@@ -50,6 +52,7 @@ export default function AdminSettingsDesk() {
         openingTime,
         closingTime,
         supportPhone,
+        storeUpiId,
         restaurantAddress,
         updatedAt: serverTimestamp()
       }, { merge: true })
