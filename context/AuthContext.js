@@ -185,9 +185,9 @@ export function AuthProvider({ children }) {
         const duration = Date.now() - startTime
         const code = error?.code || error?.message || ''
 
-        // If popup closed in under 1200ms, it was blocked by mobile browser popup blocker
-        if (duration < 1200 && (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request'))) {
-          throw new Error('Google Sign-In popup was blocked by your browser settings. Please allow popups for demo-z7n1.vercel.app or sign in with Email below.')
+        // Only flag as popup-blocked if duration is extremely fast (<350ms) AND blocked by browser
+        if (duration < 350 && (code.includes('popup-blocked') || code.includes('cancelled-popup-request'))) {
+          throw new Error('Google Sign-In popup was blocked by your browser settings. Please allow popups for this website or sign in with Email below.')
         }
 
         if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
