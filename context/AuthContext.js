@@ -163,26 +163,21 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 1. Google Sign-In with Popup -> Redirect Fallback for Mobile Webviews
+  // 1. Google Sign-In via Popup (Supported across Mobile Chrome, Safari & Android WebViews)
   const loginWithGoogle = async () => {
     try {
-      // Must use popup because mobile browsers block cross-origin storage required by signInWithRedirect.
-      // The popup MUST be triggered synchronously in the click event to bypass popup blockers.
       const result = await signInWithPopup(auth, googleProvider)
-      await syncWithBackend(result.user)
+      if (result?.user) {
+        await syncWithBackend(result.user)
+      }
     } catch (error) {
-      const code = error?.code || ''
-      console.warn('Google Popup failed, attempting redirect fallback:', code, error.message)
-
-      // Fallback to signInWithRedirect if popup is blocked by mobile browsers / WebViews
-      if (
-        code.includes('popup-blocked') ||
-        code.includes('operation-not-supported') ||
-        code.includes('popup-closed-by-user') ||
-        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      ) {
-        await signInWithRedirect(auth, googleProvider)
-        return
+      console.error('Google Sign-In Error:', error)
+      const code = error?.code || error?.message || ''
+      if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
+        return // Ignore silent user cancellation
+      }
+      if (code.includes('popup-blocked')) {
+        throw new Error('Google Sign-In popup was blocked by your browser. Please tap the Google button again or allow popups for this website.')
       }
       throw error
     }
