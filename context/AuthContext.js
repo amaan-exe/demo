@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -35,8 +37,17 @@ export function AuthProvider({ children }) {
   const openAuthModal = () => setIsAuthModalOpen(true)
   const closeAuthModal = () => setIsAuthModalOpen(false)
 
-  // Listen to Firebase auth state changes & sync Firestore user record
+  // Listen to Firebase auth state changes & handle redirect sign-in results
   useEffect(() => {
+    // Process redirect result if returning from Google OAuth redirect flow
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        await syncWithBackend(result.user)
+      }
+    }).catch((err) => {
+      console.warn('Redirect result notice:', err?.message || err)
+    })
+
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         try {
@@ -152,7 +163,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 1. Google Sign-In
+  // 1. Google Sign-In with Popup -> Redirect Fallback for Mobile Webviews
   const loginWithGoogle = async () => {
     try {
       // Must use popup because mobile browsers block cross-origin storage required by signInWithRedirect.
@@ -160,7 +171,19 @@ export function AuthProvider({ children }) {
       const result = await signInWithPopup(auth, googleProvider)
       await syncWithBackend(result.user)
     } catch (error) {
-      console.error('Google Sign-In Error:', error)
+      const code = error?.code || ''
+      console.warn('Google Popup failed, attempting redirect fallback:', code, error.message)
+
+      // Fallback to signInWithRedirect if popup is blocked by mobile browsers / WebViews
+      if (
+        code.includes('popup-blocked') ||
+        code.includes('operation-not-supported') ||
+        code.includes('popup-closed-by-user') ||
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      ) {
+        await signInWithRedirect(auth, googleProvider)
+        return
+      }
       throw error
     }
   }
