@@ -174,11 +174,12 @@ biriyani/
 
 #### `pages/api/orders/create.js`
 - `handler(req, res)`: `POST` request endpoint for order placement.
-  1. Checks Firestore `settings/restaurant` to verify `isStoreOpen !== false`. Returns `403 Forbidden` if store is turned OFF by admin.
-  2. Connects to MongoDB via `connectDb()`.
-  3. Validates required fields (`items`, `totalAmount`, `deliveryAddress`, `customerPhone`).
-  4. Generates unique readable order ID (e.g. `BS-84920`).
-  5. Saves new `Order` document in MongoDB and returns `201 Created`.
+  1. **Closed Store Shield**: Checks Firestore `settings/restaurant` to verify `isStoreOpen !== false`. Returns `403 Forbidden` if store is turned OFF by admin.
+  2. **Server-Side Coupon Rule Engine**: Re-evaluates applied coupon codes against Cloud Firestore (`coupons` collection). Validates active status, expiration date, global usage limits, minimum order thresholds, and category restrictions. Recalculates verified discount server-side before accepting order to prevent client-side price tampering. Atomically increments `usedCount` upon successful order creation.
+  3. Connects to MongoDB via `connectDb()`.
+  4. Validates required fields (`items`, `totalAmount`, `deliveryAddress`, `customerPhone`).
+  5. Generates unique readable order ID (e.g. `BS-PATNA-84920`).
+  6. Saves new `Order` document in MongoDB and returns `201 Created`.
 
 #### `pages/api/orders/user.js`
 - `handler(req, res)`: `GET` request endpoint. Decodes authorization headers or query parameters to return all orders belonging to a specific user email/UID from MongoDB.
@@ -215,8 +216,9 @@ biriyani/
 ## 🔒 Security & Store Safety Guarantees
 
 1. **Closed Store Shield**: Backend validation in `/api/orders/create.js` blocks any incoming orders directly at the server level when `isStoreOpen` is set to `false`.
-2. **Synchronous Mobile OAuth**: `signInWithPopup` is executed in the direct call stack of mobile touch events to guarantee browsers like Safari and Chrome do not flag Google login as unprompted popup popups.
-3. **Role-Based Access Control (RBAC)**: Admin routes (`/admin/*`) are double-guarded by client-side auth context (`user && isAdmin`) and backend JWT verification.
+2. **Server-Side Coupon Rule Verification**: Re-evaluates applied coupon codes against Cloud Firestore (`coupons` collection). Validates active status, expiration date, global usage limits, minimum order thresholds, and category restrictions. Recalculates verified discount server-side before accepting order to prevent client-side price tampering.
+3. **Synchronous Mobile OAuth**: `signInWithPopup` is executed in the direct call stack of mobile touch events to guarantee browsers like Safari and Chrome do not flag Google login as unprompted popup popups.
+4. **Role-Based Access Control (RBAC)**: Admin routes (`/admin/*`) are double-guarded by client-side auth context (`user && isAdmin`) and backend JWT verification.
 
 ---
 
