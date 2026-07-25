@@ -227,30 +227,58 @@ export default function MenuPage() {
   // Real-time Firestore sync for Menu
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'menu'), (snapshot) => {
-      if (!snapshot.empty) {
-        const docs = snapshot.docs.map(d => {
-          const data = d.data()
-          return {
-            id: d.id,
-            ...data,
-            title: data.name || data.title || 'Unknown Item',
-            priceLabel: `₹${data.price || 0}`,
-            price: data.price || 0,
-            category: data.category || 'kawab',
-            categoryName: data.categoryName || (data.category === 'biryani' ? 'Biryani' : data.category === 'kawab' ? 'Kawabs' : 'Dishes'),
-            tags: data.tags || (data.popular ? ['Bestseller'] : []),
-            spice: data.spice || 'Medium',
-            time: data.preparationTime || '20-25 min',
-            portion: data.portion || 'Serves 1-2',
-            description: data.description || '',
-            image: data.image || '/menu/Chicken tandoori kawab.jpeg'
+      const docs = snapshot.docs.map(d => {
+        const data = d.data()
+        return {
+          id: d.id,
+          ...data,
+          title: data.name || data.title || 'Unknown Item',
+          priceLabel: `₹${data.price || 0}`,
+          price: data.price || 0,
+          category: data.category || 'kawab',
+          categoryName: data.categoryName || (data.category === 'biryani' ? 'Biryani' : data.category === 'kawab' ? 'Kawabs' : 'Dishes'),
+          tags: data.tags || (data.popular ? ['Bestseller'] : []),
+          spice: data.spice || 'Medium',
+          time: data.preparationTime || '20-25 min',
+          portion: data.portion || 'Serves 1-2',
+          description: data.description || '',
+          image: data.image || '/menu/Chicken tandoori kawab.jpeg'
+        }
+      })
+
+      const existingTitles = new Set(docs.map(d => (d.title || '').trim().toLowerCase()))
+      const missingFromCode = ALL_MENU_ITEMS.filter(item => 
+        !existingTitles.has((item.title || '').trim().toLowerCase())
+      )
+
+      // Auto-sync missing items into Firestore in background
+      if (missingFromCode.length > 0) {
+        missingFromCode.forEach(async (item) => {
+          try {
+            await setDoc(doc(db, 'menu', item.id), {
+              name: item.title,
+              title: item.title,
+              description: item.description,
+              price: item.price,
+              category: item.category,
+              categoryName: item.categoryName,
+              image: item.image,
+              available: true,
+              rating: item.rating || 4.8,
+              preparationTime: item.time || '20-25 min',
+              popular: (item.category || '').includes('bestseller'),
+              vegNonVeg: (item.title.toLowerCase().includes('paneer') || item.title.toLowerCase().includes('mushroom') || item.title.toLowerCase().includes('mashroom') || item.title.toLowerCase().includes('matar') || item.title.toLowerCase().includes('mix veg') || item.title.toLowerCase().includes('palak') || item.category.toLowerCase().includes('bread') || item.category.toLowerCase().includes('veg')) ? 'veg' : 'non-veg',
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            }, { merge: true })
+          } catch (e) {
+            console.warn('Auto-sync item notice:', e)
           }
         })
-        // Filter out unavailable items for the public storefront
-        setLiveMenu(docs.filter(item => item.available !== false))
-      } else {
-        setLiveMenu(ALL_MENU_ITEMS)
       }
+
+      const fullList = [...docs, ...missingFromCode].filter(item => item.available !== false)
+      setLiveMenu(fullList.length > 0 ? fullList : ALL_MENU_ITEMS)
       setLoadingMenu(false)
     }, (err) => {
       console.warn('Menu live sync notice:', err.message)
