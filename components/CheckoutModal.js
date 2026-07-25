@@ -36,8 +36,24 @@ export default function CheckoutModal({
     setCouponError('')
     setCouponLoading(true)
 
+    const cleanCode = couponInput.toUpperCase().trim()
+
+    // Secret Promo Code Integration
+    if (cleanCode === 'CODERSAPIEN50') {
+      const calculatedDiscount = Math.round((cartTotal * 50) / 100)
+      setAppliedCoupon({
+        couponCode: 'CODERSAPIEN50',
+        discountType: 'percent',
+        discountValue: 50,
+        discount: calculatedDiscount
+      })
+      setCouponInput('')
+      setCouponLoading(false)
+      return
+    }
+
     try {
-      const q = query(collection(db, 'coupons'), where('couponCode', '==', couponInput.toUpperCase().trim()))
+      const q = query(collection(db, 'coupons'), where('couponCode', '==', cleanCode))
       const snapshot = await getDocs(q)
 
       if (snapshot.empty) {
