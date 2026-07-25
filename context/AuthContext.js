@@ -168,6 +168,13 @@ export function AuthProvider({ children }) {
     return signInWithPopup(auth, googleProvider)
       .then(async (result) => {
         if (result?.user) {
+          setUser({
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Foodie User',
+            photoURL: result.user.photoURL || '',
+          })
+          closeAuthModal()
           await syncWithBackend(result.user)
         }
         return result
