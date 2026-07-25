@@ -98,7 +98,7 @@ biriyani/
 - `calculateTax(subtotal)`: Computes 5% GST tax charge.
 - `calculateDeliveryFee(subtotal)`: Evaluates distance/subtotal tier rules to calculate delivery fee (or free delivery threshold).
 - `calculateGrandTotal()`: Returns `subtotal + tax + deliveryFee - couponDiscount`.
-- `handleApplyCoupon()`: Validates entered coupon code against Firestore active promo codes and updates discount state.
+- `handleApplyCoupon()`: Evaluates entered coupon codes against Firestore with strict 6-rule validation (Active status, Expiry date check, Global usage limits, Minimum order amount, Category restriction matching, and Percentage vs Fixed-amount discount calculation).
 - `handleStep1Submit(e)`: Validates name, phone number, and delivery address inputs. Verifies `settings.isStoreOpen` before advancing to Step 2.
 - `handleFinalOrderSubmit(e)`: Submits finalized order data to `/api/orders/create`. Verifies live store status before execution.
 
@@ -149,8 +149,17 @@ biriyani/
 - `handleDeleteItem(itemId)`: Removes a dish from the menu catalog.
 - `handleToggleAvailability(itemId, currentStatus)`: Instantly toggles a dish's `isAvailable` boolean flag.
 
-#### `pages/admin/coupons.js` (Promo & Discount Management)
-- `AdminCoupons()`: Interface to create, edit, and delete discount codes (`BIR30`, `WELCOME50`).
+#### `pages/admin/coupons.js` (Promo & Rules-Based Coupon Engine)
+- `AdminCouponsDesk()`: Full administrative control desk for creating, toggling, and deleting promo codes backed by Cloud Firestore (`coupons` collection). Supports 6 granular rule parameters:
+  1. **Global Usage Limit (`usageLimit`)**: Maximum total redemptions permitted across all store customers (0 = unlimited).
+  2. **Expiry Date (`expiryDate`)**: Automated cut-off date (`YYYY-MM-DD`) after which the promo code is auto-rejected.
+  3. **Per-User Redemption Limit (`perUserLimit`)**: Restricts the maximum number of times a single account can redeem the coupon code.
+  4. **Minimum Order Threshold (`minimumOrder`)**: Cart total requirement (e.g. ₹299) necessary to unlock the discount.
+  5. **Applicable Categories (`applicableCategory`)**: Scopes promo code validity to specific menu categories (`Biriyani`, `Starters`, `Combos`, `Desserts`, or `All`).
+  6. **Stackability Rules (`isStackable`)**: Configures whether the coupon can be combined with automatic platform discounts or requires exclusive redemption.
+- `handleAddCoupon(e)`: Form handler that validates and persists new rules-based coupon documents to Firestore.
+- `handleToggleCoupon(coupon)`: Toggles active/inactive state of existing coupons.
+- `handleDeleteCoupon(id)`: Permanently removes a promo coupon from the catalog.
 
 #### `pages/admin/settings.js` (Store Operational Master Switch)
 - `AdminSettings()`: Master configuration page for restaurant operations.

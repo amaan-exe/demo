@@ -41,24 +41,70 @@ export default function CheckoutModal({
       const snapshot = await getDocs(q)
 
       if (snapshot.empty) {
-        setCouponError('Invalid coupon code.')
+        setCouponError('Invalid coupon code. Please check for typos.')
         setAppliedCoupon(null)
       } else {
-        const coupon = snapshot.docs[0].data()
+        const coupon = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
 
+        // Rule 1: Active Status
         if (!coupon.active) {
-          setCouponError('This coupon is currently inactive.')
+          setCouponError('This promo coupon is currently inactive.')
           setAppliedCoupon(null)
-        } else if (cartTotal < coupon.minimumOrder) {
-          setCouponError(`Minimum order amount for this coupon is ₹${coupon.minimumOrder}.`)
-          setAppliedCoupon(null)
-        } else {
-          setAppliedCoupon(coupon)
-          setCouponInput('')
+          return
         }
+
+        // Rule 2: Expiry Date Validation
+        if (coupon.expiryDate) {
+          const today = new Date().toISOString().split('T')[0]
+          if (today > coupon.expiryDate) {
+            setCouponError(`This coupon expired on ${coupon.expiryDate}.`)
+            setAppliedCoupon(null)
+            return
+          }
+        }
+
+        // Rule 3: Global Usage Limit
+        if (coupon.usageLimit > 0 && (coupon.usedCount || 0) >= coupon.usageLimit) {
+          setCouponError('This coupon has reached its maximum total redemption limit.')
+          setAppliedCoupon(null)
+          return
+        }
+
+        // Rule 4: Minimum Order Threshold
+        if (cartTotal < coupon.minimumOrder) {
+          setCouponError(`Minimum order requirement for this coupon is ₹${coupon.minimumOrder}.`)
+          setAppliedCoupon(null)
+          return
+        }
+
+        // Rule 5: Applicable Category Check
+        if (coupon.applicableCategory && coupon.applicableCategory !== 'all') {
+          const hasCategoryItem = cartItems.some(item => 
+            (item.category || '').toLowerCase() === coupon.applicableCategory.toLowerCase()
+          )
+          if (!hasCategoryItem) {
+            setCouponError(`This coupon is only valid for items in the '${coupon.applicableCategory}' category.`)
+            setAppliedCoupon(null)
+            return
+          }
+        }
+
+        // Compute Discount Amount (Percentage vs Fixed Amount)
+        let calculatedDiscount = 0
+        if (coupon.discountType === 'percent') {
+          calculatedDiscount = Math.round((cartTotal * coupon.discountValue) / 100)
+        } else {
+          calculatedDiscount = Number(coupon.discountValue) || 0
+        }
+
+        setAppliedCoupon({
+          ...coupon,
+          discount: calculatedDiscount
+        })
+        setCouponInput('')
       }
     } catch (err) {
-      setCouponError('Failed to apply coupon. Try again.')
+      setCouponError('Failed to validate coupon. Please try again.')
       setAppliedCoupon(null)
     } finally {
       setCouponLoading(false)
