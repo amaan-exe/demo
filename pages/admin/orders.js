@@ -11,11 +11,25 @@ export default function AdminOrdersDesk() {
   const [orders, setOrders] = useState([])
   const [filterStatus, setFilterStatus] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
   const [mounted, setMounted] = useState(false)
   const [firestoreError, setFirestoreError] = useState(null)
   const [actionFeedback, setActionFeedback] = useState(null)
   const prevOrderCount = useRef(0)
   const isFirstLoad = useRef(true)
+
+  // Click outside to close status dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setStatusDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -285,11 +299,11 @@ export default function AdminOrdersDesk() {
                 ) : null}
               </div>
 
-              {/* Granular Status Select Dropdown */}
-              <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+              {/* Custom Right-Aligned Status Select Dropdown (Zero Frame Overflow) */}
+              <div ref={dropdownRef} style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px', maxWidth: '260px' }}>
+                <button
+                  type="button"
+                  onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
                   style={{
                     width: '100%',
                     padding: '12px 18px',
@@ -300,20 +314,110 @@ export default function AdminOrdersDesk() {
                     fontWeight: 800,
                     color: 'var(--ink)',
                     cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'space-between',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    outline: 'none'
                   }}
                 >
-                  <option value="all">📦 All Orders ({orders.length})</option>
-                  <option value="UPI Verification Pending">💳 UPI Verification ({countUpiPending})</option>
-                  <option value="Pending">⏳ Pending ({countPending})</option>
-                  <option value="Accepted">👍 Accepted ({countAccepted})</option>
-                  <option value="Preparing">👨‍🍳 Preparing ({countPreparing})</option>
-                  <option value="Ready">🍱 Ready ({countReady})</option>
-                  <option value="Out For Delivery">🛵 Out For Delivery ({countOut})</option>
-                  <option value="Delivered">✅ Delivered ({countDelivered})</option>
-                  <option value="Cancelled">❌ Cancelled ({countCancelled})</option>
-                </select>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span>
+                      {filterStatus === 'all' ? '📦' :
+                       filterStatus === 'UPI Verification Pending' ? '💳' :
+                       filterStatus === 'Pending' ? '⏳' :
+                       filterStatus === 'Accepted' ? '👍' :
+                       filterStatus === 'Preparing' ? '👨‍🍳' :
+                       filterStatus === 'Ready' ? '🍱' :
+                       filterStatus === 'Out For Delivery' ? '🛵' :
+                       filterStatus === 'Delivered' ? '✅' : '❌'}
+                    </span>
+                    <span>
+                      {filterStatus === 'all' ? `All Orders (${orders.length})` :
+                       filterStatus === 'UPI Verification Pending' ? `UPI Verification (${countUpiPending})` :
+                       filterStatus === 'Pending' ? `Pending (${countPending})` :
+                       filterStatus === 'Accepted' ? `Accepted (${countAccepted})` :
+                       filterStatus === 'Preparing' ? `Preparing (${countPreparing})` :
+                       filterStatus === 'Ready' ? `Ready (${countReady})` :
+                       filterStatus === 'Out For Delivery' ? `Out For Delivery (${countOut})` :
+                       filterStatus === 'Delivered' ? `Delivered (${countDelivered})` : `Cancelled (${countCancelled})`}
+                    </span>
+                  </span>
+                  <span style={{ fontSize: '0.65rem', opacity: 0.6, transform: statusDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', marginLeft: '6px' }}>▼</span>
+                </button>
+
+                {/* Dropdown Panel Aligned to Right Edge (Opens Inwards, NEVER overflows frame!) */}
+                {statusDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      right: 0, // Aligned to RIGHT edge so it opens INWARDS inside the frame!
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(13,90,58,0.18)',
+                      boxShadow: '0 12px 36px rgba(0,0,0,0.15)',
+                      padding: '8px',
+                      minWidth: '220px',
+                      maxWidth: 'calc(100vw - 32px)',
+                      zIndex: 2000,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '3px'
+                    }}
+                  >
+                    {[
+                      { id: 'all', label: 'All Orders', icon: '📦', count: orders.length },
+                      { id: 'UPI Verification Pending', label: 'UPI Verification', icon: '💳', count: countUpiPending, highlight: countUpiPending > 0 },
+                      { id: 'Pending', label: 'Pending', icon: '⏳', count: countPending, highlight: countPending > 0 },
+                      { id: 'Accepted', label: 'Accepted', icon: '👍', count: countAccepted },
+                      { id: 'Preparing', label: 'Preparing', icon: '👨‍🍳', count: countPreparing },
+                      { id: 'Ready', label: 'Ready', icon: '🍱', count: countReady },
+                      { id: 'Out For Delivery', label: 'Out For Delivery', icon: '🛵', count: countOut },
+                      { id: 'Delivered', label: 'Delivered', icon: '✅', count: countDelivered },
+                      { id: 'Cancelled', label: 'Cancelled', icon: '❌', count: countCancelled }
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setFilterStatus(opt.id)
+                          setStatusDropdownOpen(false)
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justify: 'space-between',
+                          padding: '10px 14px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          background: filterStatus === opt.id ? 'rgba(13,90,58,0.08)' : 'transparent',
+                          color: filterStatus === opt.id ? 'var(--deep-green)' : 'var(--ink)',
+                          fontWeight: filterStatus === opt.id ? 900 : 700,
+                          fontSize: '0.84rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.15s ease'
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>{opt.icon}</span>
+                          <span>{opt.label}</span>
+                        </span>
+                        <span style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '999px',
+                          background: opt.highlight ? '#f59e0b' : 'rgba(0,0,0,0.06)',
+                          color: opt.highlight ? '#ffffff' : 'var(--ink)'
+                        }}>
+                          {opt.count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
