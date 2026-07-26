@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
 
 export default function ProfilePage() {
-  const { user, userProfile, isAdmin, updateUserProfileData, logout, openAuthModal } = useAuth()
+  const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, updateUserProfileData, logout, openAuthModal } = useAuth()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
@@ -238,6 +238,18 @@ export default function ProfilePage() {
             <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
               <span className="tab-icon">🛡️</span>
               Admin
+            </Link>
+          )}
+          {user && isStaffOnly && (
+            <Link href="/kitchen" style={{ color: '#ea580c', fontWeight: 800 }}>
+              <span className="tab-icon">🍳</span>
+              Kitchen
+            </Link>
+          )}
+          {user && isDeliveryOnly && (
+            <Link href="/delivery" style={{ color: '#0284c7', fontWeight: 800 }}>
+              <span className="tab-icon">🛵</span>
+              Delivery
             </Link>
           )}
           <Link href="/profile" className="active"><span className="tab-icon">{'\u{1F464}'}</span>Profile</Link>

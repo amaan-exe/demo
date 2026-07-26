@@ -32,16 +32,25 @@ export default function AdminDashboard() {
   }, [])
 
   // Calculate Metrics
-  const pendingCount = orders.filter(o =>
-    o.orderStatus === 'payment_verification_pending' ||
-    o.orderStatus === 'verification_pending' ||
-    o.orderStatus === 'Awaiting Payment Verification' ||
-    o.orderStatus === 'Pending' ||
-    o.orderStatus === 'Accepted' ||
-    o.orderStatus === 'Preparing'
-  ).length
-  const completedCount = orders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered').length
-  const totalRevenue = orders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered').reduce((sum, o) => sum + (o.grandTotal || 0), 0)
+  const pendingCount = orders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toLowerCase()
+    return st === 'pending' || st === 'upi verification pending' || st === 'payment_verification_pending' || st === 'accepted' || st === 'preparing'
+  }).length
+  const completedCount = orders.filter(o => (o.orderStatus || o.status || '').toLowerCase() === 'delivered').length
+
+  const grossRevenue = orders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toLowerCase()
+    const paySt = (o.paymentStatus || '').toLowerCase()
+    return paySt === 'paid' || paySt === 'verified' || st === 'accepted' || st === 'confirmed' || st === 'delivered' || st === 'refunded'
+  }).reduce((sum, o) => sum + (o.grandTotal || o.amount || 0), 0)
+
+  const totalRefundAmount = orders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toUpperCase()
+    const refSt = (o.refund?.status || '').toUpperCase()
+    return st === 'REFUNDED' || refSt === 'REFUNDED'
+  }).reduce((sum, o) => sum + (o.refund?.amount || o.grandTotal || 0), 0)
+
+  const netRevenue = grossRevenue - totalRefundAmount
 
   return (
     <AdminLayout activePage="dashboard" title="Overview Dashboard">
@@ -113,10 +122,13 @@ export default function AdminDashboard() {
 
             <div style={{ borderRadius: '12px', padding: '16px', background: 'var(--deep-green)', border: '1px solid var(--deep-green)', color: '#ffffff', boxShadow: '0 4px 14px rgba(13,90,58,0.2)' }}>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'rgba(255,255,255,0.8)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                💰 TOTAL REVENUE
+                💰 NET REVENUE
               </span>
               <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#ffffff', marginTop: '4px' }}>
-                ₹{totalRevenue.toFixed(0)}
+                ₹{netRevenue.toFixed(0)}
+              </div>
+              <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px' }}>
+                Gross ₹{grossRevenue.toFixed(0)} - Refund ₹{totalRefundAmount.toFixed(0)}
               </div>
             </div>
           </div>

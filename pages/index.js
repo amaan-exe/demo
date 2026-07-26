@@ -12,7 +12,7 @@ import AnnouncementBanner from '../components/AnnouncementBanner'
 
 export default function Home() {
   const router = useRouter()
-  const { user, userProfile, isAdmin, openAuthModal, logout } = useAuth()
+  const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, logout } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
@@ -332,6 +332,54 @@ export default function Home() {
               🛡️ ADMIN
             </Link>
           )}
+          {user && isStaffOnly && (
+            <Link
+              href="/kitchen"
+              className="kitchen-header-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#ea580c',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.4)',
+                padding: '5px 11px',
+                borderRadius: '999px',
+                fontSize: '0.72rem',
+                fontWeight: '900',
+                textDecoration: 'none',
+                letterSpacing: '0.06em',
+                boxShadow: '0 4px 14px rgba(234,88,12,0.25)',
+                marginLeft: '6px'
+              }}
+            >
+              🍳 KITCHEN
+            </Link>
+          )}
+          {user && isDeliveryOnly && (
+            <Link
+              href="/delivery"
+              className="delivery-header-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.4)',
+                padding: '5px 11px',
+                borderRadius: '999px',
+                fontSize: '0.72rem',
+                fontWeight: '900',
+                textDecoration: 'none',
+                letterSpacing: '0.06em',
+                boxShadow: '0 4px 14px rgba(2,132,199,0.25)',
+                marginLeft: '6px'
+              }}
+            >
+              🛵 DELIVERY
+            </Link>
+          )}
 
           <button className="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
             <span></span>
@@ -367,6 +415,40 @@ export default function Home() {
                 }}
               >
                 🛡️ ADMIN PORTAL
+              </Link>
+            )}
+            {isStaffOnly && (
+              <Link
+                href="/kitchen"
+                onClick={() => setIsNavOpen(false)}
+                style={{
+                  color: '#ea580c',
+                  fontWeight: '900',
+                  letterSpacing: '0.08em',
+                  background: 'rgba(234,88,12,0.15)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(234,88,12,0.3)'
+                }}
+              >
+                🍳 KITCHEN PORTAL
+              </Link>
+            )}
+            {isDeliveryOnly && (
+              <Link
+                href="/delivery"
+                onClick={() => setIsNavOpen(false)}
+                style={{
+                  color: '#0284c7',
+                  fontWeight: '900',
+                  letterSpacing: '0.08em',
+                  background: 'rgba(2,132,199,0.15)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(2,132,199,0.3)'
+                }}
+              >
+                🛵 DELIVERY PORTAL
               </Link>
             )}
             <a href="#contact" onClick={() => setIsNavOpen(false)}>CONTACT</a>
@@ -1008,6 +1090,18 @@ export default function Home() {
             <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
               <span className="tab-icon">🛡️</span>
               Admin
+            </Link>
+          )}
+          {user && isStaffOnly && (
+            <Link href="/kitchen" style={{ color: '#ea580c', fontWeight: 800 }}>
+              <span className="tab-icon">🍳</span>
+              Kitchen
+            </Link>
+          )}
+          {user && isDeliveryOnly && (
+            <Link href="/delivery" style={{ color: '#0284c7', fontWeight: 800 }}>
+              <span className="tab-icon">🛵</span>
+              Delivery
             </Link>
           )}
           {user ? (

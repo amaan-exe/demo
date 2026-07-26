@@ -26,8 +26,7 @@ export default function AdminUsersDesk() {
     }
   }
 
-  const handleToggleAdminRole = async (usr) => {
-    const newRole = usr.role === 'admin' ? 'customer' : 'admin'
+  const handleChangeUserRole = async (usr, newRole) => {
     try {
       await updateDoc(doc(db, 'users', usr.id), { role: newRole })
     } catch (e) {
@@ -39,9 +38,12 @@ export default function AdminUsersDesk() {
 
   // Filter users by search and role
   const filteredUsers = usersList.filter(u => {
+    const r = (u.role || 'customer').toLowerCase()
     if (roleFilter !== 'all') {
-      if (roleFilter === 'admin' && u.role !== 'admin') return false
-      if (roleFilter === 'customer' && u.role === 'admin') return false
+      if (roleFilter === 'admin' && r !== 'admin') return false
+      if (roleFilter === 'staff' && r !== 'staff') return false
+      if (roleFilter === 'delivery' && r !== 'delivery') return false
+      if (roleFilter === 'customer' && r !== 'customer') return false
       if (roleFilter === 'blocked' && !u.isBlocked) return false
     }
 
@@ -55,18 +57,21 @@ export default function AdminUsersDesk() {
     return true
   })
 
-  const adminCount = usersList.filter(u => u.role === 'admin').length
+  const adminCount = usersList.filter(u => (u.role || '').toLowerCase() === 'admin').length
+  const staffCount = usersList.filter(u => (u.role || '').toLowerCase() === 'staff').length
+  const deliveryCount = usersList.filter(u => (u.role || '').toLowerCase() === 'delivery').length
+  const customerCount = usersList.filter(u => !(u.role) || (u.role || '').toLowerCase() === 'customer').length
   const blockedCount = usersList.filter(u => u.isBlocked).length
 
   return (
-    <AdminLayout activePage="users" title="Customer Management">
+    <AdminLayout activePage="users" title="User Management & Roles">
       <div className="admin-page-container">
         {/* EXECUTIVE CONTROL CARD FOR USER DIRECTORY */}
         <div className="admin-control-hero-card">
           <div className="admin-orders-header">
             <div className="admin-title-area">
               <span className="admin-sync-pill">REGISTERED ACCOUNTS & ROLES</span>
-              <h1>User Directory</h1>
+              <h1>User & Role Directory</h1>
             </div>
 
             {/* Search Input Box */}
@@ -99,7 +104,7 @@ export default function AdminUsersDesk() {
                 className={`status-counter-btn ${roleFilter === 'all' ? 'active' : ''}`}
                 onClick={() => setRoleFilter('all')}
               >
-                👥 ALL USERS <span className="status-count-badge">{usersList.length}</span>
+                👥 ALL ({usersList.length})
               </button>
 
               <button
@@ -112,10 +117,26 @@ export default function AdminUsersDesk() {
 
               <button
                 type="button"
+                className={`status-counter-btn ${roleFilter === 'staff' ? 'active' : ''}`}
+                onClick={() => setRoleFilter('staff')}
+              >
+                🍳 KITCHEN STAFF <span className="status-count-badge">{staffCount}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`status-counter-btn ${roleFilter === 'delivery' ? 'active' : ''}`}
+                onClick={() => setRoleFilter('delivery')}
+              >
+                🛵 DELIVERY PARTNERS <span className="status-count-badge">{deliveryCount}</span>
+              </button>
+
+              <button
+                type="button"
                 className={`status-counter-btn ${roleFilter === 'customer' ? 'active' : ''}`}
                 onClick={() => setRoleFilter('customer')}
               >
-                🍔 CUSTOMERS <span className="status-count-badge">{usersList.length - adminCount}</span>
+                🍔 CUSTOMERS <span className="status-count-badge">{customerCount}</span>
               </button>
 
               <button
@@ -148,44 +169,60 @@ export default function AdminUsersDesk() {
             <p className="empty-msg">No matching user accounts found.</p>
           ) : (
             <div className="user-cards-grid">
-              {filteredUsers.map(u => (
-                <div key={u.id} className="adm-user-card">
-                  <div className="user-card-top">
-                    <div className="user-info-meta">
-                      <strong>{u.name || 'Foodie Customer'}</strong>
-                      <span>{u.email}</span>
-                      {u.phone && <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '2px' }}>📞 {u.phone}</span>}
+              {filteredUsers.map(u => {
+                const currentRole = (u.role || 'customer').toLowerCase()
+                return (
+                  <div key={u.id} className="adm-user-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '12px' }}>
+                    <div className="user-card-top">
+                      <div className="user-info-meta">
+                        <strong>{u.name || 'Foodie Customer'}</strong>
+                        <span>{u.email}</span>
+                        {u.phone && <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '2px' }}>📞 {u.phone}</span>}
+                      </div>
+
+                      <span className={`user-role-badge ${currentRole}`}>
+                        {currentRole === 'admin' ? '🛡️ Admin' : currentRole === 'staff' ? '🍳 Staff' : currentRole === 'delivery' ? '🛵 Delivery' : '👤 Customer'}
+                      </span>
                     </div>
 
-                    <span className={`user-role-badge ${u.role === 'admin' ? 'admin' : 'customer'}`}>
-                      {u.role === 'admin' ? '🛡️ Admin' : '👤 Customer'}
-                    </span>
-                  </div>
+                    {/* Role Dropdown Selector & Status Controls */}
+                    <div className="user-card-bot" style={{ flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--muted)' }}>Role:</span>
+                        <select
+                          value={currentRole}
+                          onChange={(e) => handleChangeUserRole(u, e.target.value)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(0,0,0,0.15)',
+                            background: '#ffffff',
+                            fontSize: '0.8rem',
+                            fontWeight: 800,
+                            color: 'var(--ink)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="customer">👤 Customer</option>
+                          <option value="staff">🍳 Staff (Kitchen)</option>
+                          <option value="delivery">🛵 Delivery Partner</option>
+                          <option value="admin">🛡️ Admin</option>
+                        </select>
+                      </div>
 
-                  <div className="user-card-bot">
-                    <span className={`user-status-text ${u.isBlocked ? 'blocked' : 'active'}`}>
-                      {u.isBlocked ? '🔴 Blocked' : '🟢 Active'}
-                    </span>
-
-                    <div className="user-action-btns">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleAdminRole(u)}
-                        className="user-role-btn"
-                      >
-                        {u.role === 'admin' ? 'Demote' : 'Make Admin'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleBlock(u)}
-                        className={`user-block-btn ${u.isBlocked ? 'unblock' : 'block'}`}
-                      >
-                        {u.isBlocked ? 'Unblock' : 'Block'}
-                      </button>
+                      <div className="user-action-btns">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBlock(u)}
+                          className={`user-block-btn ${u.isBlocked ? 'unblock' : 'block'}`}
+                        >
+                          {u.isBlocked ? 'Unblock' : 'Block'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

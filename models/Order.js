@@ -63,6 +63,16 @@ const OrderSchema = new mongoose.Schema({
   paymentVerifiedBy: String,
   paymentVerifiedAt: Date,
   rejectionReason: String,
+  refund: {
+    requested: { type: Boolean, default: false },
+    status: { type: String, default: 'NONE' },
+    requestedAt: Date,
+    processingAt: Date,
+    refundedAt: Date,
+    refundedBy: String,
+    amount: Number,
+    cancellationReason: String
+  },
   createdAt: {
     type: Date,
     default: Date.now,

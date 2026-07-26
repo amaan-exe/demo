@@ -254,14 +254,24 @@ export function AuthProvider({ children }) {
   }
 
   const currentEmail = (user?.email || userProfile?.email || '').toLowerCase().trim()
-  const isAdmin = Boolean(user && currentEmail && (userProfile?.role === 'admin' || user?.role === 'admin' || ADMIN_EMAILS.includes(currentEmail)))
+  const userRole = (userProfile?.role || user?.role || 'customer').toLowerCase()
+  const isAdmin = Boolean(user && currentEmail && (userRole === 'admin' || ADMIN_EMAILS.includes(currentEmail)))
+  const isStaff = Boolean(user && (isAdmin || userRole === 'staff'))
+  const isDelivery = Boolean(user && (isAdmin || userRole === 'delivery'))
+  const isStaffOnly = Boolean(user && !isAdmin && userRole === 'staff')
+  const isDeliveryOnly = Boolean(user && !isAdmin && userRole === 'delivery')
 
   return (
     <AuthContext.Provider
       value={{
         user,
         userProfile,
+        userRole: isAdmin ? 'admin' : userRole,
         isAdmin,
+        isStaff,
+        isDelivery,
+        isStaffOnly,
+        isDeliveryOnly,
         accessToken,
         loading,
         isAuthModalOpen,

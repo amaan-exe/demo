@@ -10,10 +10,33 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
   const { user, isAdmin, logout, openAuthModal } = useAuth()
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [pendingRefundCount, setPendingRefundCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!user || !isAdmin) return
+    let unsub = () => {}
+    try {
+      import('firebase/firestore').then(({ collection, onSnapshot }) => {
+        import('../lib/firebase').then(({ db }) => {
+          unsub = onSnapshot(collection(db, 'orders'), (snap) => {
+            const count = snap.docs.filter(d => {
+              const data = d.data()
+              const st = (data.orderStatus || data.status || '').toUpperCase()
+              const refSt = (data.refund?.status || '').toUpperCase()
+              return (st === 'REFUND_PENDING' || refSt === 'REFUND_PENDING' || data.refund?.requested === true) && st !== 'REFUNDED' && refSt !== 'REFUNDED'
+            }).length
+            setPendingRefundCount(count)
+          })
+        })
+      })
+    } catch (e) {}
+
+    return () => unsub()
+  }, [user, isAdmin])
 
   if (!mounted) return null
 
@@ -53,6 +76,7 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
   const navItems = [
     { key: 'dashboard', label: 'Overview', href: '/admin', icon: '📊' },
     { key: 'orders', label: 'Live Orders', href: '/admin/orders', icon: '📦' },
+    { key: 'refunds', label: 'Refunds Desk', href: '/admin/refunds', icon: '💸' },
     { key: 'menu', label: 'Dish Menu', href: '/admin/menu', icon: '🍛' },
     { key: 'coupons', label: 'Coupons', href: '/admin/coupons', icon: '🎟️' },
     { key: 'users', label: 'Customers', href: '/admin/users', icon: '👤' },
@@ -133,9 +157,24 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
                 key={item.key}
                 href={item.href}
                 className={`sidebar-link ${activePage === item.key ? 'active' : ''}`}
+                style={{ position: 'relative' }}
               >
                 <span className="link-icon">{item.icon}</span>
                 <span className="link-label">{item.label}</span>
+                {item.key === 'refunds' && pendingRefundCount > 0 && (
+                  <span style={{
+                    background: '#dc2626',
+                    color: '#ffffff',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    padding: '2px 7px',
+                    borderRadius: '999px',
+                    marginLeft: 'auto',
+                    boxShadow: '0 2px 6px rgba(220,38,38,0.4)'
+                  }}>
+                    {pendingRefundCount}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
@@ -176,13 +215,13 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
           <span className="adm-icon">📦</span>
           <span className="adm-label">Orders</span>
         </Link>
+        <Link href="/admin/refunds" className={`adm-tab ${activePage === 'refunds' ? 'active' : ''}`}>
+          <span className="adm-icon">💸</span>
+          <span className="adm-label">Refunds</span>
+        </Link>
         <Link href="/admin/menu" className={`adm-tab ${activePage === 'menu' ? 'active' : ''}`}>
           <span className="adm-icon">🍛</span>
           <span className="adm-label">Menu</span>
-        </Link>
-        <Link href="/admin/settings" className={`adm-tab ${activePage === 'settings' ? 'active' : ''}`}>
-          <span className="adm-icon">⚙️</span>
-          <span className="adm-label">Settings</span>
         </Link>
       </nav>
     </div>

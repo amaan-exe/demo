@@ -1,16 +1,25 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { collection, query, where, onSnapshot } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 
 export default function MyOrdersPage() {
-  const { user, isAdmin, openAuthModal } = useAuth()
+  const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal } = useAuth()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [cancelModalOrder, setCancelModalOrder] = useState(null)
+  const [cancellationReason, setCancellationReason] = useState('')
+  const [submittingCancel, setSubmittingCancel] = useState(false)
+  const [toast, setToast] = useState(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
+
+  const triggerToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3500)
+  }
 
   useEffect(() => {
     if (!user) {
@@ -38,7 +47,10 @@ export default function MyOrdersPage() {
                 hour: '2-digit', minute: '2-digit'
               })
             } else if (data.createdAt) {
-              dateStr = new Date(data.createdAt).toLocaleDateString()
+              dateStr = new Date(data.createdAt).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
             }
           } catch (e) {}
 
@@ -86,7 +98,6 @@ export default function MyOrdersPage() {
         if (fetchedList.length > 0) {
           setOrders(prev => {
             const map = new Map()
-            // First load fetched, then let existing (or Firestore synced) items update/override
             fetchedList.forEach(item => map.set(item.orderId || item.id, item))
             prev.forEach(item => map.set(item.orderId || item.id, { ...map.get(item.orderId || item.id), ...item }))
             return Array.from(map.values())
@@ -97,7 +108,84 @@ export default function MyOrdersPage() {
     setLoading(false)
   }
 
+  const handleRequestCancellation = async () => {
+    if (!cancelModalOrder) return
+    setSubmittingCancel(true)
+
+    const rawId = cancelModalOrder.orderId || cancelModalOrder.id || ''
+    const cleanDocId = String(rawId).replace(/^#/, '').trim()
+    const grandTotal = cancelModalOrder.grandTotal || cancelModalOrder.amount || 0
+
+    const refundPayload = {
+      requested: true,
+      status: 'REFUND_PENDING',
+      requestedAt: new Date().toISOString(),
+      processingAt: null,
+      refundedAt: null,
+      refundedBy: null,
+      amount: grandTotal,
+      cancellationReason: cancellationReason || 'Customer requested cancellation'
+    }
+
+    try {
+      // 1. Update Firestore in real time
+      const targetDocRef = doc(db, 'orders', cleanDocId)
+      await updateDoc(targetDocRef, {
+        orderStatus: 'REFUND_PENDING',
+        status: 'REFUND_PENDING',
+        updatedAt: serverTimestamp(),
+        refund: refundPayload
+      }).catch(async () => {
+        // Fallback: try using original id
+        if (cancelModalOrder.id && cancelModalOrder.id !== cleanDocId) {
+          await updateDoc(doc(db, 'orders', cancelModalOrder.id), {
+            orderStatus: 'REFUND_PENDING',
+            status: 'REFUND_PENDING',
+            updatedAt: serverTimestamp(),
+            refund: refundPayload
+          }).catch(() => {})
+        }
+      })
+
+      // 2. Call Server API
+      await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: cleanDocId,
+          cancellationReason: cancellationReason || 'Customer requested cancellation',
+          userEmail: user.email,
+          userId: user.uid
+        })
+      }).catch(() => {})
+
+      triggerToast('Order cancellation requested! Moved to Refund Queue.')
+      setCancelModalOrder(null)
+      setCancellationReason('')
+    } catch (err) {
+      triggerToast('Notice: ' + err.message)
+    } finally {
+      setSubmittingCancel(false)
+    }
+  }
+
+  // Check if order is eligible for customer cancellation
+  const isEligibleForCancellation = (order) => {
+    const st = (order.orderStatus || order.status || '').toLowerCase()
+    const refRequested = order.refund?.requested === true
+    if (refRequested) return false
+
+    // Allowed ONLY when payment is verified and before ready for delivery
+    const allowed = ['payment_verified', 'payment verified', 'confirmed', 'accepted', 'preparing']
+    return allowed.includes(st)
+  }
+
   const getStatusColor = (status) => {
+    const s = (status || '').toLowerCase()
+    if (s.includes('refund_pending')) return { bg: 'rgba(220, 38, 38, 0.15)', color: '#dc2626', border: 'rgba(220, 38, 38, 0.3)' }
+    if (s.includes('refund_processing')) return { bg: 'rgba(217, 119, 6, 0.15)', color: '#d97706', border: 'rgba(217, 119, 6, 0.3)' }
+    if (s.includes('refunded')) return { bg: 'rgba(5, 150, 105, 0.15)', color: '#059669', border: 'rgba(5, 150, 105, 0.3)' }
+
     switch (status) {
       case 'verification_pending':
       case 'payment_verification_pending':
@@ -107,6 +195,8 @@ export default function MyOrdersPage() {
       case 'paid':
       case 'accepted':
       case 'Accepted':
+      case 'CONFIRMED':
+      case 'Confirmed':
         return { bg: 'rgba(13, 90, 58, 0.15)', color: 'var(--deep-green)', border: 'rgba(13, 90, 58, 0.3)' }
       case 'preparing':
       case 'Preparing':
@@ -130,31 +220,61 @@ export default function MyOrdersPage() {
     }
   }
 
-  const statusSteps = ['Order Placed', 'Payment Verification Pending', 'Accepted', 'Preparing', 'Ready', 'Out For Delivery', 'Delivered']
+  const standardSteps = ['Order Placed', 'Payment Verification Pending', 'Accepted', 'Preparing', 'Ready', 'Out For Delivery', 'Delivered']
+  const refundSteps = ['Order Placed', 'Payment Verified', 'Cancellation Requested', 'Refund Processing', 'Refund Completed']
 
   const getStatusEmoji = (step) => {
     const map = {
-      'Order Placed': '\u{1F4CB}',
-      'Payment Verification Pending': '\u{1F504}',
-      'Accepted': '\u2705',
-      'Preparing': '\u{1F468}\u200D\u{1F373}',
-      'Ready': '\u{1F37D}\uFE0F',
-      'Out For Delivery': '\u{1F6F5}',
-      'Delivered': '\u{1F389}'
+      'Order Placed': '📋',
+      'Payment Verification Pending': '🔄',
+      'Payment Verified': '✅',
+      'Accepted': '👍',
+      'Preparing': '👨‍🍳',
+      'Ready': '🍱',
+      'Out For Delivery': '🛵',
+      'Delivered': '🎉',
+      'Cancellation Requested': '📝',
+      'Refund Processing': '⏳',
+      'Refund Completed': '💸'
     }
-    return map[step] || '\u25CB'
+    return map[step] || '📌'
   }
 
   useEffect(() => {
-    document.body.style.overflow = selectedOrder ? 'hidden' : ''
+    if (selectedOrder || cancelModalOrder) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
     return () => { document.body.style.overflow = '' }
-  }, [selectedOrder])
+  }, [selectedOrder, cancelModalOrder])
 
   return (
     <>
       <Head>
-        <title>My Orders | Biriyani Station Patna</title>
+        <title>My Orders & Refund Status | Biriyani Station Patna</title>
       </Head>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#0d5a3a',
+          color: '#ffffff',
+          padding: '12px 24px',
+          borderRadius: '999px',
+          fontSize: '0.9rem',
+          fontWeight: 900,
+          zIndex: 9999,
+          boxShadow: '0 8px 30px rgba(13,90,58,0.3)',
+          fontFamily: "'Outfit', sans-serif"
+        }}>
+          ⚡ {toast}
+        </div>
+      )}
 
       <header className="site-header scrolled" id="top">
         <nav className="nav container">
@@ -173,7 +293,7 @@ export default function MyOrdersPage() {
             <Link href="/menu" onClick={() => setIsNavOpen(false)}>MENU</Link>
             <Link href="/my-orders" className="active" style={{ color: 'var(--yellow)' }} onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
             <Link href="/profile" onClick={() => setIsNavOpen(false)}>PROFILE</Link>
-            
+
             {!user && (
               <button className="btn" onClick={() => { openAuthModal(); setIsNavOpen(false); }}>
                 SIGN IN
@@ -187,19 +307,19 @@ export default function MyOrdersPage() {
         <div className="container" style={{ maxWidth: '900px' }}>
           <div style={{ marginBottom: '32px', textAlign: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.22em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
-              REAL-TIME TRACKING
+              REAL-TIME TRACKING & REFUNDS
             </span>
             <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(2rem, 6vw, 2.8rem)', fontWeight: 900, color: 'var(--ink)', margin: '6px 0' }}>
               My Orders
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: '0.95rem' }}>
-              Track live updates as our chefs prepare your dum pukht biryani & clay-oven tandoori kawabs.
+              Track live food prep updates and manage cancellations & refunds seamlessly.
             </p>
           </div>
 
           {!user ? (
             <div className="empty-state">
-              <span className="empty-state-icon">{'\u{1F512}'}</span>
+              <span className="empty-state-icon">🔒</span>
               <h2>Please Sign In</h2>
               <p>You must be logged in to view your orders.</p>
               <button onClick={openAuthModal} className="btn" style={{ padding: '12px 28px' }}>SIGN IN NOW</button>
@@ -211,7 +331,7 @@ export default function MyOrdersPage() {
             </div>
           ) : orders.length === 0 ? (
             <div className="empty-state">
-              <span className="empty-state-icon">{'\u{1F372}'}</span>
+              <span className="empty-state-icon">🍲</span>
               <h2>No Orders Placed Yet</h2>
               <p>Explore our authentic charcoal kawabs and dum biryanis to place your first order!</p>
               <Link href="/menu" className="btn" style={{ padding: '14px 32px' }}>EXPLORE MENU</Link>
@@ -219,9 +339,24 @@ export default function MyOrdersPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {orders.map((order) => {
+                const st = (order.orderStatus || order.status || 'Confirmed').toUpperCase()
+                const refSt = (order.refund?.status || '').toUpperCase()
+                const isRefundWorkflow = st === 'REFUND_PENDING' || st === 'REFUND_PROCESSING' || st === 'REFUNDED' || refSt === 'REFUND_PENDING' || refSt === 'REFUND_PROCESSING' || refSt === 'REFUNDED' || order.refund?.requested === true
+
                 const statusStyle = getStatusColor(order.orderStatus || 'Confirmed')
-                const currentStepIdx = statusSteps.indexOf(order.orderStatus)
-                
+                const canCancel = isEligibleForCancellation(order)
+
+                // Step index for progress timeline
+                let activeSteps = standardSteps
+                let currentStepIdx = standardSteps.indexOf(order.orderStatus)
+
+                if (isRefundWorkflow) {
+                  activeSteps = refundSteps
+                  if (st === 'REFUNDED' || refSt === 'REFUNDED') currentStepIdx = 4
+                  else if (st === 'REFUND_PROCESSING' || refSt === 'REFUND_PROCESSING') currentStepIdx = 3
+                  else currentStepIdx = 2
+                }
+
                 return (
                   <div
                     key={order.id || order.orderId}
@@ -230,73 +365,89 @@ export default function MyOrdersPage() {
                       background: '#ffffff',
                       borderRadius: '24px',
                       padding: '24px',
-                      border: '1px solid rgba(13,90,58,0.1)',
+                      border: isRefundWorkflow ? '2px solid rgba(220,38,38,0.2)' : '1px solid rgba(13,90,58,0.1)',
                       boxShadow: '0 6px 24px rgba(0,0,0,0.04)',
-                      cursor: 'pointer',
-                      transition: 'transform 0.15s ease',
-                      WebkitTapHighlightColor: 'transparent'
+                      transition: 'transform 0.15s ease'
                     }}
-                    onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="order-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                      <div>
+                    {/* Order Card Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div onClick={() => setSelectedOrder(order)} style={{ cursor: 'pointer' }}>
                         <span style={{ fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.15em', color: 'var(--muted)', textTransform: 'uppercase' }}>
                           ORDER ID
                         </span>
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--ink)', margin: 0 }}>
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--ink)', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>
                           #{order.orderId || order.id?.slice(0, 8)}
                         </h3>
                         <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{order.createdAt}</span>
                       </div>
-                      <span className="status-badge" style={{ background: statusStyle.bg, color: statusStyle.color, border: `1px solid ${statusStyle.border}` }}>
-                        {'\u25CF'} {order.orderStatus || 'Confirmed'}
-                      </span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span className="status-badge" style={{ background: statusStyle.bg, color: statusStyle.color, border: `1px solid ${statusStyle.border}`, fontWeight: 900 }}>
+                          ● {order.orderStatus || 'Confirmed'}
+                        </span>
+
+                        {/* PROMINENT CANCEL ORDER BUTTON (when eligible) */}
+                        {canCancel && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCancelModalOrder(order)
+                            }}
+                            style={{
+                              background: '#fee2e2',
+                              color: '#dc2626',
+                              border: '1.5px solid #dc2626',
+                              padding: '6px 14px',
+                              borderRadius: '999px',
+                              fontSize: '0.78rem',
+                              fontWeight: 900,
+                              cursor: 'pointer',
+                              fontFamily: "'Outfit', sans-serif",
+                              boxShadow: '0 2px 8px rgba(220,38,38,0.15)'
+                            }}
+                          >
+                            Cancel Order 🚫
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {(order.paymentStatus === 'verification_pending' || order.orderStatus === 'payment_verification_pending' || order.orderStatus === 'Awaiting Payment Verification') && (
-                      <div style={{ background: 'rgba(245, 200, 66, 0.14)', border: '1px solid rgba(245, 200, 66, 0.4)', borderRadius: '14px', padding: '12px 14px', marginBottom: '14px' }}>
-                        <p style={{ margin: 0, color: '#8a6200', fontWeight: 800, fontSize: '0.85rem' }}>
-                          {'\u{1F7E1}'} Payment Verification Pending
-                        </p>
-                        <p style={{ margin: '4px 0 0 0', color: '#665000', fontSize: '0.8rem', lineHeight: 1.5 }}>
-                          Submitted. Verifying now. Est: 1\u20135 min.
-                        </p>
+                    {/* Refund Banner if Refund Completed */}
+                    {(st === 'REFUNDED' || refSt === 'REFUNDED') && (
+                      <div style={{ background: '#d1fae5', border: '1.5px solid #059669', borderRadius: '14px', padding: '14px 16px', marginBottom: '16px' }}>
+                        <div style={{ color: '#059669', fontWeight: 900, fontSize: '0.95rem', fontFamily: "'Outfit', sans-serif", marginBottom: '4px' }}>
+                          ✅ Refund Completed
+                        </div>
+                        <div style={{ color: '#065f46', fontSize: '0.85rem', fontWeight: 800 }}>
+                          ₹{(order.refund?.amount || order.grandTotal || 0).toFixed(0)} refunded successfully
+                        </div>
+                        {order.refund?.refundedAt && (
+                          <div style={{ color: 'var(--muted)', fontSize: '0.75rem', marginTop: '4px' }}>
+                            Processed on {new Date(order.refund.refundedAt).toLocaleString([], { dateStyle: 'long', timeStyle: 'short' })}
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {(order.paymentStatus === 'paid' || order.paymentStatus === 'Paid') && (
-                      <div style={{ background: 'rgba(13, 90, 58, 0.12)', border: '1px solid rgba(13, 90, 58, 0.3)', borderRadius: '14px', padding: '12px 14px', marginBottom: '14px' }}>
-                        <p style={{ margin: 0, color: 'var(--deep-green)', fontWeight: 800, fontSize: '0.85rem' }}>
-                          {'\u{1F7E2}'} Payment Verified
-                        </p>
-                      </div>
-                    )}
-
-                    {(order.paymentStatus === 'rejected' || order.orderStatus === 'cancelled' || order.orderStatus === 'Payment Failed') && (
-                      <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '14px', padding: '12px 14px', marginBottom: '14px' }}>
-                        <p style={{ margin: 0, color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>
-                          {'\u274C'} Payment Failed
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Desktop: Horizontal Progress */}
+                    {/* Progress Timeline (Standard or Refund Workflow) */}
                     <div className="order-progress-horizontal" style={{ margin: '16px 0', padding: '16px', background: '#faf9f6', borderRadius: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', margin: '0 10px' }}>
-                        {statusSteps.map((step, idx) => {
+                        {activeSteps.map((step, idx) => {
                           const isDone = currentStepIdx >= idx
                           const isCurrent = currentStepIdx === idx
                           return (
                             <div key={step} style={{ textAlign: 'center', zIndex: 1, flex: 1 }}>
                               <div style={{
                                 width: '28px', height: '28px', borderRadius: '50%',
-                                background: isDone ? 'var(--deep-green)' : '#e0e0e0',
+                                background: isDone ? (isRefundWorkflow ? '#dc2626' : 'var(--deep-green)') : '#e0e0e0',
                                 color: isDone ? '#ffffff' : '#888888',
                                 display: 'grid', placeItems: 'center',
                                 margin: '0 auto 6px', fontSize: '0.75rem', fontWeight: '800',
                                 border: isCurrent ? '3px solid var(--yellow)' : 'none'
                               }}>
-                                {isDone ? '\u2713' : idx + 1}
+                                {isDone ? '✓' : idx + 1}
                               </div>
                               <span style={{ fontSize: '0.68rem', fontWeight: isCurrent ? 800 : 600, color: isCurrent ? 'var(--deep-green)' : 'var(--muted)', display: 'block' }}>
                                 {step}
@@ -307,16 +458,16 @@ export default function MyOrdersPage() {
                       </div>
                     </div>
 
-                    {/* Mobile: Vertical Timeline */}
+                    {/* Mobile Timeline */}
                     <div className="order-timeline-vertical" style={{ margin: '12px 0', padding: '16px', background: '#faf9f6', borderRadius: '16px' }}>
-                      {statusSteps.map((step, idx) => {
+                      {activeSteps.map((step, idx) => {
                         const isDone = currentStepIdx >= idx
                         const isCurrent = currentStepIdx === idx
                         const isPending = currentStepIdx < idx
                         return (
                           <div key={step} className={`timeline-step ${isDone && !isCurrent ? 'done' : ''}`}>
                             <div className={`timeline-dot ${isDone && !isCurrent ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isPending ? 'pending' : ''}`}>
-                              {isDone ? '\u2713' : getStatusEmoji(step)}
+                              {isDone ? '✓' : getStatusEmoji(step)}
                             </div>
                             <div className="timeline-info">
                               <p className={`timeline-label ${isPending ? 'muted' : ''}`}>{step}</p>
@@ -328,12 +479,12 @@ export default function MyOrdersPage() {
                       })}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', cursor: 'pointer' }} onClick={() => setSelectedOrder(order)}>
                       <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-                        {order.items?.length || 0} item{(order.items?.length || 0) === 1 ? '' : 's'} {'\u00B7'} Tap for details
+                        {order.items?.length || 0} item{(order.items?.length || 0) === 1 ? '' : 's'} · Tap for receipt
                       </span>
-                      <strong style={{ fontSize: '1.2rem', color: 'var(--deep-green)' }}>
-                        {'\u20B9'}{(order.grandTotal || 0).toFixed(0)}
+                      <strong style={{ fontSize: '1.2rem', color: 'var(--deep-green)', fontFamily: "'Outfit', sans-serif" }}>
+                        ₹{(order.grandTotal || 0).toFixed(0)}
                       </strong>
                     </div>
                   </div>
@@ -344,27 +495,88 @@ export default function MyOrdersPage() {
         </div>
       </main>
 
-      {/* Mobile Bottom Tab Bar */}
-      <div className="mobile-bottom-bar">
-        <nav>
-          <Link href="/"><span className="tab-icon">{'\u{1F3E0}'}</span>Home</Link>
-          <Link href="/menu"><span className="tab-icon">{'\u{1F35B}'}</span>Menu</Link>
-          <Link href="/my-orders" className="active"><span className="tab-icon">{'\u{1F4E6}'}</span>Orders</Link>
-          {user && isAdmin && (
-            <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
-              <span className="tab-icon">🛡️</span>
-              Admin
-            </Link>
-          )}
-          {user ? (
-            <Link href="/profile"><span className="tab-icon">{'\u{1F464}'}</span>Profile</Link>
-          ) : (
-            <button type="button" onClick={openAuthModal}><span className="tab-icon">{'\u{1F510}'}</span>Sign In</button>
-          )}
-        </nav>
-      </div>
+      {/* CUSTOMER CANCELLATION CONFIRMATION MODAL */}
+      {cancelModalOrder && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div onClick={() => setCancelModalOrder(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }} />
 
-      {/* Order Detail Bottom Sheet */}
+          <div style={{ position: 'relative', zIndex: 10, width: 'min(460px, 94vw)', background: '#ffffff', borderRadius: '24px', padding: '28px', boxShadow: '0 25px 50px rgba(0,0,0,0.3)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⚠️</div>
+            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.35rem', fontWeight: 900, color: '#dc2626', margin: '0 0 8px 0' }}>
+              Cancel Order?
+            </h2>
+
+            <p style={{ fontSize: '0.9rem', color: 'var(--ink)', lineHeight: 1.45, fontWeight: 700, margin: '0 0 16px 0' }}>
+              Your payment has already been verified by Biriyani Station. Cancelling this order will move it into the restaurant’s <strong>Refund Queue</strong> for manual verification and payout.
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 900, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Cancellation Reason (Optional):
+              </label>
+              <textarea
+                placeholder="e.g. Changed my mind, ordered by mistake..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: '1.5px solid rgba(0,0,0,0.15)',
+                  fontSize: '0.88rem',
+                  outline: 'none',
+                  resize: 'none',
+                  height: '70px',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setCancelModalOrder(null)}
+                disabled={submittingCancel}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '12px',
+                  background: '#f3f4f6',
+                  color: 'var(--ink)',
+                  border: 'none',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontFamily: "'Outfit', sans-serif"
+                }}
+              >
+                Keep Order
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRequestCancellation}
+                disabled={submittingCancel}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '12px',
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  fontFamily: "'Outfit', sans-serif",
+                  boxShadow: '0 4px 14px rgba(220,38,38,0.3)'
+                }}
+              >
+                {submittingCancel ? 'Submitting...' : 'Request Cancellation 🚫'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Detail Receipt Bottom Sheet */}
       {selectedOrder && (
         <div className="co-overlay" aria-hidden="false" style={{ opacity: 1, visibility: 'visible', zIndex: 5000, position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <button type="button" className="co-backdrop" onClick={() => setSelectedOrder(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: 'none', cursor: 'pointer' }} />
@@ -373,9 +585,9 @@ export default function MyOrdersPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <div>
                 <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--deep-green)', letterSpacing: '0.15em' }}>ORDER RECEIPT</span>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#111827', margin: 0 }}>#{selectedOrder.orderId}</h2>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#111827', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>#{selectedOrder.orderId}</h2>
               </div>
-              <button onClick={() => setSelectedOrder(null)} style={{ background: '#f3f4f6', color: '#111827', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', fontSize: '1.1rem', display: 'grid', placeItems: 'center', fontWeight: 700 }}>{'\u2715'}</button>
+              <button onClick={() => setSelectedOrder(null)} style={{ background: '#f3f4f6', color: '#111827', border: 'none', borderRadius: '50%', width: '40px', height: '4px', height: '40px', cursor: 'pointer', fontSize: '1.1rem', display: 'grid', placeItems: 'center', fontWeight: 700 }}>✕</button>
             </div>
 
             <div style={{ padding: '14px 18px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '16px', marginBottom: '20px', color: '#1f2937' }}>
@@ -386,24 +598,17 @@ export default function MyOrdersPage() {
 
             <h4 style={{ fontSize: '0.85rem', letterSpacing: '0.1em', color: 'var(--deep-green)', marginBottom: '12px', fontWeight: 800 }}>ORDERED ITEMS</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-              {selectedOrder.items?.map(item => (
-                <div key={item.title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.92rem', padding: '12px 16px', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: '12px', color: '#1f2937' }}>
-                  <span style={{ color: '#1f2937' }}>{item.title} <strong style={{ color: 'var(--deep-green)' }}>x{item.qty || item.quantity}</strong></span>
-                  <strong style={{ color: '#111827' }}>{'\u20B9'}{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(0)}</strong>
+              {selectedOrder.items?.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.92rem', padding: '12px 16px', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: '12px', color: '#1f2937' }}>
+                  <span style={{ color: '#1f2937' }}>{item.title || item.name} <strong style={{ color: 'var(--deep-green)' }}>x{item.qty || item.quantity}</strong></span>
+                  <strong style={{ color: '#111827' }}>₹{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(0)}</strong>
                 </div>
               ))}
             </div>
 
-            {selectedOrder.appliedCoupon && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.92rem', padding: '10px 14px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', marginBottom: '16px', color: '#065f46', fontWeight: 700 }}>
-                <span>🏷️ Coupon ({selectedOrder.appliedCoupon})</span>
-                <span>-₹{(selectedOrder.discount || 0).toFixed(0)}</span>
-              </div>
-            )}
-
             <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '800', color: '#111827' }}>
               <span>Total Paid</span>
-              <span style={{ color: 'var(--deep-green)' }}>{'\u20B9'}{(selectedOrder.grandTotal || 0).toFixed(0)}</span>
+              <span style={{ color: 'var(--deep-green)' }}>₹{(selectedOrder.grandTotal || 0).toFixed(0)}</span>
             </div>
           </div>
         </div>
