@@ -253,7 +253,7 @@ export default function AdminOrdersDesk() {
       <div className="admin-page-container">
         {/* EXECUTIVE ADMIN CONTROL DECK HERO CARD */}
         <div className="admin-control-hero-card">
-          {/* Header Row: Title, Search Bar & Quick Dropdown Select */}
+          {/* Header Row: Title, Search Bar & Granular Status Selector */}
           <div className="admin-orders-header">
             <div className="admin-title-area">
               <span className="admin-sync-pill">
@@ -262,9 +262,9 @@ export default function AdminOrdersDesk() {
               <h1>Orders Management Desk</h1>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', flex: 1, maxWidth: '640px', flexWrap: 'wrap', alignItems: 'center' }}>
-              {/* Premium Search Box */}
-              <div className="admin-search-box" style={{ flex: '1 1 240px' }}>
+            <div style={{ display: 'flex', gap: '12px', flex: 1, maxWidth: '680px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Premium Search Input Box */}
+              <div className="admin-search-box" style={{ flex: '1 1 260px' }}>
                 <span className="admin-search-icon">🔍</span>
                 <input
                   type="text"
@@ -285,131 +285,118 @@ export default function AdminOrdersDesk() {
                 ) : null}
               </div>
 
-              {/* Status Select Dropdown */}
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                style={{
-                  padding: '12px 18px',
-                  borderRadius: '999px',
-                  border: '1.5px solid rgba(13,90,58,0.18)',
-                  background: '#ffffff',
-                  fontSize: '0.84rem',
-                  fontWeight: 800,
-                  color: 'var(--ink)',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-                }}
-              >
-                <option value="all">📦 All Orders ({orders.length})</option>
-                <option value="UPI Verification Pending">💳 UPI Verification ({countUpiPending})</option>
-                <option value="Pending">⏳ Pending ({countPending})</option>
-                <option value="Accepted">👍 Accepted ({countAccepted})</option>
-                <option value="Preparing">👨‍🍳 Preparing ({countPreparing})</option>
-                <option value="Ready">🍱 Ready ({countReady})</option>
-                <option value="Out For Delivery">🛵 Out For Delivery ({countOut})</option>
-                <option value="Delivered">✅ Delivered ({countDelivered})</option>
-                <option value="Cancelled">❌ Cancelled ({countCancelled})</option>
-              </select>
+              {/* Granular Status Select Dropdown */}
+              <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 18px',
+                    borderRadius: '999px',
+                    border: '1.5px solid rgba(13,90,58,0.18)',
+                    background: '#ffffff',
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    color: 'var(--ink)',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <option value="all">📦 All Orders ({orders.length})</option>
+                  <option value="UPI Verification Pending">💳 UPI Verification ({countUpiPending})</option>
+                  <option value="Pending">⏳ Pending ({countPending})</option>
+                  <option value="Accepted">👍 Accepted ({countAccepted})</option>
+                  <option value="Preparing">👨‍🍳 Preparing ({countPreparing})</option>
+                  <option value="Ready">🍱 Ready ({countReady})</option>
+                  <option value="Out For Delivery">🛵 Out For Delivery ({countOut})</option>
+                  <option value="Delivered">✅ Delivered ({countDelivered})</option>
+                  <option value="Cancelled">❌ Cancelled ({countCancelled})</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Quick Metrics Overview Strip */}
+          {/* Interactive KPI Filter Cards (Rethought Master Category Deck) */}
           <div className="admin-stats-summary-strip">
-            <div className="admin-stat-chip">
-              <span>📦 Total Orders</span>
-              <strong>{orders.length}</strong>
-            </div>
-            <div className={`admin-stat-chip ${(countUpiPending + countPending) > 0 ? 'action-needed' : ''}`}>
-              <span>⚡ Action Needed</span>
-              <strong>{countUpiPending + countPending}</strong>
-            </div>
-            <div className="admin-stat-chip">
-              <span>👨‍🍳 In Kitchen</span>
-              <strong>{countPreparing + countReady + countOut}</strong>
-            </div>
-            <div className="admin-stat-chip">
-              <span>✅ Delivered</span>
-              <strong>{countDelivered}</strong>
-            </div>
-          </div>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('all')}
+              className={`admin-stat-chip ${filterStatus === 'all' ? 'active-filter' : ''}`}
+              style={{
+                cursor: 'pointer',
+                textAlign: 'left',
+                border: filterStatus === 'all' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.08)',
+                background: filterStatus === 'all' ? 'rgba(13,90,58,0.06)' : '#ffffff',
+                boxShadow: filterStatus === 'all' ? '0 4px 14px rgba(13,90,58,0.12)' : 'none'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  ALL ORDERS
+                </span>
+                <strong style={{ fontSize: '1.2rem' }}>📦 {orders.length}</strong>
+              </div>
+            </button>
 
-          {/* Segmented Wrapped Category Filter Tabs (Zero Side Scrolling) */}
-          <div className="status-filter-wrapper-container">
-            <div className="status-filter-wrapped" role="tablist" aria-label="Order status categories">
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'all' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('all')}
-              >
-                📦 ALL <span className="status-count-badge">{orders.length}</span>
-              </button>
+            <button
+              type="button"
+              onClick={() => setFilterStatus(countUpiPending > 0 ? 'UPI Verification Pending' : 'Pending')}
+              className={`admin-stat-chip ${(countUpiPending + countPending) > 0 ? 'action-needed' : ''}`}
+              style={{
+                cursor: 'pointer',
+                textAlign: 'left',
+                border: (filterStatus === 'UPI Verification Pending' || filterStatus === 'Pending') ? '2px solid #b45309' : undefined
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: (countUpiPending + countPending) > 0 ? '#92400e' : 'var(--muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  ACTION NEEDED
+                </span>
+                <strong style={{ fontSize: '1.2rem', color: (countUpiPending + countPending) > 0 ? '#b45309' : 'var(--deep-green)' }}>
+                  ⚡ {countUpiPending + countPending}
+                </strong>
+              </div>
+            </button>
 
-              <button
-                type="button"
-                className={`status-counter-btn ${countUpiPending > 0 ? 'has-action' : ''} ${filterStatus === 'UPI Verification Pending' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('UPI Verification Pending')}
-              >
-                💳 UPI VERIFICATION <span className="status-count-badge" style={{ background: countUpiPending > 0 && filterStatus !== 'UPI Verification Pending' ? '#f59e0b' : undefined, color: countUpiPending > 0 && filterStatus !== 'UPI Verification Pending' ? '#ffffff' : undefined }}>{countUpiPending}</span>
-              </button>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('Preparing')}
+              className={`admin-stat-chip ${filterStatus === 'Preparing' ? 'active-filter' : ''}`}
+              style={{
+                cursor: 'pointer',
+                textAlign: 'left',
+                border: filterStatus === 'Preparing' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.08)',
+                background: filterStatus === 'Preparing' ? 'rgba(13,90,58,0.06)' : '#ffffff'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  IN KITCHEN & TRANSIT
+                </span>
+                <strong style={{ fontSize: '1.2rem' }}>👨‍🍳 {countPreparing + countReady + countOut}</strong>
+              </div>
+            </button>
 
-              <button
-                type="button"
-                className={`status-counter-btn ${countPending > 0 ? 'has-action' : ''} ${filterStatus === 'Pending' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Pending')}
-              >
-                ⏳ PENDING <span className="status-count-badge">{countPending}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'Accepted' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Accepted')}
-              >
-                👍 ACCEPTED <span className="status-count-badge">{countAccepted}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'Preparing' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Preparing')}
-              >
-                👨‍🍳 PREPARING <span className="status-count-badge">{countPreparing}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'Ready' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Ready')}
-              >
-                🍱 READY <span className="status-count-badge">{countReady}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'Out For Delivery' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Out For Delivery')}
-              >
-                🛵 OUT FOR DELIVERY <span className="status-count-badge">{countOut}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'Delivered' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Delivered')}
-              >
-                ✅ DELIVERED <span className="status-count-badge">{countDelivered}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${filterStatus === 'Cancelled' ? 'active' : ''}`}
-                onClick={() => setFilterStatus('Cancelled')}
-              >
-                ❌ CANCELLED <span className="status-count-badge">{countCancelled}</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('Delivered')}
+              className={`admin-stat-chip ${filterStatus === 'Delivered' ? 'active-filter' : ''}`}
+              style={{
+                cursor: 'pointer',
+                textAlign: 'left',
+                border: filterStatus === 'Delivered' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.08)',
+                background: filterStatus === 'Delivered' ? 'rgba(13,90,58,0.06)' : '#ffffff'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  DELIVERED
+                </span>
+                <strong style={{ fontSize: '1.2rem' }}>✅ {countDelivered}</strong>
+              </div>
+            </button>
           </div>
         </div>
 
