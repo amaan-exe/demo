@@ -27,6 +27,8 @@ const AuthContext = createContext({
   updateUserProfileData: async () => {}
 })
 
+const ADMIN_EMAILS = ['amaanullah2607@gmail.com', 'md.amanullahkhan1980@gmail.com', 'admin@biriyanistation.com', 'admin@gmail.com']
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
@@ -54,7 +56,6 @@ export function AuthProvider({ children }) {
           const userRef = doc(db, 'users', fbUser.uid)
           const userSnap = await getDoc(userRef)
 
-          const ADMIN_EMAILS = ['amaanullah2607@gmail.com', 'admin@biriyanistation.com']
           const isAdminEmail = ADMIN_EMAILS.includes(fbUser.email?.toLowerCase())
 
           let profileData = {
@@ -92,7 +93,6 @@ export function AuthProvider({ children }) {
           })
         } catch (err) {
           console.warn('Firestore user sync notice:', err.message)
-          const ADMIN_EMAILS = ['amaanullah2607@gmail.com', 'admin@biriyanistation.com']
           const isAdminEmail = ADMIN_EMAILS.includes(fbUser.email?.toLowerCase())
           setUser({
             uid: fbUser.uid,
@@ -253,7 +253,6 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const ADMIN_EMAILS = ['amaanullah2607@gmail.com', 'admin@biriyanistation.com', 'admin@gmail.com']
   const currentEmail = (user?.email || userProfile?.email || '').toLowerCase().trim()
   const isAdmin = Boolean(user && currentEmail && (userProfile?.role === 'admin' || user?.role === 'admin' || ADMIN_EMAILS.includes(currentEmail)))
 
