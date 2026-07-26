@@ -7299,19 +7299,12 @@ html, body {
 
 .status-filter-wrapped {
   display: flex !important;
+  flex-wrap: wrap !important;
   align-items: center !important;
-  gap: 10px !important;
-  overflow-x: auto !important;
-  white-space: nowrap !important;
-  -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: none !important;
-  padding: 4px 4px 8px 4px !important;
+  gap: 8px 10px !important;
+  padding: 4px 0 !important;
   width: 100% !important;
   box-sizing: border-box !important;
-}
-
-.status-filter-wrapped::-webkit-scrollbar {
-  display: none !important;
 }
 
 .status-counter-btn {

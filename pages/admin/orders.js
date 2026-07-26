@@ -253,7 +253,7 @@ export default function AdminOrdersDesk() {
       <div className="admin-page-container">
         {/* EXECUTIVE ADMIN CONTROL DECK HERO CARD */}
         <div className="admin-control-hero-card">
-          {/* Header Row: Title & Premium Search Bar */}
+          {/* Header Row: Title, Search Bar & Quick Dropdown Select */}
           <div className="admin-orders-header">
             <div className="admin-title-area">
               <span className="admin-sync-pill">
@@ -262,26 +262,56 @@ export default function AdminOrdersDesk() {
               <h1>Orders Management Desk</h1>
             </div>
 
-            {/* Premium Search Box with Keyboard Hint & Clear Button */}
-            <div className="admin-search-box">
-              <span className="admin-search-icon">🔍</span>
-              <input
-                type="text"
-                className="admin-search-input"
-                placeholder="Search Order ID, Customer, Phone, Address..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery ? (
-                <button
-                  type="button"
-                  className="admin-search-clear"
-                  onClick={() => setSearchQuery('')}
-                  title="Clear search query"
-                >
-                  ✕
-                </button>
-              ) : null}
+            <div style={{ display: 'flex', gap: '10px', flex: 1, maxWidth: '640px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Premium Search Box */}
+              <div className="admin-search-box" style={{ flex: '1 1 240px' }}>
+                <span className="admin-search-icon">🔍</span>
+                <input
+                  type="text"
+                  className="admin-search-input"
+                  placeholder="Search Order ID, Phone, Customer..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    className="admin-search-clear"
+                    onClick={() => setSearchQuery('')}
+                    title="Clear search query"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Status Select Dropdown */}
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                style={{
+                  padding: '12px 18px',
+                  borderRadius: '999px',
+                  border: '1.5px solid rgba(13,90,58,0.18)',
+                  background: '#ffffff',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: 'var(--ink)',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                }}
+              >
+                <option value="all">📦 All Orders ({orders.length})</option>
+                <option value="UPI Verification Pending">💳 UPI Verification ({countUpiPending})</option>
+                <option value="Pending">⏳ Pending ({countPending})</option>
+                <option value="Accepted">👍 Accepted ({countAccepted})</option>
+                <option value="Preparing">👨‍🍳 Preparing ({countPreparing})</option>
+                <option value="Ready">🍱 Ready ({countReady})</option>
+                <option value="Out For Delivery">🛵 Out For Delivery ({countOut})</option>
+                <option value="Delivered">✅ Delivered ({countDelivered})</option>
+                <option value="Cancelled">❌ Cancelled ({countCancelled})</option>
+              </select>
             </div>
           </div>
 
@@ -305,7 +335,7 @@ export default function AdminOrdersDesk() {
             </div>
           </div>
 
-          {/* Segmented Category Filter Tabs */}
+          {/* Segmented Wrapped Category Filter Tabs (Zero Side Scrolling) */}
           <div className="status-filter-wrapper-container">
             <div className="status-filter-wrapped" role="tablist" aria-label="Order status categories">
               <button
