@@ -13,7 +13,10 @@ export const defaultSettings = {
   closingTime: '11:30 PM',
   supportPhone: '+91 82713 01179',
   storeUpiId: 'Q441280679@ybl',
-  restaurantAddress: 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001'
+  restaurantAddress: 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001',
+  announcementEnabled: false,
+  announcementText: '',
+  announcementType: 'info'
 }
 
 export function SettingsProvider({ children }) {
@@ -33,7 +36,10 @@ export function SettingsProvider({ children }) {
             closingTime: data.closingTime || defaultSettings.closingTime,
             supportPhone: data.supportPhone || defaultSettings.supportPhone,
             storeUpiId: data.storeUpiId || defaultSettings.storeUpiId,
-            restaurantAddress: data.restaurantAddress || defaultSettings.restaurantAddress
+            restaurantAddress: data.restaurantAddress || defaultSettings.restaurantAddress,
+            announcementEnabled: Boolean(data.announcementEnabled),
+            announcementText: typeof data.announcementText === 'string' ? data.announcementText : '',
+            announcementType: data.announcementType || 'info'
           })
         }
       }, (err) => console.warn('Settings live sync notice:', err.message))

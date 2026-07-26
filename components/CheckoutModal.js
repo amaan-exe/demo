@@ -3,6 +3,7 @@ import UpiPaymentBox from './UpiPaymentBox'
 import { getDocs, query, collection, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useSettings } from '../context/SettingsContext'
+import AnnouncementBanner from './AnnouncementBanner'
 
 export default function CheckoutModal({
   isOpen,
@@ -255,6 +256,7 @@ export default function CheckoutModal({
         <div className="chk-body-grid">
           {/* Left Column: Order Summary & Coupon */}
           <div className="chk-summary-col">
+            <AnnouncementBanner placement="cart" />
             {/* Collapsible Order Accordion on Mobile */}
             <div className="chk-summary-card">
               <button

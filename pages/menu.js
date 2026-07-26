@@ -8,6 +8,7 @@ import { ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import CheckoutModal from '../components/CheckoutModal'
+import AnnouncementBanner from '../components/AnnouncementBanner'
 
 export default function MenuPage() {
   const router = useRouter()
@@ -601,6 +602,7 @@ export default function MenuPage() {
         {/* Main Controls & Menu Grid */}
         <section className="menu section-pad" id="menu" style={{ paddingTop: '20px' }}>
           <div className="container">
+            <AnnouncementBanner placement="menu" />
 
             {/* Search and Category Filter Bar */}
             <div className="menu-controls-wrapper" style={{
@@ -786,6 +788,7 @@ export default function MenuPage() {
         </div>
 
         <div className="cart-body">
+          <AnnouncementBanner placement="cart" />
           {cartItems.length === 0 ? (
             <div className="cart-empty-state">
               <div className="cart-empty-icon">🫙</div>

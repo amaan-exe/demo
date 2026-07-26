@@ -8,6 +8,7 @@ import { FEATURED_DISHES } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import CheckoutModal from '../components/CheckoutModal'
+import AnnouncementBanner from '../components/AnnouncementBanner'
 
 export default function Home() {
   const router = useRouter()
@@ -484,6 +485,8 @@ export default function Home() {
         </nav>
       </header>
 
+      <AnnouncementBanner placement="hero" />
+
       <main>
         <section className="hero-clean-split" id="hero">
           {/* Fast-loading auto-playing background video */}
@@ -857,6 +860,7 @@ export default function Home() {
         </div>
 
         <div className="cart-body">
+          <AnnouncementBanner placement="cart" />
           {cartItems.length === 0 ? (
             <div className="cart-empty-state">
               <div className="cart-empty-icon">🫙</div>
