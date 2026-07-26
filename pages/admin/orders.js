@@ -541,103 +541,251 @@ export default function AdminOrdersDesk() {
                   key={ord.id}
                   style={{
                     background: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+                    borderRadius: '18px',
+                    border: '1.5px solid rgba(13,90,58,0.12)',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     justify: 'space-between',
-                    position: 'relative'
+                    position: 'relative',
+                    fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif"
                   }}
                 >
-                  {/* TOP COLORED STATUS ACCENT BAR (Instant visual identity for staff) */}
+                  {/* TOP COLORED STATUS ACCENT BAR */}
                   <div style={{ height: '5px', width: '100%', background: statusMeta.color }} />
 
-                  <div style={{ padding: '16px 18px' }}>
-                    {/* Top Status Strip Banner */}
+                  <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* HEADER STRIP: Status Meta & Prominent SECOND PRIORITY Order ID */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
                       justify: 'space-between',
-                      padding: '6px 12px',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      padding: '8px 12px',
                       background: statusMeta.bg,
-                      borderRadius: '8px',
-                      marginBottom: '14px'
+                      borderRadius: '12px'
                     }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 900, color: statusMeta.color, letterSpacing: '0.04em' }}>
-                        {statusMeta.icon} {statusMeta.text}
-                      </span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)' }}>
-                        🕒 {ord.createdAtFormatted}
-                      </span>
-                    </div>
-
-                    {/* Customer Info & Prominent Order ID */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {/* 2-Letter Initials Avatar */}
-                        <div style={{
-                          width: '42px',
-                          height: '42px',
-                          borderRadius: '50%',
-                          background: 'var(--deep-green)',
-                          color: '#ffffff',
-                          display: 'grid',
-                          placeItems: 'center',
-                          fontWeight: 900,
-                          fontSize: '0.92rem',
-                          flexShrink: 0
-                        }}>
-                          {initials}
-                        </div>
-
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)', margin: 0 }}>
-                              {customerName}
-                            </h3>
-                            {rawPhone && (
-                              <a
-                                href={`https://wa.me/91${rawPhone}?text=${waMessage}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ padding: '2px 8px', fontSize: '0.7rem', fontWeight: 800, background: '#25d366', color: '#ffffff', borderRadius: '6px', textDecoration: 'none' }}
-                              >
-                                WhatsApp 💬
-                              </a>
-                            )}
-                          </div>
-                          <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 700 }}>
-                            📞 {ord.customerPhone || ord.userPhone || 'No Phone'}
-                          </p>
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 900, color: statusMeta.color, letterSpacing: '0.04em', fontFamily: "'Outfit', sans-serif" }}>
+                          {statusMeta.icon} {statusMeta.text}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)' }}>
+                          • {ord.createdAtFormatted}
+                        </span>
                       </div>
 
-                      {/* Prominent Brand Green Order ID */}
-                      <span style={{
-                        fontSize: '1.05rem',
-                        fontWeight: 900,
-                        color: 'var(--deep-green)',
-                        background: 'rgba(13,90,58,0.08)',
-                        border: '1px solid rgba(13,90,58,0.18)',
-                        padding: '4px 10px',
+                      {/* SECOND PRIORITY VISUAL ANCHOR: Standout Monospace Order ID */}
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        background: '#ffffff',
+                        border: '1.5px solid var(--deep-green)',
+                        padding: '4px 11px',
                         borderRadius: '8px',
-                        letterSpacing: '0.04em'
+                        boxShadow: '0 2px 6px rgba(13,90,58,0.1)'
                       }}>
-                        #{ord.orderId || ord.id.slice(0, 8)}
-                      </span>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>ID:</span>
+                        <span style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--deep-green)', letterSpacing: '0.06em', fontFamily: "'JetBrains Mono', monospace" }}>
+                          #{ord.orderId || ord.id.slice(0, 8)}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Delivery Location */}
-                    <div style={{ background: '#faf9f5', borderRadius: '10px', padding: '8px 12px', marginBottom: '14px', fontSize: '0.8rem', color: 'var(--ink)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>📍</span>
-                      <span style={{ wordBreak: 'break-word' }}>{ord.deliveryAddress || 'Patna Delivery Address'}</span>
+                    {/* PRIMARY FOCUS (#1 CENTER OF ATTENTION): WHAT HE ORDERED */}
+                    <div style={{
+                      background: 'linear-gradient(180deg, #ffffff 0%, #f6fbf8 100%)',
+                      border: '2px solid rgba(13,90,58,0.2)',
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      boxShadow: '0 4px 16px rgba(13,90,58,0.06)',
+                      position: 'relative'
+                    }}>
+                      {/* Box Header Label */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          letterSpacing: '0.08em',
+                          color: 'var(--deep-green)',
+                          textTransform: 'uppercase',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontFamily: "'Outfit', sans-serif"
+                        }}>
+                          🍱 ORDERED ITEMS & QUANTITIES
+                        </span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--muted)', background: 'rgba(0,0,0,0.04)', padding: '2px 8px', borderRadius: '999px', fontFamily: "'Outfit', sans-serif" }}>
+                          {ord.items?.reduce((sum, i) => sum + (i.qty || i.quantity || 1), 0) || 0} Total Items
+                        </span>
+                      </div>
+
+                      {/* Items List with Formatted Separation */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                        {ord.items?.map((item, idx) => {
+                          const qty = item.qty || item.quantity || 1
+                          const unitPrice = item.price || 0
+                          const itemTotal = (unitPrice * qty).toFixed(0)
+
+                          return (
+                            <div
+                              key={idx}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '14px',
+                                padding: '10px 12px',
+                                background: '#ffffff',
+                                borderRadius: '10px',
+                                border: '1px solid rgba(13,90,58,0.1)',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                              }}
+                            >
+                              {/* Left: Quantity Badge + Item Title */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                <span style={{
+                                  background: 'var(--deep-green)',
+                                  color: '#ffffff',
+                                  fontSize: '0.84rem',
+                                  fontWeight: 900,
+                                  padding: '3px 9px',
+                                  borderRadius: '6px',
+                                  flexShrink: 0,
+                                  fontFamily: "'Outfit', sans-serif"
+                                }}>
+                                  {qty}x
+                                </span>
+                                <span style={{
+                                  fontSize: '0.94rem',
+                                  fontWeight: 800,
+                                  color: 'var(--ink)',
+                                  fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+                                  lineHeight: 1.3,
+                                  wordBreak: 'break-word'
+                                }}>
+                                  {item.title || item.name}
+                                </span>
+                              </div>
+
+                              {/* Right: Formatted Price Tag Badge */}
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
+                                <span style={{
+                                  fontSize: '0.92rem',
+                                  fontWeight: 900,
+                                  color: 'var(--deep-green)',
+                                  background: 'rgba(13,90,58,0.08)',
+                                  border: '1px solid rgba(13,90,58,0.18)',
+                                  padding: '3px 10px',
+                                  borderRadius: '8px',
+                                  fontFamily: "'Outfit', sans-serif",
+                                  letterSpacing: '-0.01em',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  ₹{itemTotal}
+                                </span>
+                                {qty > 1 && (
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', marginTop: '2px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                                    ₹{unitPrice.toFixed(0)} / ea
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* GRAND TOTAL HIGHLIGHT */}
+                      <div style={{
+                        borderTop: '2px dashed rgba(13,90,58,0.2)',
+                        paddingTop: '10px',
+                        marginTop: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justify: 'space-between'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 900, letterSpacing: '0.08em', color: 'var(--muted)', display: 'block', textTransform: 'uppercase', fontFamily: "'Outfit', sans-serif" }}>
+                            GRAND TOTAL AMOUNT
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--deep-green)', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                            Inclusive of all taxes & delivery
+                          </span>
+                        </div>
+                        <strong style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--deep-green)', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>
+                          ₹{(ord.grandTotal || 0).toFixed(0)}
+                        </strong>
+                      </div>
                     </div>
 
-                    {/* Payment Info & Items List Split */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '10px', marginBottom: '14px' }}>
-                      {/* Left: Scannable Payment Card */}
+                    {/* SHAPED AROUND #1: Customer Details & Payment Info (2-Column Grid) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      {/* Customer Info Card */}
+                      <div style={{
+                        background: '#fafaf6',
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justify: 'space-between'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: 'var(--deep-green)',
+                            color: '#ffffff',
+                            display: 'grid',
+                            placeItems: 'center',
+                            fontWeight: 900,
+                            fontSize: '0.78rem',
+                            flexShrink: 0,
+                            fontFamily: "'Outfit', sans-serif"
+                          }}>
+                            {initials}
+                          </div>
+                          <div style={{ overflow: 'hidden' }}>
+                            <h4 style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--ink)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Outfit', sans-serif" }}>
+                              {customerName}
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--muted)', fontWeight: 700 }}>
+                              📞 {ord.customerPhone || ord.userPhone || 'No Phone'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {rawPhone && (
+                          <a
+                            href={`https://wa.me/91${rawPhone}?text=${waMessage}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justify: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              background: '#25d366',
+                              color: '#ffffff',
+                              borderRadius: '6px',
+                              textDecoration: 'none',
+                              marginTop: '4px',
+                              fontFamily: "'Outfit', sans-serif"
+                            }}
+                          >
+                            WhatsApp 💬
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Payment Card */}
                       <div style={{
                         background: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#e6f4ea' : isCancelled ? '#fce8e6' : '#fef3c7',
                         borderRadius: '12px',
@@ -648,63 +796,49 @@ export default function AdminOrdersDesk() {
                         border: '1px solid rgba(0,0,0,0.05)'
                       }}>
                         <div>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ fontSize: '0.76rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             💳 {ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery'}
                           </div>
 
-                          <div style={{ fontSize: '0.78rem', fontWeight: 900, marginTop: '4px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : isCancelled ? '#dc2626' : '#b45309' }}>
+                          <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : isCancelled ? '#dc2626' : '#b45309' }}>
                             {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : isCancelled ? '🔴 Rejected' : '🟡 Verification Pending'}
                           </div>
 
                           {ord.transactionReference && (
-                            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--ink)', marginTop: '4px' }}>
-                              👤 {ord.transactionReference}
+                            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              Ref: {ord.transactionReference}
                             </div>
                           )}
                         </div>
 
                         {!isLocked && (ord.paymentStatus === 'verification_pending' || ord.paymentStatus === 'Verification Pending' || ord.orderStatus === 'payment_verification_pending') && (
-                          <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
                             <button
                               type="button"
                               onClick={() => handleApprovePayment(ord.id)}
-                              style={{ background: 'var(--deep-green)', color: '#ffffff', border: 'none', padding: '6px', borderRadius: '6px', fontWeight: 900, fontSize: '0.72rem', cursor: 'pointer', width: '100%' }}
+                              style={{ background: 'var(--deep-green)', color: '#ffffff', border: 'none', padding: '5px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer', width: '100%' }}
                             >
                               Approve ✅
                             </button>
                             <button
                               type="button"
                               onClick={() => handleRejectPayment(ord.id)}
-                              style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '6px 8px', borderRadius: '6px', fontWeight: 900, fontSize: '0.72rem', cursor: 'pointer' }}
+                              style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '5px 8px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
                             >
                               ✕
                             </button>
                           </div>
                         )}
                       </div>
-
-                      {/* Right: Items & Prominent 22-24px Total */}
-                      <div style={{ background: '#fafaf5', padding: '10px 12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '80px', overflowY: 'auto' }}>
-                          {ord.items?.map((item, idx) => (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                              <span><strong style={{ color: 'var(--deep-green)' }}>{item.qty || item.quantity}x</strong> {item.title || item.name}</span>
-                              <span style={{ fontWeight: 700, color: 'var(--muted)' }}>₹{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(0)}</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Prominent Total Amount (22-24px bold) */}
-                        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: '6px', paddingTop: '4px', textAlign: 'right' }}>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--muted)', display: 'block' }}>TOTAL AMOUNT</span>
-                          <strong style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--deep-green)', lineHeight: 1.1 }}>
-                            ₹{(ord.grandTotal || 0).toFixed(0)}
-                          </strong>
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Pipeline Controls / Concise Action Badges */}
+                    {/* SHAPED AROUND #2: Delivery Location Strip */}
+                    <div style={{ background: '#faf9f5', borderRadius: '10px', padding: '8px 12px', fontSize: '0.78rem', color: 'var(--ink)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(0,0,0,0.04)' }}>
+                      <span style={{ fontSize: '0.9rem' }}>📍</span>
+                      <span style={{ wordBreak: 'break-word', lineHeight: 1.3 }}>{ord.deliveryAddress || 'Patna Delivery Address'}</span>
+                    </div>
+
+                    {/* SHAPED AROUND #3: Pipeline Controls / Action Buttons */}
                     <div>
                       {isDelivered ? (
                         <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#e6f4ea', color: '#047857', fontWeight: 900, fontSize: '0.82rem', textAlign: 'center' }}>
