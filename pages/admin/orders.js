@@ -253,7 +253,7 @@ export default function AdminOrdersDesk() {
       <div className="admin-page-container">
         {/* EXECUTIVE ADMIN CONTROL DECK HERO CARD */}
         <div className="admin-control-hero-card">
-          {/* Header Row: Title & Search Bar */}
+          {/* Header Row: Title & Premium Search Bar */}
           <div className="admin-orders-header">
             <div className="admin-title-area">
               <span className="admin-sync-pill">
@@ -262,70 +262,74 @@ export default function AdminOrdersDesk() {
               <h1>Orders Management Desk</h1>
             </div>
 
-            {/* Premium Search Box with Clear Button */}
+            {/* Premium Search Box with Keyboard Hint & Clear Button */}
             <div className="admin-search-box">
               <span className="admin-search-icon">🔍</span>
               <input
                 type="text"
                 className="admin-search-input"
-                placeholder="Search Order ID, Customer, Phone..."
+                placeholder="Search Order ID, Customer, Phone, Address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              {searchQuery && (
+              {searchQuery ? (
                 <button
                   type="button"
                   className="admin-search-clear"
                   onClick={() => setSearchQuery('')}
-                  title="Clear search"
+                  title="Clear search query"
                 >
                   ✕
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Quick Metrics Snapshot Strip */}
+          {/* Quick Metrics Overview Strip */}
           <div className="admin-stats-summary-strip">
             <div className="admin-stat-chip">
-              📦 Total: <strong>{orders.length}</strong>
+              <span>📦 Total Orders</span>
+              <strong>{orders.length}</strong>
             </div>
             <div className={`admin-stat-chip ${(countUpiPending + countPending) > 0 ? 'action-needed' : ''}`}>
-              ⚡ Action Required: <strong>{countUpiPending + countPending}</strong>
+              <span>⚡ Action Needed</span>
+              <strong>{countUpiPending + countPending}</strong>
             </div>
             <div className="admin-stat-chip">
-              🚚 Active Kitchen: <strong>{countPreparing + countReady + countOut}</strong>
+              <span>👨‍🍳 In Kitchen</span>
+              <strong>{countPreparing + countReady + countOut}</strong>
             </div>
             <div className="admin-stat-chip">
-              ✅ Delivered: <strong>{countDelivered}</strong>
+              <span>✅ Delivered</span>
+              <strong>{countDelivered}</strong>
             </div>
           </div>
 
-          {/* Segmented Control Status Tabs */}
+          {/* Segmented Category Filter Tabs */}
           <div className="status-filter-wrapper-container">
-            <div className="status-filter-wrapped">
+            <div className="status-filter-wrapped" role="tablist" aria-label="Order status categories">
               <button
                 type="button"
                 className={`status-counter-btn ${filterStatus === 'all' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('all')}
               >
-                ALL <span className="status-count-badge">{orders.length}</span>
+                📦 ALL <span className="status-count-badge">{orders.length}</span>
               </button>
 
               <button
                 type="button"
-                className={`status-counter-btn ${filterStatus === 'UPI Verification Pending' ? 'active' : ''}`}
+                className={`status-counter-btn ${countUpiPending > 0 ? 'has-action' : ''} ${filterStatus === 'UPI Verification Pending' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('UPI Verification Pending')}
               >
-                💳 UPI VERIFICATION <span className="status-count-badge" style={{ background: countUpiPending > 0 ? '#f59e0b' : undefined, color: countUpiPending > 0 ? '#ffffff' : undefined }}>{countUpiPending}</span>
+                💳 UPI VERIFICATION <span className="status-count-badge" style={{ background: countUpiPending > 0 && filterStatus !== 'UPI Verification Pending' ? '#f59e0b' : undefined, color: countUpiPending > 0 && filterStatus !== 'UPI Verification Pending' ? '#ffffff' : undefined }}>{countUpiPending}</span>
               </button>
 
               <button
                 type="button"
-                className={`status-counter-btn ${filterStatus === 'Pending' ? 'active' : ''}`}
+                className={`status-counter-btn ${countPending > 0 ? 'has-action' : ''} ${filterStatus === 'Pending' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Pending')}
               >
-                PENDING <span className="status-count-badge">{countPending}</span>
+                ⏳ PENDING <span className="status-count-badge">{countPending}</span>
               </button>
 
               <button
@@ -333,7 +337,7 @@ export default function AdminOrdersDesk() {
                 className={`status-counter-btn ${filterStatus === 'Accepted' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Accepted')}
               >
-                ACCEPTED <span className="status-count-badge">{countAccepted}</span>
+                👍 ACCEPTED <span className="status-count-badge">{countAccepted}</span>
               </button>
 
               <button
@@ -341,7 +345,7 @@ export default function AdminOrdersDesk() {
                 className={`status-counter-btn ${filterStatus === 'Preparing' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Preparing')}
               >
-                PREPARING <span className="status-count-badge">{countPreparing}</span>
+                👨‍🍳 PREPARING <span className="status-count-badge">{countPreparing}</span>
               </button>
 
               <button
@@ -349,7 +353,7 @@ export default function AdminOrdersDesk() {
                 className={`status-counter-btn ${filterStatus === 'Ready' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Ready')}
               >
-                READY <span className="status-count-badge">{countReady}</span>
+                🍱 READY <span className="status-count-badge">{countReady}</span>
               </button>
 
               <button
@@ -357,7 +361,7 @@ export default function AdminOrdersDesk() {
                 className={`status-counter-btn ${filterStatus === 'Out For Delivery' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Out For Delivery')}
               >
-                OUT FOR DELIVERY <span className="status-count-badge">{countOut}</span>
+                🛵 OUT FOR DELIVERY <span className="status-count-badge">{countOut}</span>
               </button>
 
               <button
@@ -365,7 +369,7 @@ export default function AdminOrdersDesk() {
                 className={`status-counter-btn ${filterStatus === 'Delivered' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Delivered')}
               >
-                DELIVERED <span className="status-count-badge">{countDelivered}</span>
+                ✅ DELIVERED <span className="status-count-badge">{countDelivered}</span>
               </button>
 
               <button
@@ -373,7 +377,7 @@ export default function AdminOrdersDesk() {
                 className={`status-counter-btn ${filterStatus === 'Cancelled' ? 'active' : ''}`}
                 onClick={() => setFilterStatus('Cancelled')}
               >
-                CANCELLED <span className="status-count-badge">{countCancelled}</span>
+                ❌ CANCELLED <span className="status-count-badge">{countCancelled}</span>
               </button>
             </div>
           </div>

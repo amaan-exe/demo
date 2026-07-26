@@ -7,6 +7,11 @@ import { useAuth } from '../../context/AuthContext'
 export default function AdminCouponsDesk() {
   const { user, isAdmin } = useAuth()
   const [coupons, setCoupons] = useState([])
+  
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+
   const [code, setCode] = useState('')
   const [discountValue, setDiscountValue] = useState('')
   const [discountType, setDiscountType] = useState('fixed') // 'fixed' | 'percent'
@@ -215,14 +220,96 @@ export default function AdminCouponsDesk() {
           </form>
         </div>
 
-        {/* Active & Past Coupons */}
+        {/* Active & Configured Offers */}
         <div className="adm-section-card">
-          <h3 style={{ marginBottom: '16px', fontSize: '1.1rem', fontWeight: 800 }}>Active & Configured Offers</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Active & Configured Offers ({coupons.length})</h3>
+
+            {/* Filter controls */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="admin-search-box" style={{ minWidth: '220px', maxWidth: '320px' }}>
+                <span className="admin-search-icon">🔍</span>
+                <input
+                  type="text"
+                  className="admin-search-input"
+                  placeholder="Search promo code..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ padding: '8px 32px 8px 36px', fontSize: '0.84rem' }}
+                />
+                {searchQuery && (
+                  <button type="button" className="admin-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('all')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    background: statusFilter === 'all' ? 'var(--deep-green)' : '#f4f3ed',
+                    color: statusFilter === 'all' ? '#fff' : 'var(--ink)',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  All ({coupons.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('active')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    background: statusFilter === 'active' ? '#047857' : '#f4f3ed',
+                    color: statusFilter === 'active' ? '#fff' : 'var(--ink)',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🟢 Active ({coupons.filter(c => c.active).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('inactive')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    background: statusFilter === 'inactive' ? '#6b7280' : '#f4f3ed',
+                    color: statusFilter === 'inactive' ? '#fff' : 'var(--ink)',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚪ Inactive ({coupons.filter(c => !c.active).length})
+                </button>
+              </div>
+            </div>
+          </div>
+
           {coupons.length === 0 ? (
             <p className="empty-msg">No coupons created yet.</p>
           ) : (
             <div className="coupon-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-              {coupons.map(cp => (
+              {coupons
+                .filter(cp => {
+                  if (statusFilter === 'active' && !cp.active) return false
+                  if (statusFilter === 'inactive' && cp.active) return false
+                  if (searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase().trim()
+                    return (cp.couponCode || '').toLowerCase().includes(q) || (cp.applicableCategory || '').toLowerCase().includes(q)
+                  }
+                  return true
+                })
+                .map(cp => (
                 <div key={cp.id} className="adm-coupon-card" style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', background: 'var(--card-bg)' }}>
                   <div className="coupon-card-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <span className="coupon-code-tag" style={{ background: 'var(--deep-green-subtle)', color: 'var(--deep-green)', padding: '4px 10px', borderRadius: '6px', fontWeight: 800, fontSize: '0.95rem' }}>

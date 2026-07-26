@@ -14,6 +14,10 @@ export default function AdminMenuDesk() {
   const [showModal, setShowModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
 
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+
   // Form State
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -198,44 +202,107 @@ export default function AdminMenuDesk() {
   return (
     <AdminLayout activePage="menu" title="Dish Menu Management" itemCount={menuItems.length}>
       <div className="admin-page-container">
-          <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
-            <div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.18em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
-                FOOD CATALOG CONTROL
-              </span>
-              <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: 900, color: 'var(--ink)', margin: 0 }}>
-                Menu Management
-              </h1>
+        {/* EXECUTIVE CONTROL DECK FOR MENU MANAGEMENT */}
+        <div className="admin-control-hero-card">
+          <div className="admin-orders-header">
+            <div className="admin-title-area">
+              <span className="admin-sync-pill">FOOD CATALOG CONTROL</span>
+              <h1>Menu Management</h1>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
               {menuItems.length === 0 && (
                 <button onClick={handleSeedMenu} className="btn secondary" style={{ padding: '10px 18px', fontSize: '0.82rem', borderRadius: '12px' }}>
-                  ⚡ SEED INITIAL 19 DISHES
+                  ⚡ SEED INITIAL DISHES
                 </button>
               )}
               <button onClick={handleOpenAdd} className="btn" style={{ padding: '10px 20px', fontSize: '0.82rem', borderRadius: '12px', whiteSpace: 'nowrap' }}>
                 + ADD NEW FOOD ITEM
               </button>
             </div>
-          </header>
+          </div>
 
-          {/* Menu Items Table Container */}
-          <div style={{ background: '#ffffff', borderRadius: '24px', padding: '20px', border: '1px solid rgba(13,90,58,0.1)', boxShadow: '0 6px 20px rgba(0,0,0,0.03)' }}>
-            <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
-              <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1.5px solid rgba(0,0,0,0.08)', color: 'var(--muted)' }}>
-                    <th style={{ padding: '12px 14px', width: '38%' }}>ITEM</th>
-                    <th style={{ padding: '12px 14px' }}>CATEGORY</th>
-                    <th style={{ padding: '12px 14px' }}>PRICE</th>
-                    <th style={{ padding: '12px 14px' }}>TYPE</th>
-                    <th style={{ padding: '12px 14px' }}>STATUS</th>
-                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(menuItems.length > 0 ? menuItems : ALL_MENU_ITEMS).map((item) => (
+          {/* Search Box & Category Filters */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="admin-search-box" style={{ maxWidth: '100%' }}>
+              <span className="admin-search-icon">🔍</span>
+              <input
+                type="text"
+                className="admin-search-input"
+                placeholder="Search dish title, description, category..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="admin-search-clear"
+                  onClick={() => setSearchQuery('')}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="status-filter-wrapper-container">
+              <div className="status-filter-wrapped" role="tablist">
+                {[
+                  { id: 'all', label: '🍱 ALL DISHES' },
+                  { id: 'kawab', label: '🔥 KAWABS' },
+                  { id: 'biryani', label: '🍛 BIRYANIS' },
+                  { id: 'gravy', label: '🍲 GRAVIES' },
+                  { id: 'bread', label: '𫓓 BREADS' },
+                  { id: 'beverage', label: '🥤 BEVERAGES' }
+                ].map((tab) => {
+                  const itemsList = menuItems.length > 0 ? menuItems : ALL_MENU_ITEMS
+                  const count = tab.id === 'all'
+                    ? itemsList.length
+                    : itemsList.filter(i => (i.category || '').toLowerCase() === tab.id).length
+
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`status-counter-btn ${categoryFilter === tab.id ? 'active' : ''}`}
+                      onClick={() => setCategoryFilter(tab.id)}
+                    >
+                      {tab.label} <span className="status-count-badge">{count}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Menu Items Table Container */}
+        <div style={{ background: '#ffffff', borderRadius: '24px', padding: '20px', border: '1px solid rgba(13,90,58,0.1)', boxShadow: '0 6px 20px rgba(0,0,0,0.03)' }}>
+          <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1.5px solid rgba(0,0,0,0.08)', color: 'var(--muted)' }}>
+                  <th style={{ padding: '12px 14px', width: '38%' }}>ITEM</th>
+                  <th style={{ padding: '12px 14px' }}>CATEGORY</th>
+                  <th style={{ padding: '12px 14px' }}>PRICE</th>
+                  <th style={{ padding: '12px 14px' }}>TYPE</th>
+                  <th style={{ padding: '12px 14px' }}>STATUS</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(menuItems.length > 0 ? menuItems : ALL_MENU_ITEMS)
+                  .filter(item => {
+                    if (categoryFilter !== 'all' && (item.category || '').toLowerCase() !== categoryFilter.toLowerCase()) return false
+                    if (searchQuery.trim()) {
+                      const q = searchQuery.toLowerCase().trim()
+                      const titleMatch = (item.name || item.title || '').toLowerCase().includes(q)
+                      const descMatch = (item.description || '').toLowerCase().includes(q)
+                      const catMatch = (item.category || '').toLowerCase().includes(q)
+                      return titleMatch || descMatch || catMatch
+                    }
+                    return true
+                  })
+                  .map((item) => (
                     <tr key={item.id || item.title} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
