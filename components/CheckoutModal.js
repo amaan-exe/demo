@@ -174,7 +174,7 @@ export default function CheckoutModal({
     }
     const cleanPhone = phone.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10)
     if (!cleanPhone || cleanPhone.length < 10) {
-      alert('⚠️ Please enter a valid 10-digit mobile number (e.g. 8271301179). Do not include +91.')
+      alert('⚠️ Please enter a valid 10-digit mobile number (e.g. 9102985148). Do not include +91.')
       return
     }
     if (!address || !address.trim()) {
@@ -205,7 +205,7 @@ export default function CheckoutModal({
     }
     const cleanPhone = phone.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10)
     if (!cleanPhone || cleanPhone.length < 10) {
-      alert('⚠️ Please enter a valid 10-digit mobile number (e.g. 8271301179). Do not include +91.')
+      alert('⚠️ Please enter a valid 10-digit mobile number (e.g. 9102985148). Do not include +91.')
       return
     }
     if (!address || !address.trim()) {
@@ -385,7 +385,7 @@ export default function CheckoutModal({
 
                 <div className="store-hours-info">
                   <p>🕒 Hours: <strong>{settings?.openingTime || '11:00 AM'} – {settings?.closingTime || '11:30 PM'}</strong></p>
-                  <p>📞 Support: <strong>{settings?.supportPhone || '+91 82713 01179'}</strong></p>
+                  <p>📞 Support: <strong>{settings?.supportPhone || '+91 91029 85148'}</strong></p>
                 </div>
 
                 <button type="button" onClick={onClose} className="btn closed-close-btn">
@@ -432,7 +432,7 @@ export default function CheckoutModal({
                     <input
                       id="chk-phone"
                       type="tel"
-                      placeholder="e.g. 8271301179"
+                      placeholder="e.g. 9102985148"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10))}
                       maxLength={10}

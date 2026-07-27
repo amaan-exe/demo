@@ -142,11 +142,11 @@ export default function ProfilePage() {
                 <span className="qa-icon">{'\u{1F35B}'}</span>
                 <span className="qa-label">Order Food</span>
               </Link>
-              <a href="https://wa.me/918271301179" target="_blank" rel="noopener noreferrer" className="quick-action-card">
+              <a href="https://wa.me/919102985148" target="_blank" rel="noopener noreferrer" className="quick-action-card">
                 <span className="qa-icon">{'\u{1F4AC}'}</span>
                 <span className="qa-label">Contact Us</span>
               </a>
-              <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="quick-action-card">
+              <a href="https://maps.app.goo.gl/edZ9PRNyhbUr4Que6" target="_blank" rel="noopener noreferrer" className="quick-action-card">
                 <span className="qa-icon">{'\u{1F4CD}'}</span>
                 <span className="qa-label">Find Us</span>
               </a>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10))}
-                  placeholder="e.g. 8271301179"
+                  placeholder="e.g. 9102985148"
                   maxLength={10}
                 />
               </div>

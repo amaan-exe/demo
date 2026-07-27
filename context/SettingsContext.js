@@ -11,7 +11,7 @@ export const defaultSettings = {
   gstPercentage: 18,
   openingTime: '11:00 AM',
   closingTime: '11:30 PM',
-  supportPhone: '+91 82713 01179',
+  supportPhone: '+91 91029 85148',
   storeUpiId: 'Q441280679@ybl',
   restaurantAddress: 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001',
   announcementEnabled: false,

@@ -220,7 +220,7 @@ export default function Home() {
         (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
         `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
 
-      window.open(`https://wa.me/918271301179?text=${encodeURIComponent(message)}`, '_blank')
+      window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
 
       setCartItems([])
       setCheckoutOpen(false)
@@ -895,7 +895,7 @@ export default function Home() {
                 <div className="fuc-divider" />
                 <p className="fuc-address">Alba Colony, Phulwari Shareef<br />Patna, Bihar</p>
                 <p className="fuc-hours">🕐 Mon–Sun: 11:00 AM – 11:00 PM</p>
-                <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="fuc-cta">GET DIRECTIONS →</a>
+                <a href="https://maps.app.goo.gl/edZ9PRNyhbUr4Que6" target="_blank" rel="noreferrer" className="fuc-cta">GET DIRECTIONS →</a>
               </div>
               <div className="fuc-bg-text" aria-hidden="true">EAT</div>
             </article>
@@ -907,7 +907,7 @@ export default function Home() {
                 <div className="fuc-divider" />
                 <p className="fuc-address">Zomato · Swiggy<br />Direct WhatsApp Order</p>
                 <p className="fuc-hours">🛵 Free over ₹499 · ~30 min avg</p>
-                <a href="https://wa.me/918271301179" target="_blank" rel="noreferrer" className="fuc-cta">ORDER NOW →</a>
+                <a href="https://wa.me/919102985148" target="_blank" rel="noreferrer" className="fuc-cta">ORDER NOW →</a>
               </div>
               <div className="fuc-bg-text" aria-hidden="true">GO</div>
             </article>
@@ -1144,7 +1144,7 @@ export default function Home() {
             </div>
             <div className="info-block socials-brutalist">
               <a href="https://www.instagram.com/ibn_ishfaq" target="_blank" rel="noopener noreferrer" >INSTAGRAM</a>
-              <a href="https://wa.me/918271301179" target="_blank" rel="noreferrer">WHATSAPP</a>
+              <a href="https://wa.me/919102985148" target="_blank" rel="noreferrer">WHATSAPP</a>
               <a href="https://github.com/amaan-exe" target="_blank" rel="noopener noreferrer">Github</a>
             </div>
           </div>

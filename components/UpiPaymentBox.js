@@ -162,7 +162,7 @@ export default function UpiPaymentBox({
 
       {/* Help Line */}
       <p style={{ margin: '10px 0 0 0', textAlign: 'center', fontSize: '0.78rem', color: 'var(--muted)' }}>
-        Need help? Call restaurant: <a href="tel:+918271301179" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>+91 82713 01179</a>
+        Need help? Call restaurant: <a href="tel:+919102985148" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>+91 91029 85148</a>
       </p>
 
       {/* STEP 1 MODAL: Confirm Payment */}
@@ -251,7 +251,7 @@ export default function UpiPaymentBox({
 
             <input
               type="text"
-              placeholder="e.g. 8271301179 or username@upi"
+              placeholder="e.g. 9102985148 or username@upi"
               value={upiPayerName}
               onChange={(e) => setUpiPayerName(e.target.value)}
               style={{

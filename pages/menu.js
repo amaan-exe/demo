@@ -197,7 +197,7 @@ export default function MenuPage() {
         (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
         `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
 
-      window.open(`https://wa.me/918271301179?text=${encodeURIComponent(message)}`, '_blank')
+      window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
 
       setCartItems([])
       setCheckoutOpen(false)
@@ -559,7 +559,7 @@ export default function MenuPage() {
       {settings?.isStoreOpen === false && (
         <div style={{ background: '#dc2626', color: '#ffffff', textAlign: 'center', padding: '10px 20px', fontWeight: 800, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <span>🔴</span>
-          <span>STORE CLOSED: Online ordering is currently suspended. Hours: {settings?.openingTime || '11:00 AM'} – {settings?.closingTime || '11:30 PM'}. Support: {settings?.supportPhone || '+91 82713 01179'}</span>
+          <span>STORE CLOSED: Online ordering is currently suspended. Hours: {settings?.openingTime || '11:00 AM'} – {settings?.closingTime || '11:30 PM'}. Support: {settings?.supportPhone || '+91 91029 85148'}</span>
         </div>
       )}
 
@@ -1049,7 +1049,7 @@ export default function MenuPage() {
             </div>
             <div className="info-block socials-brutalist">
               <a href="https://instagram.com/_.hussain29" target="_blank" rel="noopener noreferrer" >INSTAGRAM</a>
-              <a href="https://wa.me/918271301179" target="_blank" rel="noreferrer">WHATSAPP</a>
+              <a href="https://wa.me/919102985148" target="_blank" rel="noreferrer">WHATSAPP</a>
               <a href="https://github.com/amaan-exe" target="_blank" rel="noopener noreferrer">Github</a>
             </div>
           </div>

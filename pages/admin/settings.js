@@ -13,7 +13,7 @@ export default function AdminSettingsDesk() {
   const [gstPercentage, setGstPercentage] = useState('18')
   const [openingTime, setOpeningTime] = useState('11:00 AM')
   const [closingTime, setClosingTime] = useState('11:30 PM')
-  const [supportPhone, setSupportPhone] = useState('+91 82713 01179')
+  const [supportPhone, setSupportPhone] = useState('+91 91029 85148')
   const [storeUpiId, setStoreUpiId] = useState('Q441280679@ybl')
   const [restaurantAddress, setRestaurantAddress] = useState('Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001')
   
@@ -39,7 +39,7 @@ export default function AdminSettingsDesk() {
           setGstPercentage(data.gstPercentage !== undefined ? String(data.gstPercentage) : '18')
           setOpeningTime(data.openingTime || '11:00 AM')
           setClosingTime(data.closingTime || '11:30 PM')
-          setSupportPhone(data.supportPhone || '+91 82713 01179')
+          setSupportPhone(data.supportPhone || '+91 91029 85148')
           setStoreUpiId(data.storeUpiId || 'Q441280679@ybl')
           setRestaurantAddress(data.restaurantAddress || 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001')
 
