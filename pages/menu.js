@@ -601,7 +601,7 @@ export default function MenuPage() {
                 fontWeight: 900
               }}>
                 THE COMPLETE <br />
-                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>{liveMenu.length} DISHES</span> MENU.
+                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>AUTHENTIC DUM & TANDOOR</span> MENU.
               </h1>
 
               <p style={{

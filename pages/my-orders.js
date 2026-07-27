@@ -220,8 +220,21 @@ export default function MyOrdersPage() {
     }
   }
 
-  const standardSteps = ['Order Placed', 'Payment Verification Pending', 'Accepted', 'Preparing', 'Ready', 'Out For Delivery', 'Delivered']
+  const standardSteps = ['Order Placed', 'Payment Verified', 'Accepted', 'Preparing', 'Ready', 'Out For Delivery', 'Delivered']
   const refundSteps = ['Order Placed', 'Payment Verified', 'Cancellation Requested', 'Refund Processing', 'Refund Completed']
+
+  const getStandardStepIndex = (order) => {
+    const rawSt = (order.orderStatus || order.status || '').toLowerCase()
+    const paySt = (order.paymentStatus || '').toLowerCase()
+
+    if (rawSt === 'delivered') return 6
+    if (rawSt === 'out_for_delivery' || rawSt === 'out for delivery') return 5
+    if (rawSt === 'ready' || rawSt === 'ready_for_delivery') return 4
+    if (rawSt === 'preparing') return 3
+    if (rawSt === 'accepted' || rawSt === 'confirmed') return 2
+    if (rawSt === 'payment_verified' || paySt === 'paid' || paySt === 'verified' || order.paymentVerifiedBy) return 1
+    return 0 // Order Placed
+  }
 
   const getStatusEmoji = (step) => {
     const map = {
@@ -278,7 +291,26 @@ export default function MyOrdersPage() {
 
       <header className="site-header scrolled" id="top">
         <nav className="nav container">
-          <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <Link href="/menu" style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(13,90,58,0.08)',
+              border: '1.5px solid rgba(13,90,58,0.2)',
+              color: 'var(--deep-green)',
+              padding: '6px 14px',
+              borderRadius: '999px',
+              fontSize: '0.84rem',
+              fontWeight: 800,
+              textDecoration: 'none',
+              transition: 'all 0.2s ease',
+              fontFamily: "'Outfit', sans-serif"
+            }}>
+              ← Back to Menu
+            </Link>
+            <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
+          </div>
 
           <button className="nav-toggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
             <span></span>
@@ -294,6 +326,23 @@ export default function MyOrdersPage() {
             <Link href="/my-orders" className="active" style={{ color: 'var(--yellow)' }} onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
             <Link href="/profile" onClick={() => setIsNavOpen(false)}>PROFILE</Link>
 
+            {/* Role-Exclusive Portal Access Pills (Admin ONLY sees Admin, Staff ONLY sees Kitchen, Delivery ONLY sees Delivery) */}
+            {user && isAdmin && (
+              <Link href="/admin" style={{ background: '#0d5a3a', color: '#ffffff', padding: '6px 14px', borderRadius: '999px', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>
+                🛡️ ADMIN
+              </Link>
+            )}
+            {user && isStaffOnly && (
+              <Link href="/kitchen" style={{ background: '#ea580c', color: '#ffffff', padding: '6px 14px', borderRadius: '999px', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>
+                🍳 KITCHEN
+              </Link>
+            )}
+            {user && isDeliveryOnly && (
+              <Link href="/delivery" style={{ background: '#0284c7', color: '#ffffff', padding: '6px 14px', borderRadius: '999px', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>
+                🛵 DELIVERY
+              </Link>
+            )}
+
             {!user && (
               <button className="btn" onClick={() => { openAuthModal(); setIsNavOpen(false); }}>
                 SIGN IN
@@ -306,9 +355,28 @@ export default function MyOrdersPage() {
       <main style={{ minHeight: '80vh', padding: '100px 0 80px 0', background: 'var(--cream)' }}>
         <div className="container" style={{ maxWidth: '900px' }}>
           <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.22em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
-              REAL-TIME TRACKING & REFUNDS
-            </span>
+            <Link href="/menu" style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#0d5a3a',
+              color: '#ffffff',
+              padding: '7px 18px',
+              borderRadius: '999px',
+              fontSize: '0.84rem',
+              fontWeight: 800,
+              textDecoration: 'none',
+              marginBottom: '14px',
+              boxShadow: '0 4px 14px rgba(13,90,58,0.2)',
+              fontFamily: "'Outfit', sans-serif"
+            }}>
+              ← Back to Food Menu
+            </Link>
+            <div>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.22em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
+                REAL-TIME TRACKING & REFUNDS
+              </span>
+            </div>
             <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(2rem, 6vw, 2.8rem)', fontWeight: 900, color: 'var(--ink)', margin: '6px 0' }}>
               My Orders
             </h1>
@@ -348,7 +416,7 @@ export default function MyOrdersPage() {
 
                 // Step index for progress timeline
                 let activeSteps = standardSteps
-                let currentStepIdx = standardSteps.indexOf(order.orderStatus)
+                let currentStepIdx = getStandardStepIndex(order)
 
                 if (isRefundWorkflow) {
                   activeSteps = refundSteps

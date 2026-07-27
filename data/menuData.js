@@ -475,5 +475,5 @@ export const ALL_MENU_ITEMS = [
   }
 ]
 
-export const FEATURED_DISHES = ALL_MENU_ITEMS.filter((item) => item.isFeatured)
+export const FEATURED_DISHES = ALL_MENU_ITEMS.filter((item) => item.isFeatured).slice(0, 8)
 

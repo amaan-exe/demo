@@ -188,8 +188,9 @@ export default function ProfilePage() {
                   id="prof-phone"
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 82713 01179"
+                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10))}
+                  placeholder="e.g. 8271301179"
+                  maxLength={10}
                 />
               </div>
 

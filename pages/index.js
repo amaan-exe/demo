@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
-import { FEATURED_DISHES } from '../data/menuData'
+import { FEATURED_DISHES, ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import CheckoutModal from '../components/CheckoutModal'
@@ -709,17 +709,17 @@ export default function Home() {
             <div className="menu-header-flex">
               <div className="menu-header-titles">
                 <p className="section-label menu-label">CHEF'S SPECIAL SELECTION</p>
-                <h2 className="display menu-title">FEATURED <span className="highlight-italic">6 DISHES.</span></h2>
+                <h2 className="display menu-title">FEATURED <span className="highlight-italic">SELECTION.</span></h2>
               </div>
               <div style={{ alignSelf: 'center' }}>
                 <Link href="/menu" className="chip active" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-                  VIEW FULL MENU (19 ITEMS) →
+                  VIEW FULL MENU →
                 </Link>
               </div>
             </div>
 
             <div className="menu-grid premium-grid">
-              {FEATURED_DISHES.map((dish) => (
+              {FEATURED_DISHES.slice(0, 8).map((dish) => (
                 <article
                   key={dish.id}
                   className="menu-card"
@@ -768,7 +768,7 @@ export default function Home() {
                 borderRadius: '999px',
                 boxShadow: '0 8px 24px rgba(13,90,58,0.2)'
               }}>
-                EXPLORE ALL 19 DISHES (FULL MENU) →
+                EXPLORE FULL MENU →
               </Link>
             </div>
           </div>

@@ -140,7 +140,7 @@ export default function KitchenPortal() {
     }
   }
 
-  // Filter Active Kitchen Orders - ONLY show orders AFTER Admin payment acceptance / confirmation & exclude refunds!
+  // Filter Active Kitchen Orders - ONLY show orders whose payment is verified AND are NOT out for delivery, delivered, or cancelled!
   const isKitchenOrder = (o) => {
     const st = (o.orderStatus || o.status || '').toLowerCase()
     const paySt = (o.paymentStatus || '').toLowerCase()
@@ -151,38 +151,62 @@ export default function KitchenPortal() {
       return false
     }
 
-    // Filter out unverified / pending payment orders
-    if (st === 'pending' || st === 'upi verification pending' || st === 'payment_verification_pending' || paySt === 'verification_pending') {
+    // Exclude orders that are already out for delivery, delivered, or cancelled!
+    if (st === 'out_for_delivery' || st === 'out for delivery' || st === 'delivered' || st === 'cancelled' || st === 'rejected') {
       return false
     }
 
-    // Only show orders accepted/confirmed by Admin or currently preparing
-    if (st === 'accepted' || st === 'confirmed' || st === 'preparing') {
-      return true
+    // Must be payment verified
+    const isPaymentVerified = paySt === 'paid' || paySt === 'verified' || st === 'payment_verified' || o.paymentVerifiedBy
+    if (!isPaymentVerified) {
+      return false
     }
 
-    return false
+    // Active kitchen stages only (payment_verified, accepted, confirmed, preparing, ready)
+    return (
+      st === 'payment_verified' ||
+      st === 'accepted' ||
+      st === 'confirmed' ||
+      st === 'preparing' ||
+      st === 'ready'
+    )
   }
 
   const kitchenOrders = orders.filter(isKitchenOrder)
 
-  const confirmedCount = kitchenOrders.filter(o => {
-    const st = (o.orderStatus || '').toLowerCase()
+  const newOrdersCount = kitchenOrders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toLowerCase()
+    const paySt = (o.paymentStatus || '').toLowerCase()
+    return st === 'payment_verified' || (paySt === 'paid' && st !== 'accepted' && st !== 'preparing' && st !== 'ready')
+  }).length
+
+  const approvedCount = kitchenOrders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toLowerCase()
     return st === 'accepted' || st === 'confirmed'
   }).length
 
   const preparingCount = kitchenOrders.filter(o => {
-    const st = (o.orderStatus || '').toLowerCase()
+    const st = (o.orderStatus || o.status || '').toLowerCase()
     return st === 'preparing'
   }).length
 
-  const filteredOrders = kitchenOrders.filter(o => {
-    const st = (o.orderStatus || '').toLowerCase()
+  const readyCount = kitchenOrders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toLowerCase()
+    return st === 'ready' || st === 'ready_for_delivery'
+  }).length
 
-    if (filterTab === 'confirmed') {
+  const filteredOrders = kitchenOrders.filter(o => {
+    const st = (o.orderStatus || o.status || '').toLowerCase()
+    const paySt = (o.paymentStatus || '').toLowerCase()
+
+    if (filterTab === 'new') {
+      if (!(st === 'payment_verified' || (paySt === 'paid' && st !== 'accepted' && st !== 'preparing' && st !== 'ready'))) return false
+    } else if (filterTab === 'approved') {
       if (!(st === 'accepted' || st === 'confirmed')) return false
     } else if (filterTab === 'preparing') {
       if (st !== 'preparing') return false
+    } else if (filterTab === 'ready') {
+      if (!(st === 'ready' || st === 'ready_for_delivery')) return false
     }
 
     if (searchQuery.trim()) {
@@ -199,7 +223,11 @@ export default function KitchenPortal() {
   const haltedCancellationCount = orders.filter(o => {
     const st = (o.orderStatus || o.status || '').toLowerCase()
     const refSt = (o.refund?.status || '').toLowerCase()
-    return st.includes('refund') || refSt.includes('refund') || o.refund?.requested === true
+
+    // Once refund is complete (REFUNDED), halt the notice notification!
+    if (st === 'refunded' || refSt === 'refunded' || st === 'cancelled') return false
+
+    return st === 'refund_pending' || st === 'refund_processing' || refSt === 'refund_pending' || refSt === 'refund_processing' || o.refund?.requested === true
   }).length
 
   return (
@@ -325,10 +353,33 @@ export default function KitchenPortal() {
 
             <button
               type="button"
-              onClick={() => setFilterTab('confirmed')}
+              onClick={() => setFilterTab('new')}
               style={{
-                background: filterTab === 'confirmed' ? '#0284c7' : '#ffffff',
-                color: filterTab === 'confirmed' ? '#ffffff' : '#0284c7',
+                background: filterTab === 'new' ? '#1a73e8' : '#ffffff',
+                color: filterTab === 'new' ? '#ffffff' : '#1a73e8',
+                border: '2px solid #1a73e8',
+                borderRadius: '16px',
+                padding: '14px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span style={{ fontSize: '0.7rem', fontWeight: 900, display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.8 }}>
+                ⏳ NEW ORDERS
+              </span>
+              <div style={{ fontSize: '1.65rem', fontWeight: 900, fontFamily: "'Outfit', sans-serif", marginTop: '2px' }}>
+                {newOrdersCount} <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>to accept</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterTab('approved')}
+              style={{
+                background: filterTab === 'approved' ? '#0284c7' : '#ffffff',
+                color: filterTab === 'approved' ? '#ffffff' : '#0284c7',
                 border: '2px solid #0284c7',
                 borderRadius: '16px',
                 padding: '14px',
@@ -342,7 +393,7 @@ export default function KitchenPortal() {
                 👍 APPROVED & QUEUED
               </span>
               <div style={{ fontSize: '1.65rem', fontWeight: 900, fontFamily: "'Outfit', sans-serif", marginTop: '2px' }}>
-                {confirmedCount} <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>orders</span>
+                {approvedCount} <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>orders</span>
               </div>
             </button>
 
@@ -366,6 +417,29 @@ export default function KitchenPortal() {
               </span>
               <div style={{ fontSize: '1.65rem', fontWeight: 900, fontFamily: "'Outfit', sans-serif", marginTop: '2px' }}>
                 {preparingCount} <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>cooking</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterTab('ready')}
+              style={{
+                background: filterTab === 'ready' ? '#0d5a3a' : '#ffffff',
+                color: filterTab === 'ready' ? '#ffffff' : '#0d5a3a',
+                border: '2px solid #0d5a3a',
+                borderRadius: '16px',
+                padding: '14px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span style={{ fontSize: '0.7rem', fontWeight: 900, display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.8 }}>
+                🍱 READY
+              </span>
+              <div style={{ fontSize: '1.65rem', fontWeight: 900, fontFamily: "'Outfit', sans-serif", marginTop: '2px' }}>
+                {readyCount} <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>for pickup</span>
               </div>
             </button>
           </div>
@@ -406,9 +480,13 @@ export default function KitchenPortal() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
               {filteredOrders.map(ord => {
-                const st = (ord.orderStatus || 'Confirmed').toLowerCase()
-                const isConfirmed = st === 'accepted' || st === 'confirmed'
+                const st = (ord.orderStatus || ord.status || 'Confirmed').toLowerCase()
+                const paySt = (ord.paymentStatus || '').toLowerCase()
+                
+                const isPendingAcceptance = st === 'payment_verified' || (paySt === 'paid' && st !== 'accepted' && st !== 'preparing' && st !== 'ready')
+                const isAccepted = st === 'accepted' || st === 'confirmed'
                 const isPreparing = st === 'preparing'
+                const isReady = st === 'ready' || st === 'ready_for_delivery'
 
                 const customerName = ord.customerName || ord.userName || 'Customer'
                 const rawPhone = (ord.customerPhone || ord.userPhone || '').replace(/[^0-9]/g, '')
@@ -420,7 +498,7 @@ export default function KitchenPortal() {
                     style={{
                       background: '#ffffff',
                       borderRadius: '20px',
-                      border: isPreparing ? '2.5px solid #ea580c' : '2px solid #0284c7',
+                      border: isPreparing ? '2.5px solid #ea580c' : isAccepted ? '2px solid #0284c7' : isPendingAcceptance ? '2px solid #1a73e8' : '2px solid #0d5a3a',
                       boxShadow: isPreparing ? '0 10px 30px rgba(234, 88, 12, 0.15)' : '0 6px 20px rgba(0,0,0,0.04)',
                       overflow: 'hidden',
                       display: 'flex',
@@ -430,7 +508,7 @@ export default function KitchenPortal() {
                     }}
                   >
                     {/* Status Top Strip Accent */}
-                    <div style={{ height: '6px', width: '100%', background: isPreparing ? '#ea580c' : '#0284c7' }} />
+                    <div style={{ height: '6px', width: '100%', background: isPreparing ? '#ea580c' : isAccepted ? '#0284c7' : isPendingAcceptance ? '#1a73e8' : '#0d5a3a' }} />
 
                     <div style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       {/* Header Row: Order ID & Timer Ticker */}
@@ -542,7 +620,27 @@ export default function KitchenPortal() {
 
                       {/* ONE-TOUCH KITCHEN WORKFLOW ACTIONS */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {isConfirmed ? (
+                        {isPendingAcceptance ? (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateStatus(ord.id, 'Accepted')}
+                            style={{
+                              width: '100%',
+                              padding: '14px',
+                              borderRadius: '14px',
+                              background: '#1a73e8',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 900,
+                              fontSize: '0.98rem',
+                              cursor: 'pointer',
+                              fontFamily: "'Outfit', sans-serif",
+                              boxShadow: '0 4px 16px rgba(26, 115, 232, 0.4)'
+                            }}
+                          >
+                            Accept Order 👍
+                          </button>
+                        ) : isAccepted ? (
                           <button
                             type="button"
                             onClick={() => handleUpdateStatus(ord.id, 'Preparing')}
@@ -582,6 +680,20 @@ export default function KitchenPortal() {
                           >
                             Ready for Delivery 🍱 ➔
                           </button>
+                        ) : isReady ? (
+                          <div style={{
+                            padding: '12px',
+                            borderRadius: '12px',
+                            background: '#e0e7ff',
+                            color: '#3730a3',
+                            border: '1.5px solid #6366f1',
+                            fontWeight: 900,
+                            fontSize: '0.86rem',
+                            textAlign: 'center',
+                            fontFamily: "'Outfit', sans-serif"
+                          }}>
+                            Sent to Delivery Partner (Waiting for Pickup 📦)
+                          </div>
                         ) : null}
 
                         <button

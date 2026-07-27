@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import '../styles/globals.css'
 import Head from 'next/head'
 import { AuthProvider } from '../context/AuthContext'
@@ -5,6 +6,38 @@ import { SettingsProvider } from '../context/SettingsContext'
 import AuthModal from '../components/AuthModal'
 
 export default function App({ Component, pageProps }) {
+  useEffect(() => {
+    const handleUnhandledRejection = (event) => {
+      const reason = event?.reason
+      const msg = (reason?.message || String(reason || '')).toLowerCase()
+      const name = reason?.name || ''
+      const stack = (reason?.stack || '').toLowerCase()
+
+      const isHarmlessNetworkError =
+        name === 'AbortError' ||
+        msg.includes('failed to fetch') ||
+        msg.includes('signal is aborted') ||
+        msg.includes('webchannel') ||
+        msg.includes('aborted') ||
+        stack.includes('webchannel') ||
+        stack.includes('injectscriptadjust')
+
+      if (isHarmlessNetworkError) {
+        event.preventDefault()
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      }
+    }
+  }, [])
+
   return (
     <AuthProvider>
       <SettingsProvider>

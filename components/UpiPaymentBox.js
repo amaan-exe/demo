@@ -46,11 +46,16 @@ export default function UpiPaymentBox({
     window.location.href = upiUri
   }
 
-  const handleFinalSubmit = (e, nameValue) => {
+  const handleFinalSubmit = (e, val) => {
+    const cleanVal = (val !== undefined && val !== null ? val : upiPayerName).trim()
+    if (!cleanVal) {
+      alert('⚠️ UPI Number is mandatory! Please enter the UPI Phone Number or UPI ID used to make the payment.')
+      return
+    }
     setStep('idle')
     const confirmFn = onConfirmPayment || onVerify
     if (typeof confirmFn === 'function') {
-      confirmFn(e, nameValue)
+      confirmFn(e, cleanVal)
     }
   }
 
@@ -236,46 +241,47 @@ export default function UpiPaymentBox({
               border: '2px solid var(--deep-green)'
             }}
           >
-            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>👤</div>
+            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📲</div>
             <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--ink)', margin: '0 0 6px 0' }}>
-              UPI Account Name
+              UPI NUMBER / ID *
             </h3>
             <p style={{ color: 'var(--muted)', fontSize: '0.82rem', lineHeight: 1.4, marginBottom: '18px' }}>
-              Enter the <strong>Name on your UPI App / Bank Account</strong> (GPay, PhonePe, Paytm name) used to send the payment.
+              Enter the <strong>UPI Phone Number or UPI ID</strong> (GPay, PhonePe, Paytm number/ID) used to send the payment.
             </p>
 
             <input
               type="text"
-              placeholder="e.g. Amanullah Khan (GPay Name)"
+              placeholder="e.g. 8271301179 or username@upi"
               value={upiPayerName}
               onChange={(e) => setUpiPayerName(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',
                 borderRadius: '12px',
-                border: '1px solid rgba(0,0,0,0.2)',
+                border: upiPayerName.trim() ? '2px solid var(--deep-green)' : '1.5px solid #dc2626',
                 fontSize: '0.95rem',
-                fontWeight: 700,
+                fontWeight: 800,
                 textAlign: 'center',
                 marginBottom: '20px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                outline: 'none'
               }}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
               <button
                 type="button"
-                onClick={(e) => handleFinalSubmit(e, null)}
-                style={{ padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.2)', background: '#ffffff', color: 'var(--ink)', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+                onClick={() => setStep('confirm')}
+                style={{ padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.2)', background: '#ffffff', color: 'var(--ink)', fontWeight: 800, fontSize: '0.86rem', cursor: 'pointer' }}
               >
-                Skip
+                ← Back
               </button>
               <button
                 type="button"
                 onClick={(e) => handleFinalSubmit(e, upiPayerName)}
-                style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--deep-green)', color: '#ffffff', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(13,90,58,0.3)' }}
+                style={{ padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--deep-green)', color: '#ffffff', fontWeight: 900, fontSize: '0.92rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(13,90,58,0.3)' }}
               >
-                Submit Order
+                Submit Order ✅
               </button>
             </div>
           </div>

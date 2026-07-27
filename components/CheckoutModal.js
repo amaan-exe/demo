@@ -137,7 +137,7 @@ export default function CheckoutModal({
   useEffect(() => {
     if (userProfile || user) {
       if (!name) setName(userProfile?.name || user?.displayName || '')
-      if (!phone) setPhone(userProfile?.phone || '')
+      if (!phone) setPhone((userProfile?.phone || '').replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10))
       if (!address) setAddress(userProfile?.defaultAddress || '')
     }
   }, [userProfile, user])
@@ -168,19 +168,27 @@ export default function CheckoutModal({
       alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
       return
     }
-    if (!name.trim() || !phone.trim() || !address.trim()) {
-      alert('Please fill in your name, phone number, and delivery address.')
+    if (!name || !name.trim()) {
+      alert('⚠️ Name is mandatory! Please enter your full name to proceed.')
       return
     }
+    const cleanPhone = phone.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10)
+    if (!cleanPhone || cleanPhone.length < 10) {
+      alert('⚠️ Please enter a valid 10-digit mobile number (e.g. 8271301179). Do not include +91.')
+      return
+    }
+    if (!address || !address.trim()) {
+      alert('⚠️ Delivery Address is mandatory!')
+      return
+    }
+    setPhone(cleanPhone)
     setStep(2)
   }
 
   const discountAmount = appliedCoupon ? (
-    appliedCoupon.discount !== undefined
-      ? appliedCoupon.discount
-      : appliedCoupon.discountType === 'percent'
-        ? Math.round((cartTotal * appliedCoupon.discountValue) / 100)
-        : Number(appliedCoupon.discountValue) || 0
+    appliedCoupon.discountType === 'percent'
+      ? Math.round((cartTotal * (Number(appliedCoupon.discountValue) || 0)) / 100)
+      : Math.min(cartTotal, Number(appliedCoupon.discountValue) || 0)
   ) : 0
 
   const finalTotal = Math.max(0, grandTotal - discountAmount)
@@ -191,10 +199,24 @@ export default function CheckoutModal({
       alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
       return
     }
+    if (!name || !name.trim()) {
+      alert('⚠️ Name is mandatory! Please enter your full name before placing order.')
+      return
+    }
+    const cleanPhone = phone.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10)
+    if (!cleanPhone || cleanPhone.length < 10) {
+      alert('⚠️ Please enter a valid 10-digit mobile number (e.g. 8271301179). Do not include +91.')
+      return
+    }
+    if (!address || !address.trim()) {
+      alert('⚠️ Delivery Address is mandatory!')
+      return
+    }
+
     onPlaceOrder({
-      name,
-      phone,
-      address,
+      name: name.trim(),
+      phone: cleanPhone,
+      address: address.trim(),
       paymentMethod,
       isUpi: paymentMethod === 'UPI',
       coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: discountAmount } : null
@@ -410,9 +432,10 @@ export default function CheckoutModal({
                     <input
                       id="chk-phone"
                       type="tel"
-                      placeholder="+91 82713 01179"
+                      placeholder="e.g. 8271301179"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10))}
+                      maxLength={10}
                       required
                     />
                   </div>

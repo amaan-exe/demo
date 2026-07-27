@@ -280,6 +280,10 @@ export default function AdminOrdersDesk() {
       if (filterStatus === 'UPI Verification Pending') {
         const isUpi = o.paymentStatus === 'verification_pending' || o.paymentStatus === 'Verification Pending' || o.orderStatus === 'payment_verification_pending'
         if (!isUpi) return false
+      } else if (filterStatus === 'in_kitchen_transit') {
+        const st = (o.orderStatus || o.status || '').toLowerCase()
+        const isKitchenTransit = ['payment_verified', 'accepted', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'out for delivery'].includes(st)
+        if (!isKitchenTransit) return false
       } else {
         if ((o.orderStatus || '').toLowerCase() !== filterStatus.toLowerCase()) return false
       }
@@ -474,6 +478,7 @@ export default function AdminOrdersDesk() {
                       { id: 'all', label: 'All Orders', icon: '📦', count: orders.length },
                       { id: 'UPI Verification Pending', label: 'UPI Verification', icon: '💳', count: countUpiPending, highlight: countUpiPending > 0 },
                       { id: 'Pending', label: 'Pending Confirmation', icon: '⏳', count: countPending, highlight: countPending > 0 },
+                      { id: 'in_kitchen_transit', label: 'In Kitchen & Transit', icon: '👨‍🍳 🛵', count: countAccepted + countPreparing + countReady + countOut },
                       { id: 'Accepted', label: 'Accepted Orders', icon: '👍', count: countAccepted },
                       { id: 'Preparing', label: 'Preparing in Kitchen', icon: '👨‍🍳', count: countPreparing },
                       { id: 'Ready', label: 'Ready for Pickup', icon: '🍱', count: countReady },
@@ -576,12 +581,12 @@ export default function AdminOrdersDesk() {
             {/* Card 3: Kitchen & Transit */}
             <button
               type="button"
-              onClick={() => setFilterStatus('Preparing')}
+              onClick={() => setFilterStatus('in_kitchen_transit')}
               style={{
                 borderRadius: '12px',
                 padding: '14px 16px',
-                border: filterStatus === 'Preparing' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.06)',
-                background: filterStatus === 'Preparing' ? 'rgba(13,90,58,0.05)' : '#fafaf5',
+                border: filterStatus === 'in_kitchen_transit' ? '2px solid var(--deep-green)' : '1px solid rgba(0,0,0,0.06)',
+                background: filterStatus === 'in_kitchen_transit' ? 'rgba(13,90,58,0.05)' : '#fafaf5',
                 cursor: 'pointer',
                 textAlign: 'left',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
@@ -589,10 +594,10 @@ export default function AdminOrdersDesk() {
               }}
             >
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                👨‍🍳 KITCHEN & TRANSIT
+                👨‍🍳 🛵 IN KITCHEN & TRANSIT
               </span>
               <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--ink)', marginTop: '4px' }}>
-                {countPreparing + countReady + countOut} <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)' }}>active</span>
+                {countAccepted + countPreparing + countReady + countOut} <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)' }}>active</span>
               </div>
             </button>
 
