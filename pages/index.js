@@ -316,23 +316,23 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Biriyani Station Patna | Best Dum Biryani & Charcoal Kawabs</title>
-        <meta name="description" content="Order the best Dum Biryani and Charcoal Tandoori Kawabs in Patna online. Biriyani Station offers authentic Indian flavors, freshly prepared. Order now!" />
-        <meta name="keywords" content="Biryani Patna, Best Biryani in Patna, Order Biryani Online, Charcoal Kawabs, Tandoori Biryani Patna, Dum Biryani Patna, Indian Food Delivery" />
+        <title>Best Biryani in Phulwari Sharif | Chicken & Mutton Dum Biryani | Biriyani Station</title>
+        <meta name="description" content="Enjoy authentic Chicken & Mutton Dum Biryani at Biriyani Station, Phulwari Sharif, Patna. Order online for fast delivery or dine in with family. Fresh ingredients, rich flavors, and affordable prices." />
+        <meta name="keywords" content="Best biryani in Phulwari Sharif, Chicken biryani Phulwari Sharif, Mutton biryani Phulwari Sharif, Biryani near Phulwari Sharif, Order biryani online Phulwari Sharif, Biryani delivery Phulwari Sharif, Best restaurant in Phulwari Sharif, Dum biryani Phulwari Sharif, Restaurant near AIIMS Patna, Best biryani in Patna, Food delivery Patna, Chicken Dum Biryani, Mutton Dum Biryani, Tandoori Chicken, Biriyani Station Phulwari Sharif" />
         <link rel="canonical" href="https://www.biriyanistation.in/" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.biriyanistation.in/" />
-        <meta property="og:title" content="Biriyani Station Patna | Best Dum Biryani & Charcoal Kawabs" />
-        <meta property="og:description" content="Order the best Dum Biryani and Charcoal Tandoori Kawabs in Patna online. Biriyani Station offers authentic Indian flavors, freshly prepared." />
+        <meta property="og:title" content="Best Biryani in Phulwari Sharif | Chicken & Mutton Dum Biryani | Biriyani Station" />
+        <meta property="og:description" content="Enjoy authentic Chicken & Mutton Dum Biryani at Biriyani Station, Phulwari Sharif, Patna. Order online for fast delivery or dine in with family. Fresh ingredients, rich flavors, and affordable prices." />
         <meta property="og:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://www.biriyanistation.in/" />
-        <meta property="twitter:title" content="Biriyani Station Patna | Best Dum Biryani & Charcoal Kawabs" />
-        <meta property="twitter:description" content="Order the best Dum Biryani and Charcoal Tandoori Kawabs in Patna online. Biriyani Station offers authentic Indian flavors, freshly prepared." />
+        <meta property="twitter:title" content="Best Biryani in Phulwari Sharif | Chicken & Mutton Dum Biryani | Biriyani Station" />
+        <meta property="twitter:description" content="Enjoy authentic Chicken & Mutton Dum Biryani at Biriyani Station, Phulwari Sharif, Patna. Order online for fast delivery or dine in with family. Fresh ingredients, rich flavors, and affordable prices." />
         <meta property="twitter:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
 
         {/* JSON-LD Schema.org for LocalBusiness/Restaurant */}
@@ -348,11 +348,11 @@ export default function Home() {
               "telephone": "+919102985148",
               "address": {
                 "@type": "PostalAddress",
-                "addressLocality": "Patna",
+                "addressLocality": "Phulwari Sharif, Patna",
                 "addressRegion": "Bihar",
                 "addressCountry": "IN"
               },
-              "servesCuisine": "Indian, Mughlai, Biryani",
+              "servesCuisine": "Indian, Mughlai, Dum Biryani",
               "priceRange": "₹₹",
               "menu": "https://www.biriyanistation.in/menu"
             })
@@ -625,6 +625,16 @@ export default function Home() {
       <AnnouncementBanner placement="hero" />
 
       <main>
+        {/* Semantic SEO Keywords Structure */}
+        <div style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+          <h1>Best Biryani in Phulwari Sharif, Patna</h1>
+          <h2>Authentic Dum Biryani</h2>
+          <h2>Chicken & Mutton Biryani</h2>
+          <h2>Order Biryani Online</h2>
+          <h2>Fast Home Delivery in Phulwari Sharif</h2>
+          <h2>Family Restaurant in Phulwari Sharif</h2>
+          <h2>Freshly Prepared Mughlai Cuisine</h2>
+        </div>
         <section className="hero-clean-split" id="hero">
           {/* Fast-loading auto-playing background video */}
           <video
