@@ -88,6 +88,7 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
     <div className="admin-root-shell">
       <Head>
         <title>{title} | Biriyani Station Patna Admin</title>
+        <meta name="robots" content="noindex, nofollow" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
       </Head>
 

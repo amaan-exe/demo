@@ -160,6 +160,7 @@ export default function DeliveryPortal() {
       <Head>
         <title>Delivery Dispatch Desk | Biriyani Station</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
 
       <div style={{ minHeight: '100vh', background: '#fcfaf4', color: 'var(--ink)', fontFamily: "'Plus Jakarta Sans', sans-serif", paddingBottom: '40px' }}>

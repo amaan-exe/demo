@@ -271,6 +271,7 @@ export default function MyOrdersPage() {
     <>
       <Head>
         <title>My Orders & Refund Status | Biriyani Station Patna</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
 
       {/* Toast Notification */}

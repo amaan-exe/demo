@@ -316,8 +316,48 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Biriyani Station Patna | Charcoal Kawabs & Dum Biryanis</title>
-        <meta name="description" content="Biriyani Station - Authentic tandoori kawabs, kawab biryanis, gravies, and fresh clay-oven tandoori breads." />
+        <title>Biriyani Station Patna | Best Dum Biryani & Charcoal Kawabs</title>
+        <meta name="description" content="Order the best Dum Biryani and Charcoal Tandoori Kawabs in Patna online. Biriyani Station offers authentic Indian flavors, freshly prepared. Order now!" />
+        <meta name="keywords" content="Biryani Patna, Best Biryani in Patna, Order Biryani Online, Charcoal Kawabs, Tandoori Biryani Patna, Dum Biryani Patna, Indian Food Delivery" />
+        <link rel="canonical" href="https://www.biriyanistation.in/" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.biriyanistation.in/" />
+        <meta property="og:title" content="Biriyani Station Patna | Best Dum Biryani & Charcoal Kawabs" />
+        <meta property="og:description" content="Order the best Dum Biryani and Charcoal Tandoori Kawabs in Patna online. Biriyani Station offers authentic Indian flavors, freshly prepared." />
+        <meta property="og:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://www.biriyanistation.in/" />
+        <meta property="twitter:title" content="Biriyani Station Patna | Best Dum Biryani & Charcoal Kawabs" />
+        <meta property="twitter:description" content="Order the best Dum Biryani and Charcoal Tandoori Kawabs in Patna online. Biriyani Station offers authentic Indian flavors, freshly prepared." />
+        <meta property="twitter:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
+
+        {/* JSON-LD Schema.org for LocalBusiness/Restaurant */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Restaurant",
+              "name": "Biriyani Station",
+              "image": "https://www.biriyanistation.in/images/og-image.jpg",
+              "url": "https://www.biriyanistation.in",
+              "telephone": "+919102985148",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Patna",
+                "addressRegion": "Bihar",
+                "addressCountry": "IN"
+              },
+              "servesCuisine": "Indian, Mughlai, Biryani",
+              "priceRange": "₹₹",
+              "menu": "https://www.biriyanistation.in/menu"
+            })
+          }}
+        />
       </Head>
 
       <header className="site-header" id="top">

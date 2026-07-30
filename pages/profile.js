@@ -83,6 +83,7 @@ export default function ProfilePage() {
     <>
       <Head>
         <title>My Profile | Biriyani Station Patna</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
 
       <header className="site-header scrolled" id="top">

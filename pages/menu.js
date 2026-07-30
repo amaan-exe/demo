@@ -344,8 +344,24 @@ export default function MenuPage() {
   return (
     <>
       <Head>
-        <title>The Complete Menu | Biriyani Station Patna</title>
-        <meta name="description" content={`Explore ${liveMenu.length || 31} authentic clay-oven tandoori kawabs, kawab biryanis, gravies, and fresh breads at Biriyani Station.`} />
+        <title>Menu & Online Ordering | Biriyani Station Patna</title>
+        <meta name="description" content={`Explore our complete menu of authentic charcoal tandoori kawabs, kawab biryanis, and fresh tandoori breads at Biriyani Station Patna.`} />
+        <meta name="keywords" content="Biryani Menu, Tandoori Kawabs, Order Online Patna, Best Biryani Patna Menu, Chicken Dum Biryani, Mutton Kawab" />
+        <link rel="canonical" href="https://www.biriyanistation.in/menu" />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.biriyanistation.in/menu" />
+        <meta property="og:title" content="Menu & Online Ordering | Biriyani Station Patna" />
+        <meta property="og:description" content="Explore our complete menu of authentic charcoal tandoori kawabs, kawab biryanis, and fresh tandoori breads at Biriyani Station Patna." />
+        <meta property="og:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://www.biriyanistation.in/menu" />
+        <meta property="twitter:title" content="Menu & Online Ordering | Biriyani Station Patna" />
+        <meta property="twitter:description" content="Explore our complete menu of authentic charcoal tandoori kawabs, kawab biryanis, and fresh tandoori breads at Biriyani Station Patna." />
+        <meta property="twitter:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
       </Head>
 
       {/* Sticky Header */}
