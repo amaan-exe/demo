@@ -1,5 +1,5 @@
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
-import { db } from '../../../lib/firebase'
+import { connectDb } from '../../../lib/db'
+import Order from '../../../models/Order'
 import { withAuth } from '../../../lib/authMiddleware'
 
 async function handler(req, res) {
@@ -14,39 +14,28 @@ async function handler(req, res) {
   }
 
   try {
-    const ordersRef = collection(db, 'orders')
-    // Simple query without orderBy to avoid composite index requirement on server
-    const q = query(ordersRef, where('userId', '==', userId))
-    const snapshot = await getDocs(q)
+    const conn = await connectDb()
+    if (!conn) {
+      return res.status(500).json({ error: 'Database connection failed' })
+    }
 
-    const orders = snapshot.docs.map(doc => {
-      const data = doc.data()
-      let createdAtStr = new Date().toISOString()
-      try {
-        if (data.createdAt?.toDate) {
-          createdAtStr = data.createdAt.toDate().toISOString()
-        } else if (data.createdAt) {
-          createdAtStr = new Date(data.createdAt).toISOString()
-        }
-      } catch (e) {}
+    // Fetch all historical orders for this user from MongoDB
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean()
 
-      return {
-        id: doc.id,
-        orderId: data.orderId || doc.id,
-        ...data,
-        createdAt: createdAtStr
-      }
-    })
+    // Format dates to string to prevent serialization issues
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      _id: order._id.toString(),
+      id: order._id.toString(),
+      orderId: order.orderId || order._id.toString(),
+      createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString()
+    }))
 
-    // Sort by createdAt descending in JavaScript (avoids Firestore composite index)
-    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
-    return res.status(200).json({ success: true, orders })
+    return res.status(200).json({ success: true, orders: formattedOrders })
   } catch (error) {
-    console.warn('User Orders API Notice:', error.message)
-    return res.status(200).json({ success: true, orders: [] })
+    console.error('User Orders API Error:', error)
+    return res.status(500).json({ success: false, error: 'Failed to fetch user orders', orders: [] })
   }
 }
 
 export default withAuth(handler)
-
