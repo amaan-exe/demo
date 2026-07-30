@@ -66,21 +66,29 @@ export default function AdminOrdersDesk() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Load paginated archived orders (20 at a time)
+  // Load paginated archived orders (20 at a time with index-less fallback)
   const fetchArchivedOrdersPage = async (lastDoc = null) => {
     if (loadingArchived) return
     setLoadingArchived(true)
     try {
-      let q = query(collection(db, 'orders_archive'), orderBy('createdAt', 'desc'), limit(20))
-      if (lastDoc) {
-        q = query(collection(db, 'orders_archive'), orderBy('createdAt', 'desc'), startAfter(lastDoc), limit(20))
+      let snap
+      try {
+        let q = query(collection(db, 'orders_archive'), orderBy('createdAt', 'desc'), limit(20))
+        if (lastDoc) {
+          q = query(collection(db, 'orders_archive'), orderBy('createdAt', 'desc'), startAfter(lastDoc), limit(20))
+        }
+        snap = await getDocs(q)
+      } catch (qErr) {
+        console.warn('Archived query fallback triggered:', qErr.message)
+        snap = await getDocs(collection(db, 'orders_archive'))
       }
 
-      const snap = await getDocs(q)
-      if (snap.empty) {
+      if (!snap || snap.empty) {
         setHasMoreArchived(false)
       } else {
-        setLastArchivedDoc(snap.docs[snap.docs.length - 1])
+        if (snap.docs.length > 0) {
+          setLastArchivedDoc(snap.docs[snap.docs.length - 1])
+        }
         const fetched = snap.docs.map(d => {
           const data = d.data()
           let dateObj = new Date()
@@ -102,7 +110,7 @@ export default function AdminOrdersDesk() {
         setArchivedOrders(prev => {
           const combined = [...prev, ...fetched]
           const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
-          return unique
+          return unique.sort((a, b) => (b.createdAtSeconds || 0) - (a.createdAtSeconds || 0))
         })
 
         if (snap.docs.length < 20) {
