@@ -463,11 +463,8 @@ export default function AllOrdersPage() {
                           <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--ink)' }}>
                             💳 {ord.paymentMethod === 'UPI' ? 'UPI' : 'COD'}
                           </div>
-                          <div style={{
-                            fontSize: '0.72rem', fontWeight: 900, marginTop: '2px',
-                            color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : isCancelled ? '#dc2626' : '#b45309'
-                          }}>
-                            {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : isCancelled ? '🔴 Rejected' : '🟡 Pending'}
+                          <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
+                            {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Pending'}
                           </div>
                         </div>
                       </div>

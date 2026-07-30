@@ -911,8 +911,8 @@ export default function AdminOrdersDesk() {
                             💳 {ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery'}
                           </div>
 
-                          <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : isCancelled ? '#dc2626' : '#b45309' }}>
-                            {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : isCancelled ? '🔴 Rejected' : '🟡 Verification Pending'}
+                          <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
+                            {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Verification Pending'}
                           </div>
 
                           {ord.transactionReference && (
