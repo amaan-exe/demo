@@ -1,9 +1,10 @@
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
+import { withAuth } from '../../../lib/authMiddleware'
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -37,16 +38,19 @@ export default async function handler(req, res) {
     // Server-side Coupon Rule Verification Shield
     let verifiedDiscount = 0
     let couponCodeToApply = req.body.appliedCoupon || req.body.couponCode || null
+    let couponDocIdToIncrement = null
+    let cleanSecretCode = null
+
+    const rawSubtotal = req.body.subtotal || 0
 
     if (couponCodeToApply) {
-      const cleanSecretCode = String(couponCodeToApply).toUpperCase().trim()
-      const rawSubtotal = req.body.subtotal || 0
+      cleanSecretCode = String(couponCodeToApply).toUpperCase().trim()
 
       if (cleanSecretCode === 'CODERSAPIEN50') {
         verifiedDiscount = Math.round((rawSubtotal * 50) / 100)
       } else {
         try {
-          const { collection, query, where, getDocs, doc, updateDoc, increment } = await import('firebase/firestore')
+          const { collection, query, where, getDocs, updateDoc, increment } = await import('firebase/firestore')
           const q = query(collection(db, 'coupons'), where('couponCode', '==', cleanSecretCode))
           const snap = await getDocs(q)
 
@@ -76,7 +80,6 @@ export default async function handler(req, res) {
           }
 
           // Rule 4: Minimum Order Threshold Validation
-          const rawSubtotal = req.body.subtotal || 0
           if (rawSubtotal < coupon.minimumOrder) {
             return res.status(400).json({ error: `Server validation failed: Minimum order threshold of ₹${coupon.minimumOrder} required for coupon.` })
           }
@@ -98,10 +101,9 @@ export default async function handler(req, res) {
             verifiedDiscount = Number(coupon.discountValue) || 0
           }
 
-          // Atomically increment redemption count in Firestore
-          await updateDoc(doc(db, 'coupons', couponDoc.id), {
-            usedCount: increment(1)
-          }).catch(e => console.warn('Coupon usage increment notice:', e.message))
+          // Atomically increment redemption count and track user in Firestore
+          // We removed it from here to move it below after order creation (Task 3.4)
+          couponDocIdToIncrement = couponDoc.id
 
         } catch (err) {
           console.error('Server Coupon Validation Error:', err)
@@ -143,13 +145,35 @@ export default async function handler(req, res) {
         }).catch((e) => console.warn('Mongoose Order Create Notice:', e.message))
       }).catch((e) => console.warn('DB Connection Notice:', e.message))
 
-      return res.status(200).json({
-        success: true,
-        message: 'Order created successfully',
-        orderId,
-      })
-    } catch (error) {
-      console.error('Order Creation API Error:', error)
-      return res.status(500).json({ error: error.message || 'Failed to create order' })
+    // Task 3.2: Overwrite the client's untrusted Firestore document with verified server data
+    try {
+      await setDoc(doc(db, 'orders', orderId), {
+        discount: verifiedDiscount,
+        grandTotal: verifiedGrandTotal,
+        updatedAt: serverTimestamp()
+      }, { merge: true })
+
+      // Task 3.4: Commit coupon usage ONLY after order is successfully recorded in Firestore
+      if (couponCodeToApply && cleanSecretCode !== 'CODERSAPIEN50' && couponDocIdToIncrement) {
+        const { arrayUnion, increment, updateDoc } = await import('firebase/firestore')
+        await updateDoc(doc(db, 'coupons', couponDocIdToIncrement), {
+          usedCount: increment(1),
+          usedByUsers: arrayUnion(userId || userEmail)
+        }).catch(e => console.warn('Coupon usage increment notice:', e.message))
+      }
+    } catch (e) {
+      console.error('Error overwriting firestore order with verified totals:', e)
     }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Order created successfully',
+      orderId,
+    })
+  } catch (error) {
+    console.error('Order Creation API Error:', error)
+    return res.status(500).json({ error: error.message || 'Failed to create order' })
   }
+}
+
+export default withAuth(handler)

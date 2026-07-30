@@ -1,7 +1,8 @@
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
+import { withAuth } from '../../../lib/authMiddleware'
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -73,6 +74,13 @@ export default async function handler(req, res) {
       console.warn('Firestore refund sync error:', fsErr.message)
     }
 
+    try {
+      const { archiveOrderIfCompleted } = await import('../../../lib/ordersArchive')
+      await archiveOrderIfCompleted(cleanId)
+    } catch (e) {
+      console.warn('Archival check failed:', e.message)
+    }
+
     return res.status(200).json({
       success: true,
       message: `Refund status updated to ${targetStatus}`
@@ -82,3 +90,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to process refund: ' + error.message })
   }
 }
+
+export default withAuth(handler, true)
+

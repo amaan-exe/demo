@@ -37,7 +37,7 @@ const getStatusMeta = (status, isDelivered, isCancelled) => {
 }
 
 export default function AdminOrdersDesk() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [filterStatus, setFilterStatus] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -64,30 +64,14 @@ export default function AdminOrdersDesk() {
   useEffect(() => {
     setMounted(true)
 
-    const fetchAllOrders = async () => {
-      try {
-        const res = await fetch('/api/orders/admin-all')
-        if (res.ok) {
-          const data = await res.json()
-          if (data.orders && data.orders.length) {
-            setOrders(prev => {
-              const combined = [...prev]
-              data.orders.forEach(o => {
-                const idx = combined.findIndex(item => item.id === o.id)
-                if (idx >= 0) {
-                  combined[idx] = { ...combined[idx], ...o }
-                } else {
-                  combined.push(o)
-                }
-              })
-              return combined.sort((a, b) => (b.createdAtSeconds || 0) - (a.createdAtSeconds || 0))
-            })
-          }
-        }
-      } catch (err) {}
+    // Helper: check if a timestamp falls within today (IST)
+    const isToday = (dateObj) => {
+      const now = new Date()
+      // Compare using IST date strings to avoid timezone edge cases
+      const todayStr = now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+      const dateStr = dateObj.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+      return todayStr === dateStr
     }
-
-    fetchAllOrders()
 
     const unsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
       setFirestoreError(null)
@@ -107,13 +91,16 @@ export default function AdminOrdersDesk() {
           id: d.id,
           ...data,
           createdAtFormatted,
-          createdAtSeconds: Math.floor(dateObj.getTime() / 1000)
+          createdAtSeconds: Math.floor(dateObj.getTime() / 1000),
+          _dateObj: dateObj
         }
       })
 
-      fetched.sort((a, b) => (b.createdAtSeconds || 0) - (a.createdAtSeconds || 0))
+      // Only keep today's orders for Live Orders view
+      const todayOrders = fetched.filter(o => isToday(o._dateObj))
+      todayOrders.sort((a, b) => (b.createdAtSeconds || 0) - (a.createdAtSeconds || 0))
 
-      if (!isFirstLoad.current && fetched.length > prevOrderCount.current) {
+      if (!isFirstLoad.current && todayOrders.length > prevOrderCount.current) {
         try {
           const audio = new Audio('/sounds/notification.mp3')
           audio.play().catch(() => {})
@@ -121,11 +108,10 @@ export default function AdminOrdersDesk() {
       }
 
       isFirstLoad.current = false
-      prevOrderCount.current = fetched.length
-      setOrders(fetched)
+      prevOrderCount.current = todayOrders.length
+      setOrders(todayOrders)
     }, (err) => {
-      setFirestoreError('Real-time sync paused. Fetching fallback data...')
-      fetchAllOrders()
+      setFirestoreError('Real-time sync paused. Check your connection.')
     })
 
     return () => unsub()
@@ -178,7 +164,10 @@ export default function AdminOrdersDesk() {
 
         fetch('/api/orders/cancel', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
           body: JSON.stringify({ orderId: cleanDocId, cancellationReason: 'Cancelled by Admin' })
         }).catch(() => {})
 
@@ -205,7 +194,10 @@ export default function AdminOrdersDesk() {
 
       fetch('/api/orders/update-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId, status: newStatus, paymentStatus: newPaymentStatus })
       }).catch(() => {})
 
@@ -226,7 +218,10 @@ export default function AdminOrdersDesk() {
 
       fetch('/api/orders/update-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId, status: 'PAYMENT_VERIFIED', paymentStatus: 'paid' })
       }).catch(() => {})
 
@@ -248,7 +243,10 @@ export default function AdminOrdersDesk() {
 
       fetch('/api/orders/update-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId, status: 'Cancelled', paymentStatus: 'rejected' })
       }).catch(() => {})
 
@@ -382,13 +380,13 @@ export default function AdminOrdersDesk() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
             <div>
               <span style={{ fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.12em', color: 'var(--deep-green)', textTransform: 'uppercase' }}>
-                <span style={{ animation: 'pulse 1.5s infinite' }}>🟢</span> LIVE ORDER STREAM
+                <span style={{ animation: 'pulse 1.5s infinite' }}>🟢</span> LIVE ORDER STREAM — TODAY
               </span>
               <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 900, color: 'var(--ink)', margin: '2px 0 0 0' }}>
-                Orders Dashboard
+                Today's Orders
               </h1>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.84rem', color: 'var(--muted)', fontWeight: 600 }}>
-                Manage and track live customer orders
+                Live orders placed today · For past orders, visit <Link href="/admin/all-orders" style={{ color: 'var(--deep-green)', fontWeight: 800, textDecoration: 'underline' }}>All Orders</Link>
               </p>
             </div>
 

@@ -6,7 +6,7 @@ import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 
 export default function MyOrdersPage() {
-  const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal } = useAuth()
+  const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -91,7 +91,9 @@ export default function MyOrdersPage() {
 
   const fetchLocalOrders = async () => {
     try {
-      const res = await fetch(`/api/orders/user?userId=${user.uid}`)
+      const res = await fetch(`/api/orders/user?userId=${user.uid}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      })
       if (res.ok) {
         const data = await res.json()
         const fetchedList = data.orders || []
@@ -150,7 +152,10 @@ export default function MyOrdersPage() {
       // 2. Call Server API
       await fetch('/api/orders/cancel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({
           orderId: cleanDocId,
           cancellationReason: cancellationReason || 'Customer requested cancellation',

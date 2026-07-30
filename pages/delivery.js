@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import RouteGuard from '../components/RouteGuard'
 
 export default function DeliveryPortal() {
-  const { user, userRole, logout } = useAuth()
+  const { user, userRole, logout, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [filterTab, setFilterTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,7 +22,9 @@ export default function DeliveryPortal() {
   useEffect(() => {
     const fetchFallback = async () => {
       try {
-        const res = await fetch('/api/orders/admin-all')
+        const res = await fetch('/api/orders/admin-all', {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        })
         if (res.ok) {
           const data = await res.json()
           if (data.orders) {
@@ -91,7 +93,10 @@ export default function DeliveryPortal() {
 
       fetch('/api/orders/update-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId, orderStatus: newStatus, paymentStatus })
       }).catch(() => {})
 

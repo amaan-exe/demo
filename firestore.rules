@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Admin check function
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'amanullah.100ms@gmail.com' ||
+        request.auth.token.email == 'admin@biriyanistation.in'
+      );
+    }
+    
+    // User profile check
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /orders/{orderId} {
+      // Anyone can create an order (required for unauthenticated checkout fallback, though we require auth)
+      // Actually we require auth in UI, so enforce it:
+      allow create: if request.auth != null;
+      // Admins and staff can read/update all orders
+      // Users can only read and update their own orders
+      allow read, update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+    
+    match /orders_archive/{orderId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow write: if isAdmin();
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+    
+    match /coupons/{couponId} {
+      // Anyone authenticated can read coupons to validate them
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /menu/{menuId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

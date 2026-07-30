@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import RouteGuard from '../components/RouteGuard'
 
 export default function KitchenPortal() {
-  const { user, userRole, logout } = useAuth()
+  const { user, userRole, logout, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [filterTab, setFilterTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,7 +22,9 @@ export default function KitchenPortal() {
   useEffect(() => {
     const fetchFallback = async () => {
       try {
-        const res = await fetch('/api/orders/admin-all')
+        const res = await fetch('/api/orders/admin-all', {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        })
         if (res.ok) {
           const data = await res.json()
           if (data.orders) {
@@ -86,7 +88,10 @@ export default function KitchenPortal() {
 
       fetch('/api/orders/update-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId, orderStatus: newStatus })
       }).catch(() => {})
 
@@ -130,7 +135,10 @@ export default function KitchenPortal() {
 
       fetch('/api/orders/cancel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId: cleanDocId, cancellationReason: 'Cancelled by Kitchen Staff' })
       }).catch(() => {})
 

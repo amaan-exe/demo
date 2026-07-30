@@ -1,7 +1,8 @@
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
+import { withAuth } from '../../../lib/authMiddleware'
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -39,6 +40,10 @@ export default async function handler(req, res) {
       })
 
       if (existingOrder) {
+        const currentStatus = (existingOrder.orderStatus || existingOrder.status || '').toLowerCase()
+        if (currentStatus === 'delivered' || currentStatus === 'cancelled' || currentStatus === 'refunded') {
+          return res.status(400).json({ error: `Cannot cancel order that is already ${currentStatus}` })
+        }
         refundData.amount = existingOrder.grandTotal || existingOrder.amount || 0
         existingOrder.orderStatus = 'REFUND_PENDING'
         existingOrder.status = 'REFUND_PENDING'
@@ -58,6 +63,10 @@ export default async function handler(req, res) {
 
       if (fsSnap.exists()) {
         const fsData = fsSnap.data()
+        const currentFsStatus = (fsData.orderStatus || fsData.status || '').toLowerCase()
+        if (currentFsStatus === 'delivered' || currentFsStatus === 'cancelled' || currentFsStatus === 'refunded') {
+          return res.status(400).json({ error: `Cannot cancel order that is already ${currentFsStatus}` })
+        }
         if (!refundData.amount) refundData.amount = fsData.grandTotal || fsData.amount || 0
         await updateDoc(fsDocRef, {
           orderStatus: 'REFUND_PENDING',
@@ -78,6 +87,13 @@ export default async function handler(req, res) {
       console.warn('Firestore cancellation sync notice:', fsErr.message)
     }
 
+    try {
+      const { archiveOrderIfCompleted } = await import('../../../lib/ordersArchive')
+      await archiveOrderIfCompleted(cleanId)
+    } catch (e) {
+      console.warn('Archival check failed:', e.message)
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Order cancellation requested successfully and submitted to Refund Queue',
@@ -88,3 +104,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to process cancellation request: ' + error.message })
   }
 }
+
+export default withAuth(handler)
+

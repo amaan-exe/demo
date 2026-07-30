@@ -76,6 +76,7 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
   const navItems = [
     { key: 'dashboard', label: 'Overview', href: '/admin', icon: '📊' },
     { key: 'orders', label: 'Live Orders', href: '/admin/orders', icon: '📦' },
+    { key: 'all-orders', label: 'All Orders', href: '/admin/all-orders', icon: '📋' },
     { key: 'refunds', label: 'Refunds Desk', href: '/admin/refunds', icon: '💸' },
     { key: 'menu', label: 'Dish Menu', href: '/admin/menu', icon: '🍛' },
     { key: 'coupons', label: 'Coupons', href: '/admin/coupons', icon: '🎟️' },

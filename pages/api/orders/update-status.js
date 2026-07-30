@@ -1,7 +1,8 @@
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
+import { withAuth } from '../../../lib/authMiddleware'
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -28,8 +29,19 @@ export default async function handler(req, res) {
 
     const updated = await Order.findOneAndUpdate({ orderId }, updateFields, { new: true })
 
+    // Also handle Firestore archival if completed
+    try {
+      const { archiveOrderIfCompleted } = await import('../../../lib/ordersArchive')
+      await archiveOrderIfCompleted(orderId)
+    } catch (e) {
+      console.warn('Archival check failed:', e.message)
+    }
+
     return res.status(200).json({ success: true, order: updated })
   } catch (error) {
     return res.status(200).json({ success: true, message: 'Notice: ' + error.message })
   }
 }
+
+export default withAuth(handler)
+

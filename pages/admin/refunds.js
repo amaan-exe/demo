@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminRefundsDesk() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [filterTab, setFilterTab] = useState('pending')
   const [searchQuery, setSearchQuery] = useState('')
@@ -21,7 +21,9 @@ export default function AdminRefundsDesk() {
   useEffect(() => {
     const fetchFallback = async () => {
       try {
-        const res = await fetch('/api/orders/admin-all')
+        const res = await fetch('/api/orders/admin-all', {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        })
         if (res.ok) {
           const data = await res.json()
           if (data.orders) setOrders(data.orders)
@@ -98,7 +100,10 @@ export default function AdminRefundsDesk() {
 
       fetch('/api/orders/refund', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({ orderId: cleanDocId, action: targetAction, adminEmail: user.email })
       }).catch(() => {})
 

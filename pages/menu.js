@@ -12,7 +12,7 @@ import AnnouncementBanner from '../components/AnnouncementBanner'
 
 export default function MenuPage() {
   const router = useRouter()
-  const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, logout } = useAuth()
+  const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, logout, accessToken } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
@@ -141,7 +141,10 @@ export default function MenuPage() {
 
     try {
       setCoLoading(true)
-      const orderId = `BS-PATNA-${Math.floor(100000 + Math.random() * 900000)}`
+      // Collision-resistant Order ID (Timestamp base-36 + 4-digit random)
+      const ts = Date.now().toString(36).toUpperCase()
+      const rnd = Math.floor(1000 + Math.random() * 9000).toString()
+      const orderId = `BS-PATNA-${ts}-${rnd}`
 
       const discountValue = orderData.coupon ? orderData.coupon.discount : 0
       const finalGrandTotal = Math.max(0, grandTotal - discountValue)
@@ -173,17 +176,29 @@ export default function MenuPage() {
         updatedAt: serverTimestamp()
       }
 
-      // Save to Firestore in Real Time for Admin Desk & Order Tracking (non-blocking race)
-      const fsWrite = setDoc(doc(db, 'orders', orderId), payload)
-      const fsTimeout = new Promise((resolve) => setTimeout(resolve, 2000))
-      await Promise.race([fsWrite, fsTimeout]).catch((e) => console.warn('Firestore Order Notice:', e))
+      // Save to Firestore with proper wait and error handling
+      await setDoc(doc(db, 'orders', orderId), payload)
 
-      // Also save to MongoDB in background
-      fetch('/api/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch((e) => console.warn('MongoDB sync:', e))
+      // MongoDB background sync with retry logic
+      const syncWithMongo = async (attempts = 3) => {
+        for (let i = 0; i < attempts; i++) {
+          try {
+            const res = await fetch('/api/orders/create', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+              },
+              body: JSON.stringify(payload)
+            })
+            if (res.ok) return // Success
+          } catch (e) {
+            if (i === attempts - 1) console.warn('MongoDB sync failed after retries:', e)
+            await new Promise(r => setTimeout(r, 1000 * (i + 1))) // Backoff
+          }
+        }
+      }
+      syncWithMongo()
 
       // WhatsApp redirection
       const message = `🍛 *New Order — Biriyani Station*\n` +
