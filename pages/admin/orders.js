@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp, query, orderBy, limit, startAfter, getDocs } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
+import { archiveOrderIfCompleted } from '../../lib/ordersArchive'
 
 const getInitials = (nameStr) => {
   if (!nameStr) return 'CU'
@@ -39,6 +40,10 @@ const getStatusMeta = (status, isDelivered, isCancelled) => {
 export default function AdminOrdersDesk() {
   const { user, isAdmin } = useAuth()
   const [orders, setOrders] = useState([])
+  const [archivedOrders, setArchivedOrders] = useState([])
+  const [lastArchivedDoc, setLastArchivedDoc] = useState(null)
+  const [hasMoreArchived, setHasMoreArchived] = useState(true)
+  const [loadingArchived, setLoadingArchived] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false)
@@ -61,8 +66,61 @@ export default function AdminOrdersDesk() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Load paginated archived orders (20 at a time)
+  const fetchArchivedOrdersPage = async (lastDoc = null) => {
+    if (loadingArchived) return
+    setLoadingArchived(true)
+    try {
+      let q = query(collection(db, 'orders_archive'), orderBy('createdAt', 'desc'), limit(20))
+      if (lastDoc) {
+        q = query(collection(db, 'orders_archive'), orderBy('createdAt', 'desc'), startAfter(lastDoc), limit(20))
+      }
+
+      const snap = await getDocs(q)
+      if (snap.empty) {
+        setHasMoreArchived(false)
+      } else {
+        setLastArchivedDoc(snap.docs[snap.docs.length - 1])
+        const fetched = snap.docs.map(d => {
+          const data = d.data()
+          let dateObj = new Date()
+          if (data.createdAt?.toDate) dateObj = data.createdAt.toDate()
+          else if (data.createdAtSeconds) dateObj = new Date(data.createdAtSeconds * 1000)
+          else if (data.createdAt) dateObj = new Date(data.createdAt)
+
+          const createdAtFormatted = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
+            ' (' + dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ')'
+
+          return {
+            id: d.id,
+            ...data,
+            createdAtFormatted,
+            createdAtSeconds: Math.floor(dateObj.getTime() / 1000)
+          }
+        })
+
+        setArchivedOrders(prev => {
+          const combined = [...prev, ...fetched]
+          const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+          return unique
+        })
+
+        if (snap.docs.length < 20) {
+          setHasMoreArchived(false)
+        }
+      }
+    } catch (err) {
+      console.warn('Archive fetch error:', err.message)
+    } finally {
+      setLoadingArchived(false)
+    }
+  }
+
   useEffect(() => {
     setMounted(true)
+
+    // Initial load of archived orders
+    fetchArchivedOrdersPage()
 
     const fetchAllOrders = async () => {
       try {
@@ -209,6 +267,9 @@ export default function AdminOrdersDesk() {
         body: JSON.stringify({ orderId, status: newStatus, paymentStatus: newPaymentStatus })
       }).catch(() => {})
 
+      // Check if order transitioned to terminal status and archive it
+      archiveOrderIfCompleted(orderId, { orderStatus: newStatus, paymentStatus: newPaymentStatus }).catch(() => {})
+
       triggerFeedback(`Order status updated to ${newStatus}`)
     } catch (e) {
       triggerFeedback(`Status update error: ${e.message}`)
@@ -258,23 +319,29 @@ export default function AdminOrdersDesk() {
     }
   }
 
+  // Combine Active Orders & Paginated Archived Orders
+  const allCombinedOrders = [...orders, ...archivedOrders]
+  const uniqueCombinedMap = new Map()
+  allCombinedOrders.forEach(o => uniqueCombinedMap.set(o.id || o.orderId, o))
+  const allOrders = Array.from(uniqueCombinedMap.values())
+
   // Calculate Metrics
-  const countUpiPending = orders.filter(o => o.paymentStatus === 'verification_pending' || o.paymentStatus === 'Verification Pending' || o.orderStatus === 'payment_verification_pending').length
-  const countRefundPending = orders.filter(o => {
+  const countUpiPending = allOrders.filter(o => o.paymentStatus === 'verification_pending' || o.paymentStatus === 'Verification Pending' || o.orderStatus === 'payment_verification_pending').length
+  const countRefundPending = allOrders.filter(o => {
     const st = (o.orderStatus || o.status || '').toUpperCase()
     const refSt = (o.refund?.status || '').toUpperCase()
     return (st === 'REFUND_PENDING' || refSt === 'REFUND_PENDING' || o.refund?.requested === true) && st !== 'REFUNDED' && refSt !== 'REFUNDED'
   }).length
-  const countPending = orders.filter(o => o.orderStatus === 'Pending' || o.orderStatus === 'pending').length
-  const countAccepted = orders.filter(o => o.orderStatus === 'Accepted' || o.orderStatus === 'accepted').length
-  const countPreparing = orders.filter(o => o.orderStatus === 'Preparing' || o.orderStatus === 'preparing').length
-  const countReady = orders.filter(o => o.orderStatus === 'Ready' || o.orderStatus === 'ready').length
-  const countOut = orders.filter(o => o.orderStatus === 'Out For Delivery' || o.orderStatus === 'out_for_delivery').length
-  const countDelivered = orders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered').length
-  const countCancelled = orders.filter(o => o.orderStatus === 'Cancelled' || o.orderStatus === 'cancelled' || o.orderStatus === 'rejected').length
+  const countPending = allOrders.filter(o => o.orderStatus === 'Pending' || o.orderStatus === 'pending').length
+  const countAccepted = allOrders.filter(o => o.orderStatus === 'Accepted' || o.orderStatus === 'accepted').length
+  const countPreparing = allOrders.filter(o => o.orderStatus === 'Preparing' || o.orderStatus === 'preparing').length
+  const countReady = allOrders.filter(o => o.orderStatus === 'Ready' || o.orderStatus === 'ready').length
+  const countOut = allOrders.filter(o => o.orderStatus === 'Out For Delivery' || o.orderStatus === 'out_for_delivery').length
+  const countDelivered = allOrders.filter(o => o.orderStatus === 'Delivered' || o.orderStatus === 'delivered').length
+  const countCancelled = allOrders.filter(o => o.orderStatus === 'Cancelled' || o.orderStatus === 'cancelled' || o.orderStatus === 'rejected').length
 
   // Filter Logic
-  const filteredOrders = orders.filter((o) => {
+  const filteredOrders = allOrders.filter((o) => {
     // 1. Status Filter
     if (filterStatus !== 'all') {
       if (filterStatus === 'UPI Verification Pending') {
@@ -1027,6 +1094,29 @@ export default function AdminOrdersDesk() {
             })
           )}
         </div>
+
+        {hasMoreArchived && (
+          <div style={{ textAlign: 'center', marginTop: '24px', marginBottom: '16px' }}>
+            <button
+              type="button"
+              onClick={() => fetchArchivedOrdersPage(lastArchivedDoc)}
+              disabled={loadingArchived}
+              style={{
+                padding: '12px 28px',
+                borderRadius: '12px',
+                background: 'var(--deep-green)',
+                color: '#ffffff',
+                fontWeight: 900,
+                fontSize: '0.88rem',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(13,90,58,0.2)'
+              }}
+            >
+              {loadingArchived ? '⏳ Loading Historical Orders...' : '📥 Load More Historical Orders (20)'}
+            </button>
+          </div>
+        )}
       </div>
     </AdminLayout>
   )

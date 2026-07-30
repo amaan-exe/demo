@@ -69,6 +69,14 @@ export default async function handler(req, res) {
       }
 
       await updateDoc(fsDocRef, updatePayload).catch(e => console.warn('Firestore refund sync notice:', e.message))
+
+      if (action === 'COMPLETE_REFUND') {
+        const { archiveOrderIfCompleted } = await import('../../../lib/ordersArchive')
+        await archiveOrderIfCompleted(cleanId, {
+          orderStatus: 'REFUNDED',
+          refund: { status: 'REFUNDED', requested: true }
+        }).catch(e => console.warn('Refund archive notice:', e.message))
+      }
     } catch (fsErr) {
       console.warn('Firestore refund sync error:', fsErr.message)
     }

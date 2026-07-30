@@ -1,10 +1,40 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import RouteGuard from '../components/RouteGuard'
+import { archiveOrderIfCompleted } from '../lib/ordersArchive'
+
+const KITCHEN_STATUS_LIST = [
+  'PAYMENT_VERIFIED',
+  'Payment Verified',
+  'payment_verified',
+  'ACCEPTED',
+  'Accepted',
+  'accepted',
+  'PREPARING',
+  'Preparing',
+  'preparing',
+  'READY',
+  'Ready',
+  'ready',
+  'PENDING',
+  'Pending',
+  'pending',
+  'payment_verification_pending',
+  'UPI Verification Pending',
+  'confirmed',
+  'Confirmed',
+  'CONFIRMED',
+  'REFUND_PENDING',
+  'refund_pending',
+  'REFUND_PROCESSING',
+  'refund_processing',
+  'CANCELLED',
+  'cancelled'
+]
 
 export default function KitchenPortal() {
   const { user, userRole, logout } = useAuth()
@@ -18,7 +48,7 @@ export default function KitchenPortal() {
     setTimeout(() => setFeedback(null), 3000)
   }
 
-  // Real-time listener for Kitchen Orders
+  // Real-time listener for Kitchen Orders (Filtered on Firestore server-side)
   useEffect(() => {
     const fetchFallback = async () => {
       try {
@@ -42,7 +72,12 @@ export default function KitchenPortal() {
 
     fetchFallback()
 
-    const unsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
+    const q = query(
+      collection(db, 'orders'),
+      where('orderStatus', 'in', KITCHEN_STATUS_LIST)
+    )
+
+    const unsub = onSnapshot(q, (snapshot) => {
       const fetched = snapshot.docs.map(d => {
         const data = d.data()
         let dateObj = new Date()
@@ -89,6 +124,9 @@ export default function KitchenPortal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, orderStatus: newStatus })
       }).catch(() => {})
+
+      // Check if order transitioned to a terminal status and archive it
+      archiveOrderIfCompleted(orderId, { orderStatus: newStatus }).catch(() => {})
 
       triggerFeedback(`Order status updated to ${newStatus}`)
     } catch (e) {
@@ -156,19 +194,15 @@ export default function KitchenPortal() {
       return false
     }
 
-    // Must be payment verified
-    const isPaymentVerified = paySt === 'paid' || paySt === 'verified' || st === 'payment_verified' || o.paymentVerifiedBy
-    if (!isPaymentVerified) {
-      return false
-    }
-
     // Active kitchen stages only (payment_verified, accepted, confirmed, preparing, ready)
     return (
       st === 'payment_verified' ||
       st === 'accepted' ||
       st === 'confirmed' ||
       st === 'preparing' ||
-      st === 'ready'
+      st === 'ready' ||
+      paySt === 'paid' ||
+      paySt === 'verified'
     )
   }
 
@@ -220,15 +254,36 @@ export default function KitchenPortal() {
     return true
   })
 
-  const haltedCancellationCount = orders.filter(o => {
+  const cancelledOrdersList = orders.filter(o => {
     const st = (o.orderStatus || o.status || '').toLowerCase()
     const refSt = (o.refund?.status || '').toLowerCase()
 
-    // Once refund is complete (REFUNDED), halt the notice notification!
-    if (st === 'refunded' || refSt === 'refunded' || st === 'cancelled') return false
+    if (st === 'refunded' || refSt === 'refunded') return false
 
-    return st === 'refund_pending' || st === 'refund_processing' || refSt === 'refund_pending' || refSt === 'refund_processing' || o.refund?.requested === true
-  }).length
+    return (
+      st === 'refund_pending' ||
+      st === 'refund_processing' ||
+      st === 'cancelled' ||
+      refSt === 'refund_pending' ||
+      refSt === 'refund_processing' ||
+      o.refund?.requested === true
+    )
+  })
+
+  const haltedCancellationCount = cancelledOrdersList.length
+
+  useEffect(() => {
+    if (haltedCancellationCount > 0 && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel()
+        const text = `Attention Kitchen! ${haltedCancellationCount} order cancellation request received. Halt food preparation immediately.`
+        const msg = new SpeechSynthesisUtterance(text)
+        msg.rate = 0.95
+        msg.pitch = 1.1
+        window.speechSynthesis.speak(msg)
+      } catch (e) {}
+    }
+  }, [haltedCancellationCount])
 
   return (
     <RouteGuard allowedRoles={['staff', 'admin']}>
@@ -307,21 +362,37 @@ export default function KitchenPortal() {
               background: '#fee2e2',
               border: '2px solid #dc2626',
               borderRadius: '16px',
-              padding: '14px 18px',
+              padding: '16px 20px',
               marginBottom: '20px',
               display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              boxShadow: '0 4px 14px rgba(220,38,38,0.15)'
+              alignItems: 'flex-start',
+              gap: '14px',
+              boxShadow: '0 6px 20px rgba(220,38,38,0.2)'
             }}>
-              <div style={{ fontSize: '1.6rem', flexShrink: 0 }}>⛔</div>
-              <div>
-                <strong style={{ color: '#dc2626', fontSize: '0.96rem', fontFamily: "'Outfit', sans-serif", display: 'block' }}>
-                  KITCHEN NOTICE: {haltedCancellationCount} Order Cancellation Request(s) Received!
+              <div style={{ fontSize: '2rem', flexShrink: 0, lineHeight: 1 }}>⛔</div>
+              <div style={{ flex: 1 }}>
+                <strong style={{ color: '#dc2626', fontSize: '1.05rem', fontFamily: "'Outfit', sans-serif", display: 'block', marginBottom: '4px' }}>
+                  🚨 URGENT KITCHEN NOTICE: {haltedCancellationCount} Order Cancellation Request(s) Received!
                 </strong>
-                <span style={{ fontSize: '0.82rem', color: '#991b1b', fontWeight: 700 }}>
-                  Food preparation halted immediately for customer-cancelled orders. Orders removed from chef stream.
+                <span style={{ fontSize: '0.85rem', color: '#991b1b', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
+                  Halt preparation immediately for the following order(s):
                 </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {cancelledOrdersList.map(o => (
+                    <span key={o.id} style={{
+                      background: '#ffffff',
+                      color: '#dc2626',
+                      border: '1px solid #fca5a5',
+                      padding: '4px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 900,
+                      fontFamily: "'Outfit', sans-serif"
+                    }}>
+                      #{o.orderId || o.id} ({o.customerName || 'Customer'}) — {o.cancellationReason || o.refund?.cancellationReason || 'Cancelled'}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           )}

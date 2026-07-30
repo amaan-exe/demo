@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
 
 export default async function handler(req, res) {
@@ -13,12 +13,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const ordersRef = collection(db, 'orders')
-    // Simple query without orderBy to avoid composite index requirement on server
-    const q = query(ordersRef, where('userId', '==', userId))
-    const snapshot = await getDocs(q)
+    const activeQ = query(collection(db, 'orders'), where('userId', '==', userId))
+    const archiveQ = query(collection(db, 'orders_archive'), where('userId', '==', userId))
 
-    const orders = snapshot.docs.map(doc => {
+    const [activeSnap, archiveSnap] = await Promise.all([
+      getDocs(activeQ).catch(() => ({ docs: [] })),
+      getDocs(archiveQ).catch(() => ({ docs: [] }))
+    ])
+
+    const allDocs = [...(activeSnap.docs || []), ...(archiveSnap.docs || [])]
+
+    const orders = allDocs.map(doc => {
       const data = doc.data()
       let createdAtStr = new Date().toISOString()
       try {
@@ -37,7 +42,7 @@ export default async function handler(req, res) {
       }
     })
 
-    // Sort by createdAt descending in JavaScript (avoids Firestore composite index)
+    // Sort by createdAt descending in JavaScript
     orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
     return res.status(200).json({ success: true, orders })

@@ -3,40 +3,19 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAuth } from '../context/AuthContext'
+import { useOrdersContext } from '../context/OrdersContext'
 import AuthModal from './AuthModal'
 
 export default function AdminLayout({ children, activePage = 'dashboard', title = 'Admin Portal' }) {
   const router = useRouter()
   const { user, isAdmin, logout, openAuthModal } = useAuth()
+  const { pendingRefundCount = 0 } = useOrdersContext()
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [pendingRefundCount, setPendingRefundCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  useEffect(() => {
-    if (!user || !isAdmin) return
-    let unsub = () => {}
-    try {
-      import('firebase/firestore').then(({ collection, onSnapshot }) => {
-        import('../lib/firebase').then(({ db }) => {
-          unsub = onSnapshot(collection(db, 'orders'), (snap) => {
-            const count = snap.docs.filter(d => {
-              const data = d.data()
-              const st = (data.orderStatus || data.status || '').toUpperCase()
-              const refSt = (data.refund?.status || '').toUpperCase()
-              return (st === 'REFUND_PENDING' || refSt === 'REFUND_PENDING' || data.refund?.requested === true) && st !== 'REFUNDED' && refSt !== 'REFUNDED'
-            }).length
-            setPendingRefundCount(count)
-          })
-        })
-      })
-    } catch (e) {}
-
-    return () => unsub()
-  }, [user, isAdmin])
 
   if (!mounted) return null
 

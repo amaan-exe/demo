@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 export default function MyOrdersPage() {
   const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal } = useAuth()
   const [orders, setOrders] = useState([])
+  const [archivedOrders, setArchivedOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [cancelModalOrder, setCancelModalOrder] = useState(null)
@@ -21,33 +22,37 @@ export default function MyOrdersPage() {
     setTimeout(() => setToast(null), 3500)
   }
 
+  // 1. One-time fetch for archived completed orders of this user
   useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    fetchLocalOrders()
-    const interval = setInterval(fetchLocalOrders, 5000)
-
-    let unsubscribe = () => {}
+    if (!user) return
     try {
-      const ordersRef = collection(db, 'orders')
-      const q = query(ordersRef, where('userId', '==', user.uid))
-
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        const orderList = snapshot.docs.map(docSnap => {
+      const archiveQ = query(
+        collection(db, 'orders_archive'),
+        where('userId', '==', user.uid)
+      )
+      getDocs(archiveQ).then(snap => {
+        const fetched = snap.docs.map(docSnap => {
           const data = docSnap.data()
           let dateStr = new Date().toLocaleDateString()
+          let createdMs = Date.now()
           try {
             if (data.createdAt?.toDate) {
-              dateStr = data.createdAt.toDate().toLocaleDateString('en-IN', {
+              const d = data.createdAt.toDate()
+              createdMs = d.getTime()
+              dateStr = d.toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+            } else if (data.createdAtSeconds) {
+              createdMs = data.createdAtSeconds * 1000
+              dateStr = new Date(createdMs).toLocaleDateString('en-IN', {
                 day: 'numeric', month: 'short', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
               })
             } else if (data.createdAt) {
-              dateStr = new Date(data.createdAt).toLocaleDateString('en-IN', {
+              const d = new Date(data.createdAt)
+              createdMs = d.getTime() || Date.now()
+              dateStr = d.toLocaleDateString('en-IN', {
                 day: 'numeric', month: 'short', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
               })
@@ -58,20 +63,74 @@ export default function MyOrdersPage() {
             id: docSnap.id,
             orderId: data.orderId || docSnap.id,
             ...data,
-            createdAt: dateStr
+            createdAt: dateStr,
+            createdMs
+          }
+        })
+        setArchivedOrders(fetched)
+      }).catch(e => console.warn('Archived user orders notice:', e.message))
+    } catch (e) {}
+  }, [user])
+
+  // 2. Realtime listener strictly for active orders of this user
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+
+    let unsubscribe = () => {}
+    try {
+      const ordersRef = collection(db, 'orders')
+      const q = query(ordersRef, where('userId', '==', user.uid))
+
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const activeList = snapshot.docs.map(docSnap => {
+          const data = docSnap.data()
+          let dateStr = new Date().toLocaleDateString()
+          let createdMs = Date.now()
+          try {
+            if (data.createdAt?.toDate) {
+              const d = data.createdAt.toDate()
+              createdMs = d.getTime()
+              dateStr = d.toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+            } else if (data.createdAtSeconds) {
+              createdMs = data.createdAtSeconds * 1000
+              dateStr = new Date(createdMs).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+            } else if (data.createdAt) {
+              const d = new Date(data.createdAt)
+              createdMs = d.getTime() || Date.now()
+              dateStr = d.toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+            }
+          } catch (e) {}
+
+          return {
+            id: docSnap.id,
+            orderId: data.orderId || docSnap.id,
+            ...data,
+            createdAt: dateStr,
+            createdMs
           }
         })
 
-        orderList.sort((a, b) => (b.orderId || '').localeCompare(a.orderId || ''))
+        const combined = [...activeList, ...archivedOrders]
+        // Sort descending by creation timestamp (newest order FIRST at top!)
+        combined.sort((a, b) => (b.createdMs || 0) - (a.createdMs || 0))
 
-        if (orderList.length) {
-          setOrders(prev => {
-            const map = new Map()
-            prev.forEach(item => map.set(item.orderId || item.id, item))
-            orderList.forEach(item => map.set(item.orderId || item.id, { ...map.get(item.orderId || item.id), ...item }))
-            return Array.from(map.values())
-          })
-        }
+        const map = new Map()
+        combined.forEach(item => map.set(item.orderId || item.id, item))
+        setOrders(Array.from(map.values()))
         setLoading(false)
       }, (error) => {
         console.warn('Real-time order listener notice:', error.message)
@@ -85,9 +144,8 @@ export default function MyOrdersPage() {
 
     return () => {
       unsubscribe()
-      clearInterval(interval)
     }
-  }, [user])
+  }, [user, archivedOrders])
 
   const fetchLocalOrders = async () => {
     try {

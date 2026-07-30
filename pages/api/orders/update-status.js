@@ -28,6 +28,11 @@ export default async function handler(req, res) {
 
     const updated = await Order.findOneAndUpdate({ orderId }, updateFields, { new: true })
 
+    if (orderStatus) {
+      const { archiveOrderIfCompleted } = await import('../../../lib/ordersArchive')
+      archiveOrderIfCompleted(orderId, { orderStatus, paymentStatus }).catch(() => {})
+    }
+
     return res.status(200).json({ success: true, order: updated })
   } catch (error) {
     return res.status(200).json({ success: true, message: 'Notice: ' + error.message })

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import AdminLayout from '../../components/AdminLayout'
 import { useAuth } from '../../context/AuthContext'
@@ -23,11 +23,47 @@ export default function AdminCouponsDesk() {
   const [isStackable, setIsStackable] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const fetchCoupons = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'coupons'))
+      const fetchedCoupons = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+
+      try {
+        const [activeOrdersSnap, archiveOrdersSnap] = await Promise.all([
+          getDocs(collection(db, 'orders')).catch(() => ({ docs: [] })),
+          getDocs(collection(db, 'orders_archive')).catch(() => ({ docs: [] }))
+        ])
+
+        const usageMap = {}
+        const allOrderDocs = [...(activeOrdersSnap.docs || []), ...(archiveOrdersSnap.docs || [])]
+
+        allOrderDocs.forEach(d => {
+          const code = d.data().appliedCoupon
+          if (code) {
+            const clean = String(code).toUpperCase().trim()
+            usageMap[clean] = (usageMap[clean] || 0) + 1
+          }
+        })
+
+        const updated = fetchedCoupons.map(cp => {
+          const historicalCount = usageMap[cp.couponCode?.toUpperCase()] || 0
+          return {
+            ...cp,
+            usedCount: Math.max(cp.usedCount || 0, historicalCount)
+          }
+        })
+        setCoupons(updated)
+        return
+      } catch (e) {}
+
+      setCoupons(fetchedCoupons)
+    } catch (err) {
+      console.warn('Coupons fetch notice:', err.message)
+    }
+  }
+
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'coupons'), (snap) => {
-      setCoupons(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return () => unsub()
+    fetchCoupons()
   }, [])
 
   const handleAddCoupon = async (e) => {

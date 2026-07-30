@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import CheckoutModal from '../components/CheckoutModal'
 import AnnouncementBanner from '../components/AnnouncementBanner'
+import { trackCouponUsage } from '../lib/couponHelper'
 
 export default function Home() {
   const router = useRouter()
@@ -200,6 +201,10 @@ export default function Home() {
       const fsWrite = setDoc(doc(db, 'orders', orderId), payload)
       const fsTimeout = new Promise((resolve) => setTimeout(resolve, 2000))
       await Promise.race([fsWrite, fsTimeout]).catch((e) => console.warn('Firestore Order Notice:', e))
+
+      if (orderData.coupon) {
+        trackCouponUsage(orderData.coupon.code, user.uid).catch(() => {})
+      }
 
       // Also save to MongoDB in background
       fetch('/api/orders/create', {

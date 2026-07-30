@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, query, where, getDocs, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
+import { archiveOrderIfCompleted } from '../../lib/ordersArchive'
 
 export default function AdminRefundsDesk() {
   const { user, isAdmin } = useAuth()
@@ -19,23 +20,25 @@ export default function AdminRefundsDesk() {
   }
 
   useEffect(() => {
-    const fetchFallback = async () => {
-      try {
-        const res = await fetch('/api/orders/admin-all')
-        if (res.ok) {
-          const data = await res.json()
-          if (data.orders) setOrders(data.orders)
-        }
-      } catch (e) {
-      } finally {
-        setLoading(false)
-      }
-    }
+    let archivedList = []
 
-    fetchFallback()
+    // 1. Fetch completed refunds from orders_archive
+    getDocs(collection(db, 'orders_archive')).then(snap => {
+      archivedList = snap.docs.map(d => {
+        const data = d.data()
+        let dateObj = new Date()
+        if (data.createdAt?.toDate) dateObj = data.createdAt.toDate()
+        else if (data.createdAtSeconds) dateObj = new Date(data.createdAtSeconds * 1000)
+        else if (data.createdAt) dateObj = new Date(data.createdAt)
+        return { id: d.id, ...data, dateObj, createdAtFormatted: dateObj.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) }
+      })
+    }).catch(e => console.warn('Archived refunds notice:', e.message))
 
-    const unsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
-      const fetched = snapshot.docs.map(d => {
+    // 2. Realtime listener strictly for orders with refund activity in active orders collection
+    const q = query(collection(db, 'orders'), where('refund.requested', '==', true))
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const activeFetched = snapshot.docs.map(d => {
         const data = d.data()
         let dateObj = new Date()
         if (data.createdAt?.toDate) {
@@ -54,11 +57,13 @@ export default function AdminRefundsDesk() {
         }
       })
 
-      fetched.sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime())
-      setOrders(fetched)
+      const combined = [...activeFetched, ...archivedList]
+      combined.sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime())
+      setOrders(combined)
       setLoading(false)
-    }, () => {
-      fetchFallback()
+    }, (err) => {
+      console.warn('Refund snap notice:', err.message)
+      setLoading(false)
     })
 
     return () => unsub()
@@ -101,6 +106,14 @@ export default function AdminRefundsDesk() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: cleanDocId, action: targetAction, adminEmail: user.email })
       }).catch(() => {})
+
+      // If completed refund, archive order
+      if (targetAction === 'COMPLETE_REFUND') {
+        archiveOrderIfCompleted(cleanDocId, {
+          orderStatus: 'REFUNDED',
+          refund: { status: 'REFUNDED', requested: true }
+        }).catch(() => {})
+      }
 
       triggerFeedback(targetAction === 'COMPLETE_REFUND' ? '✅ Refund completed successfully!' : '⏳ Refund marked as Processing!')
     } catch (err) {

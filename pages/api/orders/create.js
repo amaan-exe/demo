@@ -98,10 +98,11 @@ export default async function handler(req, res) {
             verifiedDiscount = Number(coupon.discountValue) || 0
           }
 
-          // Atomically increment redemption count in Firestore
-          await updateDoc(doc(db, 'coupons', couponDoc.id), {
-            usedCount: increment(1)
-          }).catch(e => console.warn('Coupon usage increment notice:', e.message))
+          // Atomically increment redemption count and track user in Firestore
+          const couponUpdate = { usedCount: increment(1) }
+          if (userId) couponUpdate[`usedByUsers.${userId}`] = increment(1)
+          await updateDoc(doc(db, 'coupons', couponDoc.id), couponUpdate)
+            .catch(e => console.warn('Coupon usage increment notice:', e.message))
 
         } catch (err) {
           console.error('Server Coupon Validation Error:', err)
