@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
@@ -73,16 +73,13 @@ export default function AdminMenuDesk() {
     reader.readAsDataURL(file)
   }
 
-  // Real-time Firestore sync
+  // One-time menu items fetch
   useEffect(() => {
     if (!user) return
-
-    const unsub = onSnapshot(collection(db, 'menu'), (snapshot) => {
+    getDocs(collection(db, 'menu')).then(snapshot => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
       setMenuItems(docs)
-    })
-
-    return () => unsub()
+    }).catch(err => console.warn('Menu fetch notice:', err.message))
   }, [user])
 
   // Seed default 19 dishes into Firestore if collection is empty

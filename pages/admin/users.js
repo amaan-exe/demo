@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
@@ -12,15 +12,16 @@ export default function AdminUsersDesk() {
 
   useEffect(() => {
     if (!user) return
-    const unsub = onSnapshot(collection(db, 'users'), (snapshot) => {
-      setUsersList(snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return () => unsub()
+    getDocs(collection(db, 'users')).then(snap => {
+      setUsersList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    }).catch(err => console.warn('Users fetch notice:', err.message))
   }, [user])
 
   const handleToggleBlock = async (usr) => {
     try {
-      await updateDoc(doc(db, 'users', usr.id), { isBlocked: !usr.isBlocked })
+      const nextBlocked = !usr.isBlocked
+      setUsersList(prev => prev.map(u => u.id === usr.id ? { ...u, isBlocked: nextBlocked } : u))
+      await updateDoc(doc(db, 'users', usr.id), { isBlocked: nextBlocked })
     } catch (e) {
       alert('Error updating block status: ' + e.message)
     }
@@ -28,6 +29,7 @@ export default function AdminUsersDesk() {
 
   const handleChangeUserRole = async (usr, newRole) => {
     try {
+      setUsersList(prev => prev.map(u => u.id === usr.id ? { ...u, role: newRole } : u))
       await updateDoc(doc(db, 'users', usr.id), { role: newRole })
     } catch (e) {
       alert('Error updating role: ' + e.message)

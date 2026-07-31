@@ -1,56 +1,65 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { collection, onSnapshot } from 'firebase/firestore'
+import { collection, onSnapshot, getDocs, getCountFromServer } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import AdminLayout from '../../components/AdminLayout'
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([])
+  const [archivedOrders, setArchivedOrders] = useState([])
   const [menuItems, setMenuItems] = useState([])
   const [usersList, setUsersList] = useState([])
 
-  // Real-time Firestore sync
+  // One-time static reads & active orders listener
   useEffect(() => {
+    // 1. One-time read for Menu items & Users list
+    getDocs(collection(db, 'menu')).then(snap => {
+      setMenuItems(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    }).catch(err => console.warn('Menu fetch notice:', err.message))
+
+    getDocs(collection(db, 'users')).then(snap => {
+      setUsersList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    }).catch(err => console.warn('Users fetch notice:', err.message))
+
+    // 2. Fetch completed/archived orders once for metrics
+    getDocs(collection(db, 'orders_archive')).then(snap => {
+      setArchivedOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    }).catch(err => console.warn('Archive fetch notice:', err.message))
+
+    // 3. Realtime sync for active orders only (orders collection contains active orders)
     const unsubOrders = onSnapshot(collection(db, 'orders'), (snap) => {
       setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     }, (err) => console.warn('Orders snap notice:', err.message))
 
-    const unsubMenu = onSnapshot(collection(db, 'menu'), (snap) => {
-      setMenuItems(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    }, (err) => console.warn('Menu snap notice:', err.message))
-
-    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-      setUsersList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    }, (err) => console.warn('Users snap notice:', err.message))
-
-    return () => {
-      unsubOrders()
-      unsubMenu()
-      unsubUsers()
-    }
+    return () => unsubOrders()
   }, [])
 
-  // Calculate Metrics
+  // Calculate Metrics from Active + Archived Orders
+  const allCombinedOrders = [...orders, ...archivedOrders]
+
   const pendingCount = orders.filter(o => {
     const st = (o.orderStatus || o.status || '').toLowerCase()
     return st === 'pending' || st === 'upi verification pending' || st === 'payment_verification_pending' || st === 'accepted' || st === 'preparing'
   }).length
-  const completedCount = orders.filter(o => (o.orderStatus || o.status || '').toLowerCase() === 'delivered').length
 
-  const grossRevenue = orders.filter(o => {
+  const completedCount = allCombinedOrders.filter(o => (o.orderStatus || o.status || '').toLowerCase() === 'delivered').length
+
+  const grossRevenue = allCombinedOrders.filter(o => {
     const st = (o.orderStatus || o.status || '').toLowerCase()
     const paySt = (o.paymentStatus || '').toLowerCase()
     return paySt === 'paid' || paySt === 'verified' || st === 'accepted' || st === 'confirmed' || st === 'delivered' || st === 'refunded'
   }).reduce((sum, o) => sum + (o.grandTotal || o.amount || 0), 0)
 
-  const totalRefundAmount = orders.filter(o => {
+  const totalRefundAmount = allCombinedOrders.filter(o => {
     const st = (o.orderStatus || o.status || '').toUpperCase()
     const refSt = (o.refund?.status || '').toUpperCase()
     return st === 'REFUNDED' || refSt === 'REFUNDED'
   }).reduce((sum, o) => sum + (o.refund?.amount || o.grandTotal || 0), 0)
 
   const netRevenue = grossRevenue - totalRefundAmount
+
+  const totalOrderCount = allCombinedOrders.length
 
   return (
     <AdminLayout activePage="dashboard" title="Overview Dashboard">
@@ -98,7 +107,7 @@ export default function AdminDashboard() {
                 📦 TOTAL ORDERS
               </span>
               <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--ink)', marginTop: '4px' }}>
-                {orders.length}
+                {totalOrderCount}
               </div>
             </div>
 

@@ -87,6 +87,41 @@ export default function CheckoutModal({
           return
         }
 
+        // Rule 3.5: Per-User Usage Limit Validation
+        const perUserLimit = Number(coupon.perUserLimit) || 1
+        let userUsageCount = 0
+
+        if (user?.uid) {
+          if (coupon.usedByUsers && typeof coupon.usedByUsers === 'object') {
+            userUsageCount = Number(coupon.usedByUsers[user.uid]) || 0
+          }
+
+          try {
+            const activeUserOrdersQ = query(
+              collection(db, 'orders'),
+              where('userId', '==', user.uid),
+              where('appliedCoupon', '==', cleanCode)
+            )
+            const archiveUserOrdersQ = query(
+              collection(db, 'orders_archive'),
+              where('userId', '==', user.uid),
+              where('appliedCoupon', '==', cleanCode)
+            )
+            const [activeSnap, archiveSnap] = await Promise.all([
+              getDocs(activeUserOrdersQ).catch(() => ({ docs: [] })),
+              getDocs(archiveUserOrdersQ).catch(() => ({ docs: [] }))
+            ])
+            const totalPreviousUses = (activeSnap.docs?.length || 0) + (archiveSnap.docs?.length || 0)
+            userUsageCount = Math.max(userUsageCount, totalPreviousUses)
+          } catch (e) {}
+        }
+
+        if (userUsageCount >= perUserLimit) {
+          setCouponError(`You have already reached the maximum usage limit (${perUserLimit} time(s)) for this promo coupon.`)
+          setAppliedCoupon(null)
+          return
+        }
+
         // Rule 4: Minimum Order Threshold
         if (cartTotal < coupon.minimumOrder) {
           setCouponError(`Minimum order requirement for this coupon is ₹${coupon.minimumOrder}.`)

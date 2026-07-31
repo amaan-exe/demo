@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import RouteGuard from '../components/RouteGuard'
+import { archiveOrderIfCompleted } from '../lib/ordersArchive'
+
+const DELIVERY_STATUS_LIST = [
+  'READY',
+  'Ready',
+  'ready',
+  'ready_for_delivery',
+  'OUT_FOR_DELIVERY',
+  'Out For Delivery',
+  'out_for_delivery'
+]
 
 export default function DeliveryPortal() {
   const { user, userRole, logout, accessToken } = useAuth()
@@ -18,7 +29,7 @@ export default function DeliveryPortal() {
     setTimeout(() => setFeedback(null), 3000)
   }
 
-  // Real-time listener for Delivery Partner Orders
+  // Real-time listener for Delivery Partner Orders (Filtered on Firestore server-side)
   useEffect(() => {
     const fetchFallback = async () => {
       try {
@@ -44,7 +55,12 @@ export default function DeliveryPortal() {
 
     fetchFallback()
 
-    const unsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
+    const q = query(
+      collection(db, 'orders'),
+      where('orderStatus', 'in', DELIVERY_STATUS_LIST)
+    )
+
+    const unsub = onSnapshot(q, (snapshot) => {
       const fetched = snapshot.docs.map(d => {
         const data = d.data()
         let dateObj = new Date()
@@ -99,6 +115,9 @@ export default function DeliveryPortal() {
         },
         body: JSON.stringify({ orderId, orderStatus: newStatus, paymentStatus })
       }).catch(() => {})
+
+      // Check if order transitioned to a terminal status and archive it
+      archiveOrderIfCompleted(orderId, { orderStatus: newStatus, paymentStatus }).catch(() => {})
 
       triggerFeedback(`Order status updated to ${newStatus}`)
     } catch (e) {
