@@ -3,12 +3,14 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import dynamic from 'next/dynamic'
 import { db } from '../lib/firebase'
 import { FEATURED_DISHES, ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
-import CheckoutModal from '../components/CheckoutModal'
-import AnnouncementBanner from '../components/AnnouncementBanner'
+
+const CheckoutModal = dynamic(() => import('../components/CheckoutModal'), { ssr: false })
+const AnnouncementBanner = dynamic(() => import('../components/AnnouncementBanner'), { ssr: false })
 
 export default function Home() {
   const router = useRouter()
@@ -320,6 +322,7 @@ export default function Home() {
         <meta name="description" content="Enjoy authentic Chicken & Mutton Dum Biryani at Biriyani Station, Phulwari Sharif, Patna. Order online for fast delivery or dine in with family. Fresh ingredients, rich flavors, and affordable prices." />
         <meta name="keywords" content="Best biryani in Phulwari Sharif, Chicken biryani Phulwari Sharif, Mutton biryani Phulwari Sharif, Biryani near Phulwari Sharif, Order biryani online Phulwari Sharif, Biryani delivery Phulwari Sharif, Best restaurant in Phulwari Sharif, Dum biryani Phulwari Sharif, Restaurant near AIIMS Patna, Best biryani in Patna, Food delivery Patna, Chicken Dum Biryani, Mutton Dum Biryani, Tandoori Chicken, Biriyani Station Phulwari Sharif" />
         <link rel="canonical" href="https://www.biriyanistation.in/" />
+        <link rel="preload" as="image" href="/photo-1633945274309-2c16c9682a8c.webp" fetchpriority="high" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
@@ -636,20 +639,23 @@ export default function Home() {
           <h2>Freshly Prepared Mughlai Cuisine</h2>
         </div>
         <section className="hero-clean-split" id="hero">
-          {/* Fast-loading auto-playing background video */}
+          {/* Optimized background video element */}
           <video
             autoPlay
             loop
             muted
             playsInline
-            preload="auto"
+            preload="none"
             ref={(el) => {
               if (el) {
                 el.muted = true
-                el.play().catch(() => { })
+                // Delay play slightly after page load to avoid blocking LCP render
+                setTimeout(() => {
+                  el.play().catch(() => { })
+                }, 1000)
               }
             }}
-            poster="/photo-1633945274309-2c16c9682a8c.avif"
+            poster="/photo-1633945274309-2c16c9682a8c.webp"
             className="hero-video-bg"
           >
             <source src="/hero-video.mp4" type="video/mp4" />
@@ -739,7 +745,7 @@ export default function Home() {
                   className={`about-photo-card card-primary ${frontPhoto === 1 ? 'is-front' : 'is-back'}`}
                   onClick={() => setFrontPhoto(prev => prev === 1 ? 2 : 1)}
                 >
-                  <img src="/menu/Chicken tandoori kawab biryani.jpeg" alt="Tandoori Kawab Biryani" loading="lazy" />
+                  <img src="/menu/Chicken tandoori kawab biryani.webp" alt="Tandoori Kawab Biryani" loading="lazy" decoding="async" />
                   <figcaption className="photo-card-caption">
                     <span className="caption-tag">SIGNATURE DUM</span>
                     <strong>Tandoori Kawab Biryani</strong>
@@ -750,7 +756,7 @@ export default function Home() {
                   className={`about-photo-card card-secondary ${frontPhoto === 2 ? 'is-front' : 'is-back'}`}
                   onClick={() => setFrontPhoto(prev => prev === 1 ? 2 : 1)}
                 >
-                  <img src="/menu/Chicken tandoori kawab.jpeg" alt="Clay Oven Tandoori Kawab" loading="lazy" />
+                  <img src="/menu/Chicken tandoori kawab.webp" alt="Clay Oven Tandoori Kawab" loading="lazy" decoding="async" />
                   <figcaption className="photo-card-caption">
                     <span className="caption-tag">CHAR-GRILLED</span>
                     <strong>Chicken Tandoori Kawab</strong>
@@ -794,7 +800,7 @@ export default function Home() {
                   onClick={() => openProduct(dish)}
                 >
                   <div className="dish-media">
-                    <img src={dish.image} alt={dish.title} loading="lazy" />
+                    <img src={dish.image} alt={dish.title} loading="lazy" decoding="async" />
                     <span className="dish-tag">{dish.categoryName.toUpperCase()}</span>
                     <span className="price-badge">{dish.priceLabel}</span>
                     <div className="dish-overlay"></div>
@@ -990,7 +996,7 @@ export default function Home() {
         onClick={() => setCartOpen(true)}
         aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? '' : 's'}`}
       >
-        <img src="/cart.png" alt="Cart" />
+        <img src="/cart.webp" width="34" height="34" alt="Cart" loading="lazy" decoding="async" />
         {cartCount > 0 ? <span className="cart-floater-count">{cartCount}</span> : null}
       </button>
 

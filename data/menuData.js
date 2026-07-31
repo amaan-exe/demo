@@ -13,7 +13,7 @@ export const ALL_MENU_ITEMS = [
     portion: '4 pcs',
     isFeatured: true,
     description: 'Juicy chicken marinated in hung yogurt and vibrant tandoori spices, char-grilled to smoky perfection in clay oven.',
-    image: '/menu/Chicken tandoori kawab.jpeg'
+    image: '/menu/Chicken tandoori kawab.webp'
   },
   {
     id: 'kawab-2',
@@ -28,7 +28,7 @@ export const ALL_MENU_ITEMS = [
     portion: '4 pcs',
     isFeatured: false,
     description: 'Rich and velvety chicken marinated in cashew cream, white pepper, cheese, and mild Afghan royal spices.',
-    image: '/menu/afghani_kabab.jpeg'
+    image: '/menu/afghani_kabab.webp'
   },
   {
     id: 'kawab-3',
@@ -43,7 +43,7 @@ export const ALL_MENU_ITEMS = [
     portion: '2 Whole Legs',
     isFeatured: false,
     description: 'Succulent whole chicken legs marinated Punjabi Patiala style with spicy herbs, garlic glaze, and charred aroma.',
-    image: '/menu/Chicken patyala leg kawab.jpeg'
+    image: '/menu/Chicken patyala leg kawab.webp'
   },
   {
     id: 'kawab-4',
@@ -58,7 +58,7 @@ export const ALL_MENU_ITEMS = [
     portion: '6 pcs',
     isFeatured: false,
     description: 'Tender boneless chicken cubes marinated in mustard oil, kashmiri chili, and spices, roasted on skewers.',
-    image: '/menu/Chicken tikka kawab.jpeg'
+    image: '/menu/Chicken tikka kawab.webp'
   },
   {
     id: 'kawab-5',
@@ -73,7 +73,7 @@ export const ALL_MENU_ITEMS = [
     portion: '6 pcs',
     isFeatured: true,
     description: 'Silky, melt-in-mouth chicken skewers infused with cream, grated cheese, cardamom, and subtle saffron glaze.',
-    image: '/menu/Chicken Reshmi kawab.jpeg'
+    image: '/menu/Chicken Reshmi kawab.webp'
   },
 
   // KAWAB BIRYANIS
@@ -90,7 +90,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: true,
     description: 'Fragrant long-grain Dum basmati rice layered with smoky charred Tandoori chicken kawab and rich saffron masala.',
-    image: '/menu/Chicken tandoori kawab biryani.jpeg'
+    image: '/menu/Chicken tandoori kawab biryani.webp'
   },
   {
     id: 'biryani-2',
@@ -105,7 +105,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: true,
     description: 'Royal aromatic basmati rice slow-cooked with rich, creamy Afghani chicken kawab, ghee, and golden fried onions.',
-    image: '/menu/Chicken tandoori Afghani biryani.jpeg'
+    image: '/menu/Chicken tandoori Afghani biryani.webp'
   },
   {
     id: 'biryani-3',
@@ -120,7 +120,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: false,
     description: 'Grand festive biryani featuring a full Patyala leg kawab layered over spicy dum-cooked basmati rice pot.',
-    image: '/menu/Chicken tandoori patyala leg kawab biryani.jpeg'
+    image: '/menu/Chicken tandoori patyala leg kawab biryani.webp'
   },
   {
     id: 'biryani-4',
@@ -135,7 +135,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: false,
     description: 'Juicy boneless chicken tikka pieces layered with spicy biryani gravy, mint leaves, and kewra water.',
-    image: '/menu/Chicken tandoori kawab biryani.jpeg'
+    image: '/menu/Chicken tandoori kawab biryani.webp'
   },
   {
     id: 'biryani-5',
@@ -150,7 +150,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: false,
     description: 'Velvety Reshmi chicken kawab embedded in rich saffron Dum biryani rice with ghee and roasted cashews.',
-    image: '/menu/Chicken tandoori Afghani biryani.jpeg'
+    image: '/menu/Chicken tandoori Afghani biryani.webp'
   },
 
   // GRAVIES & CURRIES
@@ -167,7 +167,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Tender chicken pieces simmered in a velvety smooth tomato, butter, and cashew nut gravy.',
-    image: '/menu/Chicken butter masala.jpeg'
+    image: '/menu/Chicken butter masala.webp'
   },
   {
     id: 'gravy-2',
@@ -182,7 +182,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Fresh soft cottage cheese cubes tossed in rich tomato gravy with generous farm butter and kasuri methi.',
-    image: '/menu/Paneer butter masala.jpeg'
+    image: '/menu/Paneer butter masala.webp'
   },
   {
     id: 'gravy-3',
@@ -197,7 +197,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: true,
     description: 'Smoky boneless chicken tikka cooked in a rich, buttery, spiced tomato gravy garnished with fresh cream.',
-    image: '/menu/Chicken tikka butter masala.jpeg'
+    image: '/menu/Chicken tikka butter masala.webp'
   },
   {
     id: 'gravy-4',
@@ -212,7 +212,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Clay-oven roasted tandoori chicken submerged in a deeply aromatic Punjabi butter and makhani gravy.',
-    image: '/menu/Chicken tandoori butter masala.jpeg'
+    image: '/menu/Chicken tandoori butter masala.webp'
   },
   {
     id: 'gravy-5',
@@ -227,7 +227,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: true,
     description: 'Rustic village-style chicken curry slow-cooked with coarse ground spices, mustard oil, garlic pods, and whole red chillies.',
-    image: '/menu/Chicken dehati.jpeg'
+    image: '/menu/Chicken dehati.webp'
   },
 
   // BREADS
@@ -244,7 +244,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1 Pc',
     isFeatured: false,
     description: 'Traditional whole wheat flatbread crisp-baked inside hot clay tandoor.',
-    image: '/menu/Tandoori roti.jpeg'
+    image: '/menu/Tandoori roti.webp'
   },
   {
     id: 'bread-2',
@@ -259,7 +259,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1 Pc',
     isFeatured: false,
     description: 'Clay oven baked wheat roti brushed generously with pure farm butter.',
-    image: '/menu/Tandoori  butter roti.jpeg'
+    image: '/menu/Tandoori  butter roti.webp'
   },
   {
     id: 'bread-3',
@@ -274,7 +274,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1 Pc',
     isFeatured: false,
     description: 'Soft, leavened fine flour bread baked to golden bubbly perfection in clay tandoor.',
-    image: '/menu/naan.jpeg'
+    image: '/menu/naan.webp'
   },
   {
     id: 'bread-4',
@@ -289,7 +289,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1 Pc',
     isFeatured: false,
     description: 'Pillowy, multilayered tandoori naan glazed with rich melted butter.',
-    image: '/menu/butter naan.jpeg'
+    image: '/menu/butter naan.webp'
   },
 
   // NEW DELICACIES & SPECIALS
@@ -306,7 +306,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Crispy fried button mushrooms tossed with spicy garlic, soy glaze, green chillies, and bell peppers.',
-    image: '/newmenu/Massroom chilli.jpg'
+    image: '/newmenu/Massroom chilli.webp'
   },
   {
     id: 'starter-2',
@@ -321,7 +321,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1 Roll',
     isFeatured: false,
     description: 'Crisp layered laccha paratha wrapped around pan-seared spiced mushrooms, pickled onions, and tangy mint chutney.',
-    image: '/newmenu/Veg mashroom roll.jpg'
+    image: '/newmenu/Veg mashroom roll.webp'
   },
   {
     id: 'biryani-6',
@@ -336,7 +336,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: true,
     description: 'Authentic Muradabadi style fragrant white biryani cooked with succulent chicken, green chillies, aromatic whole spices, and desi ghee.',
-    image: '/newmenu/Chicken muradabadi biryani.jpg'
+    image: '/newmenu/Chicken muradabadi biryani.webp'
   },
   {
     id: 'biryani-7',
@@ -351,7 +351,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: false,
     description: 'Aromatic Dum basmati rice layered with spiced mushrooms, saffron aroma, brown onions, and mint leaves.',
-    image: '/newmenu/Veg mashroom biryani.jpg'
+    image: '/newmenu/Veg mashroom biryani.webp'
   },
   {
     id: 'biryani-8',
@@ -366,7 +366,7 @@ export const ALL_MENU_ITEMS = [
     portion: '1-2 people',
     isFeatured: true,
     description: 'Royal Dum basmati rice slow-cooked with soft marinated paneer cubes, saffron glaze, kewra water, and caramelized onions.',
-    image: '/newmenu/Veg paneer Biryani.jpg'
+    image: '/newmenu/Veg paneer Biryani.webp'
   },
   {
     id: 'gravy-6',
@@ -396,7 +396,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Tender mushrooms simmered in a luscious onion gravy with diced caramelized onions and whole spices.',
-    image: '/newmenu/Mushroom-do-pyaza-recipe.jpg'
+    image: '/newmenu/Mushroom-do-pyaza-recipe.webp'
   },
   {
     id: 'gravy-8',
@@ -426,7 +426,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Classic combination of juicy button mushrooms and sweet green peas in a medium-spiced Indian curry.',
-    image: '/newmenu/Mashroom matar.jpg'
+    image: '/newmenu/Mashroom matar.webp'
   },
   {
     id: 'gravy-10',
@@ -441,7 +441,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'Fresh soft cottage cheese cubes and sweet green peas cooked together in a savory tomato and cream curry.',
-    image: '/newmenu/Matar paneer.jpg'
+    image: '/newmenu/Matar paneer.webp'
   },
   {
     id: 'gravy-11',
@@ -456,7 +456,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: true,
     description: 'Soft cottage cheese cubes simmered in a smooth, vibrant garlic-infused spinach puree with fresh cream.',
-    image: '/newmenu/Palak paneer.avif'
+    image: '/newmenu/Palak paneer.webp'
   },
   {
     id: 'gravy-12',
@@ -471,7 +471,7 @@ export const ALL_MENU_ITEMS = [
     portion: 'Serves 2',
     isFeatured: false,
     description: 'A colorful medley of garden-fresh vegetables and paneer cooked in a rich, mildly spiced gravy.',
-    image: '/newmenu/Mix veg.jpg'
+    image: '/newmenu/Mix veg.webp'
   }
 ]
 

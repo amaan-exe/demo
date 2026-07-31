@@ -2,13 +2,15 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import dynamic from 'next/dynamic'
 import { collection, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
-import CheckoutModal from '../components/CheckoutModal'
-import AnnouncementBanner from '../components/AnnouncementBanner'
+
+const CheckoutModal = dynamic(() => import('../components/CheckoutModal'), { ssr: false })
+const AnnouncementBanner = dynamic(() => import('../components/AnnouncementBanner'), { ssr: false })
 
 export default function MenuPage() {
   const router = useRouter()
@@ -795,6 +797,7 @@ export default function MenuPage() {
                         src={dish.image}
                         alt={dish.title}
                         loading="lazy"
+                        decoding="async"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
                       />
                       <span className="dish-tag">{dish.categoryName.toUpperCase()}</span>
@@ -850,7 +853,7 @@ export default function MenuPage() {
         onClick={() => setCartOpen(true)}
         aria-label={`Open cart with ${cartCount} item${cartCount === 1 ? '' : 's'}`}
       >
-        <img src="/cart.png" alt="Cart" />
+        <img src="/cart.webp" width="34" height="34" alt="Cart" loading="lazy" decoding="async" />
         {cartCount > 0 ? <span className="cart-floater-count">{cartCount}</span> : null}
       </button>
 
