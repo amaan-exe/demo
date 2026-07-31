@@ -17,10 +17,21 @@ export default function UpiPaymentBox({
   const rawTotal = grandTotal !== undefined && grandTotal !== null ? grandTotal : (amount !== undefined && amount !== null ? amount : 0)
   const numericTotal = typeof rawTotal === 'number' && !isNaN(rawTotal) ? rawTotal : (parseFloat(rawTotal) || 0)
   const totalFormatted = numericTotal.toFixed(0)
+  const formattedAmount = Number(numericTotal).toFixed(2)
 
   const displayOrderId = orderId || 'PATNA-' + Math.floor(100000 + Math.random() * 900000)
 
-  const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${totalFormatted}&cu=INR&tn=${displayOrderId}`
+  const upiUri =
+    `upi://pay?pa=${upiId}` +
+    `&pn=${encodeURIComponent(restaurantName)}` +
+    `&am=${formattedAmount}` +
+    `&cu=INR` +
+    `&tn=${encodeURIComponent(displayOrderId)}`
+
+  if (typeof window !== 'undefined') {
+    console.log('[UPI Payment] Generated URI:', upiUri)
+  }
+
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(upiUri)}&size=240x240&margin=10`
 
   const handleCopyUpi = () => {
@@ -124,16 +135,16 @@ export default function UpiPaymentBox({
           Pay Directly Using
         </p>
         <div className="upi-app-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <button type="button" onClick={() => window.location.href = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${totalFormatted}&cu=INR&tn=${displayOrderId}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(displayOrderId)}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style={{ height: '18px' }} />
           </button>
-          <button type="button" onClick={() => window.location.href = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${totalFormatted}&cu=INR&tn=${displayOrderId}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(displayOrderId)}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="/images/phonepe-icon.png" alt="PhonePe" style={{ height: '22px' }} />
           </button>
-          <button type="button" onClick={() => window.location.href = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${totalFormatted}&cu=INR&tn=${displayOrderId}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(displayOrderId)}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg" alt="Paytm" style={{ height: '14px' }} />
           </button>
-          <button type="button" onClick={() => window.location.href = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${totalFormatted}&cu=INR&tn=${displayOrderId}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="Any UPI App" style={{ height: '14px' }} />
           </button>
         </div>
