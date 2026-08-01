@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
+import SiteNav from '../components/SiteNav'
+import MobileBottomBar from '../components/MobileBottomBar'
 
 export default function ProfilePage() {
   const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, updateUserProfileData, logout, openAuthModal } = useAuth()
@@ -26,20 +28,7 @@ export default function ProfilePage() {
         <Head>
           <title>My Profile | Biriyani Station Patna</title>
         </Head>
-        <header className="site-header scrolled" id="top">
-          <nav className="nav container">
-            <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
-            <div className="nav-right">
-              <Link href="/">HOME</Link>
-              <Link href="/menu">MENU</Link>
-              {!user && (
-                <button className="btn" onClick={() => openAuthModal()}>
-                  SIGN IN
-                </button>
-              )}
-            </div>
-          </nav>
-        </header>
+        <SiteNav activePage="profile" />
         <div style={{ minHeight: '80vh', display: 'grid', placeItems: 'center', background: 'var(--cream)', padding: '120px 20px' }}>
           <div className="empty-state" style={{ maxWidth: '400px' }}>
             <span className="empty-state-icon">{'\u{1F464}'}</span>
@@ -48,13 +37,7 @@ export default function ProfilePage() {
             <button onClick={openAuthModal} className="btn">SIGN IN</button>
           </div>
         </div>
-        <div className="mobile-bottom-bar">
-          <nav>
-            <Link href="/"><span className="tab-icon">{'\u{1F3E0}'}</span>Home</Link>
-            <Link href="/menu"><span className="tab-icon">{'\u{1F35B}'}</span>Menu</Link>
-            <button type="button" onClick={openAuthModal}><span className="tab-icon">{'\u{1F510}'}</span>Sign In</button>
-          </nav>
-        </div>
+        <MobileBottomBar activeTab="profile" />
       </>
     )
   }
@@ -86,26 +69,7 @@ export default function ProfilePage() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
-      <header className="site-header scrolled" id="top">
-        <nav className="nav container">
-          <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
-
-          <button className="nav-toggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-
-          <div className={`nav-backdrop ${isNavOpen ? 'visible' : ''}`} onClick={() => setIsNavOpen(false)} />
-
-          <div className={`nav-right ${isNavOpen ? 'open' : ''}`}>
-            <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
-            <Link href="/menu" onClick={() => setIsNavOpen(false)}>MENU</Link>
-            <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
-            <Link href="/profile" className="active" style={{ color: 'var(--yellow)' }} onClick={() => setIsNavOpen(false)}>PROFILE</Link>
-          </div>
-        </nav>
-      </header>
+      <SiteNav activePage="profile" />
 
       <main style={{ minHeight: '80vh', padding: '100px 0 80px 0', background: 'var(--cream)' }}>
         <div className="container" style={{ maxWidth: '640px' }}>
@@ -230,33 +194,7 @@ export default function ProfilePage() {
         </div>
       </main>
 
-      {/* Mobile Bottom Tab Bar */}
-      <div className="mobile-bottom-bar">
-        <nav>
-          <Link href="/"><span className="tab-icon">{'\u{1F3E0}'}</span>Home</Link>
-          <Link href="/menu"><span className="tab-icon">{'\u{1F35B}'}</span>Menu</Link>
-          <Link href="/my-orders"><span className="tab-icon">{'\u{1F4E6}'}</span>Orders</Link>
-          {user && isAdmin && (
-            <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
-              <span className="tab-icon">🛡️</span>
-              Admin
-            </Link>
-          )}
-          {user && isStaffOnly && (
-            <Link href="/kitchen" style={{ color: '#ea580c', fontWeight: 800 }}>
-              <span className="tab-icon">🍳</span>
-              Kitchen
-            </Link>
-          )}
-          {user && isDeliveryOnly && (
-            <Link href="/delivery" style={{ color: '#0284c7', fontWeight: 800 }}>
-              <span className="tab-icon">🛵</span>
-              Delivery
-            </Link>
-          )}
-          <Link href="/profile" className="active"><span className="tab-icon">{'\u{1F464}'}</span>Profile</Link>
-        </nav>
-      </div>
+      <MobileBottomBar activeTab="profile" />
     </>
   )
 }

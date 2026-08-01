@@ -9,6 +9,11 @@ import { ALL_MENU_ITEMS } from '../data/menuData'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 
+import SiteNav from '../components/SiteNav'
+import CartDrawer from '../components/CartDrawer'
+import MobileBottomBar from '../components/MobileBottomBar'
+import ToastNotification from '../components/ToastNotification'
+
 const CheckoutModal = dynamic(() => import('../components/CheckoutModal'), { ssr: false })
 const AnnouncementBanner = dynamic(() => import('../components/AnnouncementBanner'), { ssr: false })
 
@@ -366,227 +371,7 @@ export default function MenuPage() {
         <meta property="twitter:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
       </Head>
 
-      {/* Sticky Header */}
-      <header className="site-header scrolled" id="top">
-        <nav className="nav container" aria-label="Primary navigation">
-          <Link href="/" className="logo" aria-label="Biriyani Station home">BIRIYANI <span>STATION</span></Link>
-          {user && isAdmin && (
-            <Link
-              href="/admin"
-              className="admin-header-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: 'var(--deep-green)',
-                color: 'var(--yellow)',
-                border: '1px solid rgba(245,200,66,0.4)',
-                padding: '5px 11px',
-                borderRadius: '999px',
-                fontSize: '0.72rem',
-                fontWeight: '900',
-                textDecoration: 'none',
-                letterSpacing: '0.06em',
-                boxShadow: '0 4px 14px rgba(13,90,58,0.25)',
-                marginLeft: '6px'
-              }}
-            >
-              🛡️ ADMIN
-            </Link>
-          )}
-          {user && isStaffOnly && (
-            <Link
-              href="/kitchen"
-              className="kitchen-header-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#ea580c',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.4)',
-                padding: '5px 11px',
-                borderRadius: '999px',
-                fontSize: '0.72rem',
-                fontWeight: '900',
-                textDecoration: 'none',
-                letterSpacing: '0.06em',
-                boxShadow: '0 4px 14px rgba(234,88,12,0.25)',
-                marginLeft: '6px'
-              }}
-            >
-              🍳 KITCHEN
-            </Link>
-          )}
-          {user && isDeliveryOnly && (
-            <Link
-              href="/delivery"
-              className="delivery-header-pill"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#0284c7',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.4)',
-                padding: '5px 11px',
-                borderRadius: '999px',
-                fontSize: '0.72rem',
-                fontWeight: '900',
-                textDecoration: 'none',
-                letterSpacing: '0.06em',
-                boxShadow: '0 4px 14px rgba(2,132,199,0.25)',
-                marginLeft: '6px'
-              }}
-            >
-              🛵 DELIVERY
-            </Link>
-          )}
-
-          <button className="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-
-          <div className={`nav-backdrop ${isNavOpen ? 'visible' : ''}`} onClick={() => setIsNavOpen(false)} aria-hidden="true" />
-
-          <div className={`nav-right ${isNavOpen ? 'open' : ''}`} id="navLinks">
-            <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
-            <Link href="/menu" className="active" onClick={() => setIsNavOpen(false)} style={{ color: 'var(--yellow)' }}>MENU</Link>
-            <Link href="/#about" onClick={() => setIsNavOpen(false)}>ABOUT</Link>
-            <Link href="/#order" onClick={() => setIsNavOpen(false)}>ORDER</Link>
-            <Link href="/my-orders" onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
-            {isAdmin && (
-              <Link
-                href="/admin"
-                onClick={() => setIsNavOpen(false)}
-                style={{
-                  color: 'var(--yellow)',
-                  fontWeight: '900',
-                  letterSpacing: '0.08em',
-                  background: 'rgba(13,90,58,0.15)',
-                  padding: '6px 14px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(245,200,66,0.3)'
-                }}
-              >
-                🛡️ ADMIN PORTAL
-              </Link>
-            )}
-
-            {user ? (
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <button
-                  type="button"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(13,90,58,0.08)',
-                    border: '1px solid rgba(13,90,58,0.18)',
-                    padding: '6px 14px 6px 6px',
-                    borderRadius: '999px',
-                    cursor: 'pointer',
-                    fontWeight: '700',
-                    fontSize: '0.85rem',
-                    color: 'var(--deep-green)'
-                  }}
-                >
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--deep-green)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.8rem', fontWeight: '800' }}>
-                      {user.displayName?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  )}
-                  <span>{user.displayName?.split(' ')[0]}</span>
-                  <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>▼</span>
-                </button>
-
-                {userMenuOpen && isMobile && (
-                  <div className="user-menu-backdrop" onClick={() => setUserMenuOpen(false)} />
-                )}
-                {userMenuOpen && (
-                  <div
-                    className={isMobile ? 'user-menu-mobile' : ''}
-                    style={isMobile ? {
-                      background: '#ffffff',
-                    } : {
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      right: 0,
-                      background: '#ffffff',
-                      borderRadius: '16px',
-                      padding: '12px 16px',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-                      border: '1px solid rgba(0,0,0,0.08)',
-                      minWidth: '200px',
-                      zIndex: 2000
-                    }}
-                  >
-                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '10px' }}>
-                      Logged in as<br />
-                      <strong style={{ color: 'var(--ink)', fontSize: '0.92rem' }}>{user.email}</strong>
-                    </div>
-                    <Link
-                      href="/my-orders"
-                      onClick={() => setUserMenuOpen(false)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', fontSize: '0.95rem', fontWeight: '700', color: 'var(--ink)', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)' }}
-                    >
-                      📦 My Orders
-                    </Link>
-                    <Link
-                      href="/profile"
-                      onClick={() => setUserMenuOpen(false)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', fontSize: '0.95rem', fontWeight: '700', color: 'var(--ink)', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)' }}
-                    >
-                      👤 My Profile
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setUserMenuOpen(false)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', fontSize: '0.95rem', fontWeight: '800', color: 'var(--deep-green)', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.04)' }}
-                      >
-                        🛡️ Admin Portal
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => { logout(); setUserMenuOpen(false); }}
-                      className="btn-danger"
-                      style={{ marginTop: '12px' }}
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={openAuthModal}
-                style={{
-                  background: 'var(--yellow)',
-                  border: 'none',
-                  color: 'var(--ink)',
-                  padding: '8px 20px',
-                  borderRadius: '999px',
-                  fontSize: '0.82rem',
-                  fontWeight: '800',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.08)'
-                }}
-              >
-                SIGN IN
-              </button>
-            )}
-          </div>
-        </nav>
-      </header>
+      <SiteNav activePage="menu" />
 
       {/* Store Closed Banner */}
       {settings?.isStoreOpen === false && (
@@ -1004,57 +789,19 @@ export default function MenuPage() {
       />
 
       {/* Footer */}
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        cartItems={cartItems}
+        cartTotal={cartTotal}
+        updateCartQty={updateCartQty}
+        removeFromCart={removeFromCart}
+        onProceedToCheckout={handleProceedToCheckout}
+      />
+
       {/* Mobile Bottom Tab Bar */}
-      <div className="mobile-bottom-bar">
-        <nav>
-          <Link href="/">
-            <span className="tab-icon">🏠</span>
-            Home
-          </Link>
-          <Link href="/menu" className="active">
-            <span className="tab-icon">🍛</span>
-            Menu
-          </Link>
-          <button type="button" onClick={() => setCartOpen(true)} style={{ position: 'relative' }}>
-            <span className="tab-icon">🛒</span>
-            Cart
-            {cartCount > 0 && <span className="cart-tab-badge">{cartCount}</span>}
-          </button>
-          <Link href="/my-orders">
-            <span className="tab-icon">📦</span>
-            Orders
-          </Link>
-          {user && isAdmin && (
-            <Link href="/admin" style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
-              <span className="tab-icon">🛡️</span>
-              Admin
-            </Link>
-          )}
-          {user && isStaffOnly && (
-            <Link href="/kitchen" style={{ color: '#ea580c', fontWeight: 800 }}>
-              <span className="tab-icon">🍳</span>
-              Kitchen
-            </Link>
-          )}
-          {user && isDeliveryOnly && (
-            <Link href="/delivery" style={{ color: '#0284c7', fontWeight: 800 }}>
-              <span className="tab-icon">🛵</span>
-              Delivery
-            </Link>
-          )}
-          {user ? (
-            <Link href="/profile">
-              <span className="tab-icon">👤</span>
-              Profile
-            </Link>
-          ) : (
-            <button type="button" onClick={openAuthModal}>
-              <span className="tab-icon">🔐</span>
-              Sign In
-            </button>
-          )}
-        </nav>
-      </div>
+      <MobileBottomBar activeTab="menu" cartCount={cartCount} onOpenCart={() => setCartOpen(true)} />
 
       <footer className="footer-brutalist" role="contentinfo">
         <div className="marquee marquee-footer" aria-label="Order ticker">
@@ -1107,17 +854,7 @@ export default function MenuPage() {
       </footer>
 
       {/* Toast Notification */}
-      <div className={`cart-toast ${toast ? 'show' : ''}`} aria-hidden={toast ? 'false' : 'true'}>
-        {toast && (
-          <>
-            <img src={toast.image} alt={toast.title} />
-            <div className="cart-toast-text">
-              <span>Added to cart</span>
-              <p>{toast.title}</p>
-            </div>
-          </>
-        )}
-      </div>
+      <ToastNotification toast={toast} />
     </>
   )
 }

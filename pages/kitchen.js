@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp }
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import RouteGuard from '../components/RouteGuard'
+import StatusBadge from '../components/StatusBadge'
 import { archiveOrderIfCompleted } from '../lib/ordersArchive'
 
 const KITCHEN_STATUS_LIST = [

@@ -1,14 +1,61 @@
 :root {
-  /* Light theme palette (inspired by uploaded image) */
+  /* Light theme palette */
   --bg: #f6f4ea; /* page background (cream) */
   --deep-green: #0d5a3a; /* primary brand green */
   --accent-green: #2c6a44; /* secondary green */
   --yellow: #f5c842; /* accent CTA yellow (slightly warmer) */
   --ink: #0c0c0b; /* primary dark text color */
   --text-muted: #56544b; /* secondary text */
-  --muted: #7a7a6f; /* muted copy */
+  --muted: #5a5a50; /* muted copy with optimal contrast */
   --card-bg: #ffffff; /* card surfaces */
   --section-pad: clamp(60px, 8vw, 120px);
+
+  /* Design Tokens - Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 96px;
+
+  /* Design Tokens - Typography Scale */
+  --text-xs: 0.72rem;
+  --text-sm: 0.82rem;
+  --text-base: 0.92rem;
+  --text-md: 1rem;
+  --text-lg: 1.15rem;
+  --text-xl: 1.35rem;
+  --text-2xl: 1.8rem;
+  --text-3xl: clamp(2rem, 4vw, 2.8rem);
+
+  /* Design Tokens - Border Radius Scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 999px;
+
+  /* Design Tokens - Elevation & Shadows */
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.10);
+  --shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.25);
+
+  /* Design Tokens - Transitions & Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.05);
+  --duration-fast: 150ms;
+  --duration-md: 250ms;
+  --duration-slow: 400ms;
 }
 
 *,

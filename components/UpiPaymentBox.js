@@ -132,19 +132,19 @@ export default function UpiPaymentBox({
       {/* Direct UPI App Intent Buttons */}
       <div style={{ marginBottom: '18px' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', marginBottom: '10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Pay Directly Using
+          Pay Directly Using Installed App
         </p>
         <div className="upi-app-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <button type="button" onClick={() => window.location.href = `gpay://upi/pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(displayOrderId)}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style={{ height: '18px' }} />
           </button>
-          <button type="button" onClick={() => window.location.href = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(displayOrderId)}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="/images/phonepe-icon.png" alt="PhonePe" style={{ height: '22px' }} />
           </button>
-          <button type="button" onClick={() => window.location.href = `paytmmp://pay?pa=${upiId}&pn=${encodeURIComponent(restaurantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(displayOrderId)}`} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg" alt="Paytm" style={{ height: '14px' }} />
           </button>
-          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="Any UPI App" style={{ height: '14px' }} />
           </button>
         </div>

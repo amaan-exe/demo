@@ -4,6 +4,10 @@ import Link from 'next/link'
 import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
+import SiteNav from '../components/SiteNav'
+import MobileBottomBar from '../components/MobileBottomBar'
+import StatusBadge from '../components/StatusBadge'
+import ToastNotification from '../components/ToastNotification'
 
 export default function MyOrdersPage() {
   const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, accessToken } = useAuth()
@@ -353,68 +357,7 @@ export default function MyOrdersPage() {
         </div>
       )}
 
-      <header className="site-header scrolled" id="top">
-        <nav className="nav container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <Link href="/menu" style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(13,90,58,0.08)',
-              border: '1.5px solid rgba(13,90,58,0.2)',
-              color: 'var(--deep-green)',
-              padding: '6px 14px',
-              borderRadius: '999px',
-              fontSize: '0.84rem',
-              fontWeight: 800,
-              textDecoration: 'none',
-              transition: 'all 0.2s ease',
-              fontFamily: "'Outfit', sans-serif"
-            }}>
-              ← Back to Menu
-            </Link>
-            <Link href="/" className="logo">BIRIYANI <span>STATION</span></Link>
-          </div>
-
-          <button className="nav-toggle" aria-label="Toggle navigation" aria-expanded={isNavOpen} onClick={() => setIsNavOpen(!isNavOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-
-          <div className={`nav-backdrop ${isNavOpen ? 'visible' : ''}`} onClick={() => setIsNavOpen(false)} />
-
-          <div className={`nav-right ${isNavOpen ? 'open' : ''}`}>
-            <Link href="/" onClick={() => setIsNavOpen(false)}>HOME</Link>
-            <Link href="/menu" onClick={() => setIsNavOpen(false)}>MENU</Link>
-            <Link href="/my-orders" className="active" style={{ color: 'var(--yellow)' }} onClick={() => setIsNavOpen(false)}>MY ORDERS</Link>
-            <Link href="/profile" onClick={() => setIsNavOpen(false)}>PROFILE</Link>
-
-            {/* Role-Exclusive Portal Access Pills (Admin ONLY sees Admin, Staff ONLY sees Kitchen, Delivery ONLY sees Delivery) */}
-            {user && isAdmin && (
-              <Link href="/admin" style={{ background: '#0d5a3a', color: '#ffffff', padding: '6px 14px', borderRadius: '999px', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>
-                🛡️ ADMIN
-              </Link>
-            )}
-            {user && isStaffOnly && (
-              <Link href="/kitchen" style={{ background: '#ea580c', color: '#ffffff', padding: '6px 14px', borderRadius: '999px', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>
-                🍳 KITCHEN
-              </Link>
-            )}
-            {user && isDeliveryOnly && (
-              <Link href="/delivery" style={{ background: '#0284c7', color: '#ffffff', padding: '6px 14px', borderRadius: '999px', fontWeight: 900, fontSize: '0.78rem', textDecoration: 'none' }} onClick={() => setIsNavOpen(false)}>
-                🛵 DELIVERY
-              </Link>
-            )}
-
-            {!user && (
-              <button className="btn" onClick={() => { openAuthModal(); setIsNavOpen(false); }}>
-                SIGN IN
-              </button>
-            )}
-          </div>
-        </nav>
-      </header>
+      <SiteNav activePage="orders" />
 
       <main style={{ minHeight: '80vh', padding: '100px 0 80px 0', background: 'var(--cream)' }}>
         <div className="container" style={{ maxWidth: '900px' }}>
@@ -745,6 +688,8 @@ export default function MyOrdersPage() {
           </div>
         </div>
       )}
+      {/* Mobile Bottom Bar */}
+      <MobileBottomBar activeTab="orders" />
     </>
   )
 }
