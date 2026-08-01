@@ -543,6 +543,7 @@ export default function CheckoutModal({
                 <UpiPaymentBox
                   grandTotal={finalTotal}
                   amount={finalTotal}
+                  upiId={settings?.storeUpiId || 'electrohousejsr@okicici'}
                   loading={coLoading}
                   onConfirmPayment={(e, utr) => handleFinalOrderSubmit(e, utr)}
                   onVerify={(utr) => handleFinalOrderSubmit(null, utr)}

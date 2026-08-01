@@ -5,7 +5,7 @@ export default function UpiPaymentBox({
   amount,
   orderId = '',
   restaurantName = 'Biriyani Station',
-  upiId = 'Q441280679@ybl',
+  upiId = 'electrohousejsr@okicici',
   onConfirmPayment,
   onVerify,
   loading = false

@@ -14,7 +14,7 @@ export default function AdminSettingsDesk() {
   const [openingTime, setOpeningTime] = useState('11:00 AM')
   const [closingTime, setClosingTime] = useState('11:30 PM')
   const [supportPhone, setSupportPhone] = useState('+91 91029 85148')
-  const [storeUpiId, setStoreUpiId] = useState('Q441280679@ybl')
+  const [storeUpiId, setStoreUpiId] = useState('electrohousejsr@okicici')
   const [restaurantAddress, setRestaurantAddress] = useState('Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001')
   
   // Announcement Banner State
@@ -40,7 +40,7 @@ export default function AdminSettingsDesk() {
           setOpeningTime(data.openingTime || '11:00 AM')
           setClosingTime(data.closingTime || '11:30 PM')
           setSupportPhone(data.supportPhone || '+91 91029 85148')
-          setStoreUpiId(data.storeUpiId || 'Q441280679@ybl')
+          setStoreUpiId((data.storeUpiId && !data.storeUpiId.includes('8271301179') && !data.storeUpiId.includes('Q441280679')) ? data.storeUpiId : 'electrohousejsr@okicici')
           setRestaurantAddress(data.restaurantAddress || 'Exhibition Road, Opposite Big Bazaar, Patna, Bihar 800001')
 
           setAnnouncementEnabled(Boolean(data.announcementEnabled))
