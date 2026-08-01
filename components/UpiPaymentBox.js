@@ -83,19 +83,29 @@ export default function UpiPaymentBox({
         </h3>
       </div>
 
-      {/* Dynamic QR Code Card */}
-      <div style={{ background: '#ffffff', padding: '16px', borderRadius: '16px', textAlignment: 'center', textAlign: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
-        <p style={{ margin: '0 0 10px 0', fontSize: '0.78rem', fontWeight: 800, color: 'var(--muted)', letterSpacing: '0.1em' }}>
-          SCAN QR CODE WITH ANY UPI APP
-        </p>
+      {/* Static Google Pay QR Code Card */}
+      <div style={{ background: '#ffffff', padding: '18px 16px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
+        <span style={{ display: 'inline-block', background: 'rgba(13,90,58,0.08)', color: 'var(--deep-green)', padding: '4px 12px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '10px' }}>
+          SCAN OR SCREENSHOT TO PAY
+        </span>
         <img
-          src={qrUrl}
-          alt="UPI Payment QR Code"
+          src="/images/upi-qr-code.jpg"
+          alt="Official GPay UPI QR Code"
           className="upi-qr-image"
-          style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.08)' }}
+          style={{ width: '220px', height: 'auto', margin: '0 auto', display: 'block', borderRadius: '16px', border: '1.5px solid rgba(13,90,58,0.12)', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
         />
-        <div style={{ marginTop: '12px', fontSize: '0.82rem', color: 'var(--ink)' }}>
-          Payee: <strong>{restaurantName}</strong>
+        
+        {/* Step-by-Step Payment Guide Box */}
+        <div style={{ marginTop: '14px', background: '#faf9f5', border: '1px solid rgba(13,90,58,0.12)', borderRadius: '12px', padding: '12px', textAlign: 'left', fontSize: '0.82rem', color: 'var(--ink)' }}>
+          <strong style={{ color: 'var(--deep-green)', display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>
+            📲 How to Pay:
+          </strong>
+          <ol style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px', lineHeight: 1.4 }}>
+            <li><strong>Screenshot</strong> this QR Code (or copy the UPI ID below).</li>
+            <li>Open <strong>GPay / PhonePe / Paytm / BHIM</strong>.</li>
+            <li>Tap <strong>Scan QR → Select photo from Gallery</strong>.</li>
+            <li>Enter <strong>₹{totalFormatted}</strong> and pay.</li>
+          </ol>
         </div>
       </div>
 
@@ -115,9 +125,9 @@ export default function UpiPaymentBox({
                 background: copied ? 'rgba(13,90,58,0.15)' : 'rgba(0,0,0,0.05)',
                 color: copied ? 'var(--deep-green)' : 'var(--ink)',
                 border: 'none',
-                padding: '3px 8px',
+                padding: '4px 10px',
                 borderRadius: '6px',
-                fontSize: '0.72rem',
+                fontSize: '0.75rem',
                 fontWeight: 800,
                 cursor: 'pointer'
               }}
@@ -129,10 +139,10 @@ export default function UpiPaymentBox({
         </div>
       </div>
 
-      {/* Direct UPI App Intent Buttons */}
+      {/* Direct App Launchers */}
       <div style={{ marginBottom: '18px' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', marginBottom: '10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Pay Directly Using Installed App
+          Or Open App Directly
         </p>
         <div className="upi-app-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
