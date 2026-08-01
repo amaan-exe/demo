@@ -7630,7 +7630,16 @@ html, body {
 /* 8. Mobile & Tablet Navigation Drawer (Responsive) */
 @media (max-width: 1120px) {
   .nav-toggle {
-    display: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-around !important;
+    width: 32px !important;
+    height: 28px !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    z-index: 1250 !important;
   }
 
   .nav-toggle span {
