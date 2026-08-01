@@ -83,16 +83,16 @@ export default function UpiPaymentBox({
         </h3>
       </div>
 
-      {/* Static Google Pay QR Code Card */}
+      {/* Dynamic UPI QR Code Card */}
       <div style={{ background: '#ffffff', padding: '18px 16px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
         <span style={{ display: 'inline-block', background: 'rgba(13,90,58,0.08)', color: 'var(--deep-green)', padding: '4px 12px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '10px' }}>
-          SCAN OR SCREENSHOT TO PAY
+          DYNAMIC UPI QR • ₹{totalFormatted} PRE-FILLED
         </span>
         <img
-          src="/images/upi-qr-code.jpg"
-          alt="Official GPay UPI QR Code"
+          src={qrUrl}
+          alt={`Dynamic UPI QR Code for ₹${totalFormatted}`}
           className="upi-qr-image"
-          style={{ width: '220px', height: 'auto', margin: '0 auto', display: 'block', borderRadius: '16px', border: '1.5px solid rgba(13,90,58,0.12)', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
+          style={{ width: '220px', height: '220px', margin: '0 auto', display: 'block', borderRadius: '16px', border: '1.5px solid rgba(13,90,58,0.12)', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
         />
         
         {/* Step-by-Step Payment Guide Box */}
@@ -101,10 +101,10 @@ export default function UpiPaymentBox({
             📲 How to Pay:
           </strong>
           <ol style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px', lineHeight: 1.4 }}>
-            <li><strong>Screenshot</strong> this QR Code (or copy the UPI ID below).</li>
+            <li><strong>Screenshot</strong> this QR Code (or scan with camera).</li>
             <li>Open <strong>GPay / PhonePe / Paytm / BHIM</strong>.</li>
             <li>Tap <strong>Scan QR → Select photo from Gallery</strong>.</li>
-            <li>Enter <strong>₹{totalFormatted}</strong> and pay.</li>
+            <li>Amount <strong>₹{totalFormatted}</strong> is pre-filled automatically!</li>
           </ol>
         </div>
       </div>
@@ -136,27 +136,6 @@ export default function UpiPaymentBox({
             </button>
           </div>
           <strong style={{ fontSize: '0.88rem', color: 'var(--deep-green)' }}>#{displayOrderId}</strong>
-        </div>
-      </div>
-
-      {/* Direct App Launchers */}
-      <div style={{ marginBottom: '18px' }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', marginBottom: '10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Or Open App Directly
-        </p>
-        <div className="upi-app-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style={{ height: '18px' }} />
-          </button>
-          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <img src="/images/phonepe-icon.png" alt="PhonePe" style={{ height: '22px' }} />
-          </button>
-          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg" alt="Paytm" style={{ height: '14px' }} />
-          </button>
-          <button type="button" onClick={() => window.location.href = upiUri} style={{ padding: '10px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#ffffff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="Any UPI App" style={{ height: '14px' }} />
-          </button>
         </div>
       </div>
 
