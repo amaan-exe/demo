@@ -245,11 +245,6 @@ export default function AdminOrdersDesk() {
 
   // Calculate Metrics
   const countUpiPending = orders.filter(o => o.paymentStatus === 'verification_pending' || o.paymentStatus === 'Verification Pending' || o.orderStatus === 'payment_verification_pending').length
-  const countRefundPending = orders.filter(o => {
-    const st = (o.orderStatus || o.status || '').toUpperCase()
-    const refSt = (o.refund?.status || '').toUpperCase()
-    return (st === 'REFUND_PENDING' || refSt === 'REFUND_PENDING' || o.refund?.requested === true) && st !== 'REFUNDED' && refSt !== 'REFUNDED'
-  }).length
   const countPending = orders.filter(o => o.orderStatus === 'Pending' || o.orderStatus === 'pending').length
   const countAccepted = orders.filter(o => o.orderStatus === 'Accepted' || o.orderStatus === 'accepted').length
   const countPreparing = orders.filter(o => o.orderStatus === 'Preparing' || o.orderStatus === 'preparing').length
@@ -312,52 +307,6 @@ export default function AdminOrdersDesk() {
             boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
           }}>
             {actionFeedback}
-          </div>
-        )}
-
-        {/* URGENT CANCELLATION / REFUND ALERT BANNER */}
-        {countRefundPending > 0 && (
-          <div style={{
-            background: '#fee2e2',
-            border: '2px solid #dc2626',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            boxShadow: '0 6px 20px rgba(220,38,38,0.15)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ fontSize: '1.8rem', flexShrink: 0 }}>🚨</div>
-              <div>
-                <strong style={{ color: '#dc2626', fontSize: '1.02rem', fontFamily: "'Outfit', sans-serif", display: 'block' }}>
-                  ATTENTION ADMIN: {countRefundPending} Order Cancellation / Refund Request(s) Received!
-                </strong>
-                <p style={{ margin: '2px 0 0 0', fontSize: '0.84rem', color: '#991b1b', fontWeight: 700 }}>
-                  Customers requested cancellation. Regular kitchen & delivery actions have been paused for these orders.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/admin/refunds"
-              style={{
-                background: '#dc2626',
-                color: '#ffffff',
-                padding: '10px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: 900,
-                textDecoration: 'none',
-                fontFamily: "'Outfit', sans-serif",
-                boxShadow: '0 4px 12px rgba(220,38,38,0.3)'
-              }}
-            >
-              Open Refund Desk ➔
-            </Link>
           </div>
         )}
 
@@ -623,9 +572,7 @@ export default function AdminOrdersDesk() {
             filteredOrders.map((ord) => {
               const isDelivered = ord.orderStatus === 'Delivered' || ord.orderStatus === 'delivered'
               const isCancelled = ord.orderStatus === 'Cancelled' || ord.orderStatus === 'cancelled' || ord.orderStatus === 'rejected' || ord.orderStatus === 'Payment Failed' || ord.paymentStatus === 'rejected' || ord.paymentStatus === 'Payment Failed'
-              const isRefunded = ord.orderStatus === 'REFUNDED' || ord.refund?.status === 'REFUNDED'
-              const isRefundPending = (ord.refund?.requested === true || (ord.orderStatus || ord.status || '').toUpperCase().includes('REFUND')) && !isRefunded
-              const isLocked = isDelivered || isCancelled || isRefundPending || isRefunded
+              const isLocked = isDelivered || isCancelled
               const customerName = ord.customerName || ord.userName || 'Customer'
               const initials = getInitials(customerName)
               const rawPhone = (ord.customerPhone || ord.userPhone || '').replace(/[^0-9]/g, '')
@@ -636,18 +583,16 @@ export default function AdminOrdersDesk() {
                 <div
                   key={ord.id}
                   style={{
-                    background: isRefunded ? '#f8faf9' : '#ffffff',
+                    background: '#ffffff',
                     borderRadius: '18px',
-                    border: isRefunded ? '1.5px dashed #cbd5e1' : '1.5px solid rgba(13,90,58,0.12)',
-                    boxShadow: isRefunded ? 'none' : '0 6px 20px rgba(0,0,0,0.04)',
+                    border: '1.5px solid rgba(13,90,58,0.12)',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     justify: 'space-between',
                     position: 'relative',
-                    fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif",
-                    opacity: isRefunded ? 0.75 : 1,
-                    filter: isRefunded ? 'grayscale(25%)' : 'none'
+                    fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif"
                   }}
                 >
                   {/* TOP COLORED STATUS ACCENT BAR */}
@@ -938,36 +883,7 @@ export default function AdminOrdersDesk() {
 
                     {/* SHAPED AROUND #3: Pipeline Controls / Action Buttons */}
                     <div>
-                      {isRefunded ? (
-                        <div style={{
-                          padding: '12px 14px',
-                          borderRadius: '12px',
-                          background: '#ecfdf5',
-                          border: '1.5px solid #10b981',
-                          color: '#047857',
-                          fontWeight: 900,
-                          fontSize: '0.86rem',
-                          textAlign: 'center',
-                          fontFamily: "'Outfit', sans-serif",
-                          boxShadow: '0 2px 8px rgba(16,185,129,0.1)'
-                        }}>
-                          💸 Refund Processed & Completed ✓
-                        </div>
-                      ) : isRefundPending ? (
-                        <div style={{ background: '#fee2e2', border: '1.5px solid #dc2626', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
-                          <div style={{ color: '#dc2626', fontWeight: 900, fontSize: '0.88rem', fontFamily: "'Outfit', sans-serif", marginBottom: '4px' }}>
-                            🚫 CANCELLATION REQUESTED BY CUSTOMER — ACTIONS PAUSED
-                          </div>
-                          {ord.refund?.cancellationReason && (
-                            <div style={{ fontSize: '0.8rem', color: '#991b1b', fontWeight: 800, marginBottom: '8px' }}>
-                              📝 Reason: {ord.refund.cancellationReason}
-                            </div>
-                          )}
-                          <Link href="/admin/refunds" style={{ display: 'inline-block', background: '#dc2626', color: '#ffffff', padding: '8px 16px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 900, textDecoration: 'none', fontFamily: "'Outfit', sans-serif" }}>
-                            💸 Process Refund in Refund Desk ➔
-                          </Link>
-                        </div>
-                      ) : isDelivered ? (
+                      {isDelivered ? (
                         <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#e6f4ea', color: '#047857', fontWeight: 900, fontSize: '0.82rem', textAlign: 'center' }}>
                           Delivered ✓
                         </div>

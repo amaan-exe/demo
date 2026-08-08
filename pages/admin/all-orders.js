@@ -270,7 +270,6 @@ export default function AllOrdersPage() {
               <option value="active">Active / In-Progress</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
-              <option value="refunded">Refunded</option>
             </select>
           </div>
 
@@ -351,7 +350,6 @@ export default function AllOrdersPage() {
               filteredOrders.map((ord) => {
                 const isDelivered = (ord.orderStatus || '').toLowerCase() === 'delivered'
                 const isCancelled = ['cancelled', 'rejected', 'payment failed'].includes((ord.orderStatus || '').toLowerCase()) || (ord.paymentStatus || '').toLowerCase() === 'rejected'
-                const isRefunded = (ord.orderStatus || '').toUpperCase() === 'REFUNDED' || (ord.refund?.status || '').toUpperCase() === 'REFUNDED'
                 const customerName = ord.customerName || ord.userName || 'Customer'
                 const initials = getInitials(customerName)
                 const statusMeta = getStatusMeta(ord.orderStatus, isDelivered, isCancelled)
@@ -360,15 +358,14 @@ export default function AllOrdersPage() {
                   <div
                     key={ord.id}
                     style={{
-                      background: isRefunded ? '#f8faf9' : '#ffffff',
+                      background: '#ffffff',
                       borderRadius: '16px',
-                      border: isRefunded ? '1.5px dashed #cbd5e1' : '1.5px solid rgba(13,90,58,0.12)',
+                      border: '1.5px solid rgba(13,90,58,0.12)',
                       boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
                       overflow: 'hidden',
                       display: 'flex',
                       flexDirection: 'column',
                       fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif",
-                      opacity: isRefunded ? 0.8 : 1,
                       transition: 'transform 0.15s ease, box-shadow 0.15s ease'
                     }}
                   >
