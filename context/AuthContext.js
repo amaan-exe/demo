@@ -44,6 +44,13 @@ export function AuthProvider({ children }) {
     // Process redirect result if returning from Google OAuth redirect flow
     getRedirectResult(auth).then(async (result) => {
       if (result?.user) {
+        setUser({
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Foodie User',
+          photoURL: result.user.photoURL || '',
+        })
+        closeAuthModal()
         await syncWithBackend(result.user)
       }
     }).catch((err) => {
@@ -163,41 +170,38 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 1. Google Sign-In via Popup (Synchronous callstack to bypass mobile popup blockers)
-  const loginWithGoogle = () => {
-    const startTime = Date.now()
-    return signInWithPopup(auth, googleProvider)
-      .then(async (result) => {
-        if (result?.user) {
-          setUser({
-            uid: result.user.uid,
-            email: result.user.email,
-            displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Foodie User',
-            photoURL: result.user.photoURL || '',
-          })
-          closeAuthModal()
-          await syncWithBackend(result.user)
-        }
-        return result
-      })
-      .catch((error) => {
-        console.error('Google Sign-In Error:', error)
-        const duration = Date.now() - startTime
-        const code = error?.code || error?.message || ''
+  // 1. Google Sign-In with automatic Mobile Redirect support
+  const loginWithGoogle = async () => {
+    const isMobile = typeof window !== 'undefined' && (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (window.innerWidth <= 768)
+    )
 
-        // Only flag as popup-blocked if duration is extremely fast (<350ms) AND blocked by browser
-        if (duration < 350 && (code.includes('popup-blocked') || code.includes('cancelled-popup-request'))) {
-          throw new Error('Google Sign-In popup was blocked by your browser settings. Please allow popups for this website or sign in with Email below.')
-        }
+    if (isMobile) {
+      return signInWithRedirect(auth, googleProvider)
+    }
 
-        if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
-          return null // Ignore manual user cancellation after viewing popup
-        }
-        if (code.includes('popup-blocked')) {
-          throw new Error('Google Sign-In popup was blocked by your browser. Please tap the Google button again or allow popups for this website.')
-        }
-        throw error
-      })
+    try {
+      const result = await signInWithPopup(auth, googleProvider)
+      if (result?.user) {
+        setUser({
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Foodie User',
+          photoURL: result.user.photoURL || '',
+        })
+        closeAuthModal()
+        await syncWithBackend(result.user)
+      }
+      return result
+    } catch (error) {
+      console.warn('Google Sign-In Popup Warning:', error)
+      const code = error?.code || error?.message || ''
+      if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
+        return null
+      }
+      return signInWithRedirect(auth, googleProvider)
+    }
   }
 
   // 2. Email & Password Auth (Login or Signup)
