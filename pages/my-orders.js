@@ -88,8 +88,7 @@ export default function MyOrdersPage() {
           fetch('/api/razorpay/reconcile', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               internalOrderId: targetOrderId,

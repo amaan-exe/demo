@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 export default function RazorpayPaymentBox({
   grandTotal = 0,
@@ -14,6 +14,10 @@ export default function RazorpayPaymentBox({
 
   const numericTotal = typeof grandTotal === 'number' && !isNaN(grandTotal) ? grandTotal : (parseFloat(grandTotal) || 0)
   const formattedTotal = numericTotal.toFixed(0)
+
+  // Refs to track pending checkout across visibility changes
+  const pendingCheckoutRef = useRef(null)
+  const reconcileRunningRef = useRef(false)
 
   // Dynamically load Razorpay Checkout SDK script
   const loadRazorpayScript = () => {
@@ -33,12 +37,14 @@ export default function RazorpayPaymentBox({
   const [isCheckingStatus, setIsCheckingStatus] = useState(false)
   const [checkingNotice, setCheckingNotice] = useState('')
 
-  // Server-side payment reconciliation polling loop
-  const pollServerPaymentStatus = async (internalOrderId, razorpayOrderId) => {
+  // Server-side payment reconciliation polling loop (NO auth header needed — public endpoint)
+  const pollServerPaymentStatus = useCallback(async (internalOrderId, razorpayOrderId) => {
+    if (reconcileRunningRef.current) return false // prevent duplicate polls
+    reconcileRunningRef.current = true
     setIsCheckingStatus(true)
     setCheckingNotice("⏳ Checking payment status with Razorpay... Please don't pay again.")
 
-    const delays = [0, 2000, 4000, 7000]
+    const delays = [0, 2500, 5000, 8000, 12000]
     for (let i = 0; i < delays.length; i++) {
       if (delays[i] > 0) {
         await new Promise((r) => setTimeout(r, delays[i]))
@@ -56,6 +62,9 @@ export default function RazorpayPaymentBox({
           if (data.success && data.status === 'DONE') {
             setIsCheckingStatus(false)
             setPayLoading(false)
+            setCheckingNotice('')
+            reconcileRunningRef.current = false
+            pendingCheckoutRef.current = null
             try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
             if (typeof onPaymentSuccess === 'function') {
               onPaymentSuccess({
@@ -68,6 +77,9 @@ export default function RazorpayPaymentBox({
           } else if (data.status === 'FAILED') {
             setIsCheckingStatus(false)
             setPayLoading(false)
+            setCheckingNotice('')
+            reconcileRunningRef.current = false
+            pendingCheckoutRef.current = null
             setPayError(data.transaction?.failureReason || 'Payment failed on gateway or was cancelled by user.')
             return false
           }
@@ -81,9 +93,30 @@ export default function RazorpayPaymentBox({
     setIsCheckingStatus(false)
     setPayLoading(false)
     setCheckingNotice('')
+    reconcileRunningRef.current = false
     setPayError('We are still confirming your payment with your bank. Please check your Orders page shortly. Do not pay again.')
     return false
-  }
+  }, [onPaymentSuccess])
+
+  // R1: Auto-reconcile when user returns from UPI app (visibilitychange)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && pendingCheckoutRef.current && !reconcileRunningRef.current) {
+        const { internalOrderId, razorpayOrderId } = pendingCheckoutRef.current
+        if (internalOrderId && razorpayOrderId) {
+          // Small delay to let Razorpay SDK settle after app switch
+          setTimeout(() => {
+            if (pendingCheckoutRef.current) {
+              pollServerPaymentStatus(internalOrderId, razorpayOrderId)
+            }
+          }, 1500)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [pollServerPaymentStatus])
 
   const handleInitiateRazorpay = async () => {
     setPayError('')
@@ -120,18 +153,20 @@ export default function RazorpayPaymentBox({
       const { order_id, key_id, amount, currency, orderId: internalOrderId } = data
 
       // Save pending checkout metadata to sessionStorage for reload recovery
+      const pendingData = {
+        internalOrderId,
+        razorpayOrderId: order_id,
+        amount: numericTotal,
+        userId: orderDetails?.userId || null,
+        userEmail: orderDetails?.userEmail || null,
+        customerName: customerName || orderDetails?.customerName || '',
+        customerPhone: customerPhone || orderDetails?.customerPhone || '',
+        createdAt: Date.now()
+      }
+      pendingCheckoutRef.current = pendingData
       try {
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('pending_razorpay_checkout', JSON.stringify({
-            internalOrderId,
-            razorpayOrderId: order_id,
-            amount: numericTotal,
-            userId: orderDetails?.userId || null,
-            userEmail: orderDetails?.userEmail || null,
-            customerName: customerName || orderDetails?.customerName || '',
-            customerPhone: customerPhone || orderDetails?.customerPhone || '',
-            createdAt: Date.now()
-          }))
+          sessionStorage.setItem('pending_razorpay_checkout', JSON.stringify(pendingData))
         }
       } catch (e) {}
 
@@ -146,6 +181,7 @@ export default function RazorpayPaymentBox({
         order_id: order_id,
         handler: async function (response) {
           setPayLoading(true)
+          pendingCheckoutRef.current = null // handler fired = no need for visibility recovery
           try {
             // 4. Verify payment signature on backend + update Firestore
             const verifyRes = await fetch('/api/razorpay/verify-payment', {
@@ -212,11 +248,22 @@ export default function RazorpayPaymentBox({
       rzp.on('payment.failed', function (response) {
         console.warn('Razorpay payment notice / error event:', response.error)
         const desc = response.error?.description || ''
+        const reason = response.error?.reason || ''
         
-        // If error is an ambiguous app launch/handoff error (e.g. "Can't open payment app"), DO NOT assume payment failed!
-        if (desc.includes("Can't open payment app") || desc.includes('app') || !desc) {
+        // BUG 7 FIX: Only treat specific mobile app-launch handoff errors as ambiguous.
+        // Previously desc.includes('app') was too broad, matching legitimate failures like "declined by application".
+        const isMobileHandoffError = (
+          desc.includes("Can't open payment app") ||
+          desc.includes('Unable to open') ||
+          desc.includes('payment app is not installed') ||
+          reason === 'payment_cancelled' ||
+          !desc // empty description = ambiguous
+        )
+
+        if (isMobileHandoffError) {
           pollServerPaymentStatus(internalOrderId, order_id)
         } else {
+          pendingCheckoutRef.current = null
           setPayError(desc || 'Payment was unsuccessful. Please try again.')
           setPayLoading(false)
         }

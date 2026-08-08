@@ -51,10 +51,10 @@ export default async function handler(req, res) {
 
       const firestorePayload = {
         orderId,
-        userId: orderDetails.userId || null,
-        userEmail: orderDetails.userEmail || null,
+        userId: orderDetails.userId || 'GUEST',
+        userEmail: orderDetails.userEmail || 'guest@biriyanistation.in',
         customerName: orderDetails.customerName || '',
-        customerEmail: orderDetails.userEmail || '',
+        customerEmail: orderDetails.userEmail || 'guest@biriyanistation.in',
         customerPhone: orderDetails.customerPhone || '',
         deliveryAddress: orderDetails.deliveryAddress || '',
         items: orderDetails.items || [],

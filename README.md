@@ -68,8 +68,7 @@ biriyani/
 #### `context/AuthContext.js`
 - `AuthProvider({ children })`: Context Provider component wrapping the entire app. Sets up real-time Firebase `onAuthStateChanged` listeners, maintains local user profiles, enforces admin role authorization (`ADMIN_EMAILS`), and exposes session helper methods.
 - `useAuth()`: Custom hook to consume the `AuthContext` value anywhere in the component tree.
-- `loginWithGoogle()`: Invokes Firebase `signInWithPopup(auth, googleProvider)`. Synchronously executed in event handlers to prevent mobile popup blocking.
-- `loginWithEmail(email, password, isSignup, displayName)`: Authenticates via Firebase `signInWithEmailAndPassword` or `createUserWithEmailAndPassword`.
+- `loginWithEmail(identifier, password, isSignup, displayName)`: Authenticates via Firebase `signInWithEmailAndPassword` or `createUserWithEmailAndPassword`. Supports User ID or Email input, including `ADMIN` ID with pass `AMANULLAHPATNA2607`.
 - `logout()`: Executes `firebaseSignOut(auth)` and calls `/api/auth/logout` to clear HttpOnly cookies.
 - `syncWithBackend(firebaseUser)`: Internal helper function that posts the Firebase ID token to `/api/auth/login` for server-side JWT cookie synchronization.
 - `updateUserProfileData(data)`: Mutates customer user profile attributes (name, phone, address) directly in Firestore `users/{uid}`.
@@ -99,10 +98,9 @@ biriyani/
 - `AdminLayout({ children, activePage, title, itemCount })`: Master wrapper for all admin portal pages (`/admin/*`). Enforces responsive top navigation bar, quick route tab bar, dark theme container, and auto-redirects non-admin users to homepage.
 
 #### `components/AuthModal.js`
-- `AuthModal()`: Interactive modal interface for customer login and registration.
-- `handleGoogleSignIn()`: Click event trigger for Google OAuth. Synchronously calls `loginWithGoogle()` to prevent mobile popups from being flagged as unprompted browser popups.
-- `handleSubmit(e)`: Form submit handler for email/password authentication.
-- `formatAuthError(err)`: Parses Firebase authentication error codes (`auth/popup-blocked`, `auth/wrong-password`, `auth/email-already-in-use`) into friendly user error strings.
+- `AuthModal()`: Interactive modal interface for ID & Password authentication (customer registration/login and ADMIN access).
+- `handleSubmit(e)`: Form submit handler for ID & Password authentication.
+- `formatAuthError(err)`: Parses Firebase authentication error codes (`auth/wrong-password`, `auth/email-already-in-use`, `auth/invalid-credential`) into friendly user error strings.
 
 #### `components/CheckoutModal.js`
 - `CheckoutModal({ isOpen, onClose, cart, clearCart, settings, user, onOrderPlaced })`: Multi-step checkout modal dialog (Step 1: Contact & Delivery Address, Step 2: UPI / Cash Payment Method) featuring integrated Announcement Banner.

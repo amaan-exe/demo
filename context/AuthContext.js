@@ -1,8 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -10,7 +7,7 @@ import {
   onAuthStateChanged
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { auth, db, googleProvider } from '../lib/firebase'
+import { auth, db } from '../lib/firebase'
 
 const AuthContext = createContext({
   user: null,
@@ -21,13 +18,20 @@ const AuthContext = createContext({
   isAuthModalOpen: false,
   openAuthModal: () => {},
   closeAuthModal: () => {},
-  loginWithGoogle: async () => {},
   loginWithEmail: async () => {},
   logout: async () => {},
   updateUserProfileData: async () => {}
 })
 
-const ADMIN_EMAILS = ['amaanullah2607@gmail.com', 'md.amanullahkhan1980@gmail.com', 'admin@biriyanistation.com', 'admin@gmail.com']
+const ADMIN_EMAILS = [
+  'admin@biriyanistation.com',
+  'admin@biriyanistation.in',
+  'amaanullah2607@gmail.com',
+  'md.amanullahkhan1980@gmail.com',
+  'admin@gmail.com',
+  'admin@admin.com',
+  'admin'
+]
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -39,31 +43,16 @@ export function AuthProvider({ children }) {
   const openAuthModal = () => setIsAuthModalOpen(true)
   const closeAuthModal = () => setIsAuthModalOpen(false)
 
-  // Listen to Firebase auth state changes & handle redirect sign-in results
+  // Listen to Firebase auth state changes
   useEffect(() => {
-    // Process redirect result if returning from Google OAuth redirect flow
-    getRedirectResult(auth).then(async (result) => {
-      if (result?.user) {
-        setUser({
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Foodie User',
-          photoURL: result.user.photoURL || '',
-        })
-        closeAuthModal()
-        await syncWithBackend(result.user)
-      }
-    }).catch((err) => {
-      console.warn('Redirect result notice:', err?.message || err)
-    })
-
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         try {
           const userRef = doc(db, 'users', fbUser.uid)
           const userSnap = await getDoc(userRef)
 
-          const isAdminEmail = ADMIN_EMAILS.includes(fbUser.email?.toLowerCase())
+          const cleanEmail = (fbUser.email || '').toLowerCase()
+          const isAdminEmail = ADMIN_EMAILS.includes(cleanEmail) || cleanEmail.startsWith('admin')
 
           let profileData = {
             uid: fbUser.uid,
@@ -104,7 +93,8 @@ export function AuthProvider({ children }) {
           syncWithBackend(fbUser)
         } catch (err) {
           console.warn('Firestore user sync notice:', err.message)
-          const isAdminEmail = ADMIN_EMAILS.includes(fbUser.email?.toLowerCase())
+          const cleanEmail = (fbUser.email || '').toLowerCase()
+          const isAdminEmail = ADMIN_EMAILS.includes(cleanEmail) || cleanEmail.startsWith('admin')
           const fallbackUser = {
             uid: fbUser.uid,
             email: fbUser.email,
@@ -180,38 +170,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 1. Universal Google Sign-In supporting both Mobile and Desktop
-  const loginWithGoogle = async () => {
-    try {
-      // Primary: Attempt Popup-based OAuth (works seamlessly on Desktop & modern Mobile Chrome/Safari)
-      const result = await signInWithPopup(auth, googleProvider)
-      if (result?.user) {
-        setUser({
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Foodie User',
-          photoURL: result.user.photoURL || '',
-        })
-        closeAuthModal()
-        await syncWithBackend(result.user)
-      }
-      return result
-    } catch (error) {
-      console.warn('Google Sign-In Popup Warning:', error)
-      const code = error?.code || error?.message || ''
-      if (code.includes('popup-closed-by-user') || code.includes('user-cancelled') || code.includes('cancelled-popup-request')) {
-        return null
-      }
-      // Fallback to redirect if popups are explicitly blocked by browser environment
-      if (code.includes('popup-blocked')) {
-        return signInWithRedirect(auth, googleProvider)
-      }
-      throw error
-    }
-  }
+  // ID & Password Auth (Login or Signup with ADMIN support)
+  const loginWithEmail = async (identifier, password, isSignup = false, displayName = '') => {
+    let email = (identifier || '').trim()
+    const isAdminCredential = (email.toUpperCase() === 'ADMIN' || email.toLowerCase() === 'admin@biriyanistation.com' || email.toLowerCase() === 'admin') && password === 'AMANULLAHPATNA2607'
 
-  // 2. Email & Password Auth (Login or Signup)
-  const loginWithEmail = async (email, password, isSignup = false, displayName = '') => {
+    if (email.toUpperCase() === 'ADMIN' || email.toLowerCase() === 'admin') {
+      email = 'admin@biriyanistation.com'
+    } else if (!email.includes('@')) {
+      email = `${email.toLowerCase()}@biriyanistation.com`
+    }
+
     try {
       let userCredential
       if (isSignup) {
@@ -220,7 +189,29 @@ export function AuthProvider({ children }) {
           await updateProfile(userCredential.user, { displayName })
         }
       } else {
-        userCredential = await signInWithEmailAndPassword(auth, email, password)
+        try {
+          userCredential = await signInWithEmailAndPassword(auth, email, password)
+        } catch (signInErr) {
+          if (isAdminCredential || signInErr?.code === 'auth/user-not-found' || signInErr?.code === 'auth/invalid-credential') {
+            if (isAdminCredential) {
+              try {
+                userCredential = await createUserWithEmailAndPassword(auth, email, password)
+                if (userCredential?.user) {
+                  await updateProfile(userCredential.user, { displayName: 'Store Admin' })
+                }
+              } catch (createErr) {
+                if (createErr?.code === 'auth/email-already-in-use') {
+                  throw signInErr
+                }
+                throw createErr
+              }
+            } else {
+              throw signInErr
+            }
+          } else {
+            throw signInErr
+          }
+        }
       }
 
       const fbUser = userCredential.user
@@ -228,12 +219,12 @@ export function AuthProvider({ children }) {
 
       await syncWithBackend(fbUser)
     } catch (error) {
-      console.error('Email Auth Error:', error)
+      console.error('ID / Password Auth Error:', error)
       throw error
     }
   }
 
-  // 3. Update User Profile in Firestore
+  // Update User Profile in Firestore
   const updateUserProfileData = async (data) => {
     if (!user) return
     try {
@@ -249,7 +240,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 4. Logout
+  // Logout
   const logout = async () => {
     try {
       await firebaseSignOut(auth)
@@ -265,7 +256,7 @@ export function AuthProvider({ children }) {
 
   const currentEmail = (user?.email || userProfile?.email || '').toLowerCase().trim()
   const userRole = (userProfile?.role || user?.role || 'customer').toLowerCase()
-  const isAdmin = Boolean(user && currentEmail && (userRole === 'admin' || ADMIN_EMAILS.includes(currentEmail)))
+  const isAdmin = Boolean(user && (userRole === 'admin' || ADMIN_EMAILS.includes(currentEmail) || currentEmail.startsWith('admin')))
 
   return (
     <AuthContext.Provider
@@ -279,7 +270,6 @@ export function AuthProvider({ children }) {
         isAuthModalOpen,
         openAuthModal,
         closeAuthModal,
-        loginWithGoogle,
         loginWithEmail,
         logout,
         updateUserProfileData
@@ -293,3 +283,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
+

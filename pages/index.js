@@ -245,7 +245,8 @@ export default function Home() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
           },
-          body: JSON.stringify(syncPayload)
+          body: JSON.stringify(syncPayload),
+          keepalive: true
         }).catch(e => console.warn('MongoDB sync notice:', e))
 
         // WhatsApp notification

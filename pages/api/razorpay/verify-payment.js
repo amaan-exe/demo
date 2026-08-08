@@ -42,43 +42,52 @@ export default async function handler(req, res) {
     }
 
     // --- Signature valid: Update order in Firestore & MongoDB ---
+    let firestoreUpdated = false
     if (orderId) {
-      try {
-        const orderRef = doc(db, 'orders', orderId)
-        const orderSnap = await getDoc(orderRef)
+      // Firestore update with 1 retry
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const orderRef = doc(db, 'orders', orderId)
+          const orderSnap = await getDoc(orderRef)
 
-        if (orderSnap.exists()) {
-          const existingOrder = orderSnap.data()
+          if (orderSnap.exists()) {
+            const existingOrder = orderSnap.data()
 
-          const updatePayload = {
-            paymentStatus: 'paid',
-            orderStatus: 'confirmed',
-            customerMarkedPaid: true,
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_order_id,
-            razorpaySignature: razorpay_signature,
-            transactionReference: razorpay_payment_id,
-            paymentVerifiedBy: 'CLIENT_VERIFY',
-            paymentVerifiedAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
+            const updatePayload = {
+              paymentStatus: 'paid',
+              orderStatus: 'confirmed',
+              customerMarkedPaid: true,
+              razorpayPaymentId: razorpay_payment_id,
+              razorpayOrderId: razorpay_order_id,
+              razorpaySignature: razorpay_signature,
+              transactionReference: razorpay_payment_id,
+              paymentVerifiedBy: 'CLIENT_VERIFY',
+              paymentVerifiedAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }
+
+            // Ensure userId and customer info are updated if they were missing or provided
+            if (userId && (!existingOrder.userId || existingOrder.userId === 'GUEST' || existingOrder.userId !== userId)) {
+              updatePayload.userId = userId
+            }
+            if (userEmail && (!existingOrder.userEmail || existingOrder.userEmail === 'guest@biriyanistation.in' || existingOrder.userEmail !== userEmail)) {
+              updatePayload.userEmail = userEmail
+              updatePayload.customerEmail = userEmail
+            }
+            if (customerName && !existingOrder.customerName) updatePayload.customerName = customerName
+            if (customerPhone && !existingOrder.customerPhone) updatePayload.customerPhone = customerPhone
+            if (deliveryAddress && !existingOrder.deliveryAddress) updatePayload.deliveryAddress = deliveryAddress
+
+            await updateDoc(orderRef, updatePayload)
+            firestoreUpdated = true
+            break // success, no need to retry
           }
-
-          // Ensure userId and customer info are updated if they were missing or provided
-          if (userId && (!existingOrder.userId || existingOrder.userId !== userId)) {
-            updatePayload.userId = userId
+        } catch (firestoreErr) {
+          console.error(`Firestore update error in verify-payment (attempt ${attempt + 1}):`, firestoreErr)
+          if (attempt === 0) {
+            await new Promise(r => setTimeout(r, 500)) // wait 500ms before retry
           }
-          if (userEmail && (!existingOrder.userEmail || existingOrder.userEmail !== userEmail)) {
-            updatePayload.userEmail = userEmail
-            updatePayload.customerEmail = userEmail
-          }
-          if (customerName && !existingOrder.customerName) updatePayload.customerName = customerName
-          if (customerPhone && !existingOrder.customerPhone) updatePayload.customerPhone = customerPhone
-          if (deliveryAddress && !existingOrder.deliveryAddress) updatePayload.deliveryAddress = deliveryAddress
-
-          await updateDoc(orderRef, updatePayload)
         }
-      } catch (firestoreErr) {
-        console.error('Firestore update error in verify-payment:', firestoreErr)
       }
 
       // MongoDB Order & PaymentTransaction Sync
@@ -137,6 +146,7 @@ export default async function handler(req, res) {
       razorpay_order_id,
       razorpay_payment_id,
       orderId,
+      firestoreWarning: !firestoreUpdated ? 'Firestore update failed after retries. Webhook/reconciliation will recover.' : undefined,
     })
   } catch (error) {
     console.error('Razorpay Verify Payment Error:', error)

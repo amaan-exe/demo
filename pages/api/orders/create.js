@@ -118,17 +118,18 @@ async function handler(req, res) {
     const calculatedTax = Number(req.body.tax) || 0
     const verifiedGrandTotal = Math.max(0, calculatedSubtotal + calculatedDelivery + calculatedTax - verifiedDiscount)
 
-    connectDb().then(async () => {
+    try {
+      await connectDb()
       await Order.create({
           orderId,
-          userId,
-          userEmail,
-          customerEmail: req.body.customerEmail || userEmail,
-          userName: userName || req.body.customerName || userEmail.split('@')[0],
-          customerName: req.body.customerName || userName || userEmail.split('@')[0],
-          userPhone: userPhone || req.body.customerPhone,
-          customerPhone: req.body.customerPhone || userPhone,
-          deliveryAddress,
+          userId: userId || 'GUEST',
+          userEmail: userEmail || req.body.customerEmail || 'guest@biriyanistation.in',
+          customerEmail: req.body.customerEmail || userEmail || 'guest@biriyanistation.in',
+          userName: userName || req.body.customerName || (userEmail ? userEmail.split('@')[0] : 'Guest'),
+          customerName: req.body.customerName || userName || (userEmail ? userEmail.split('@')[0] : 'Guest'),
+          userPhone: userPhone || req.body.customerPhone || '',
+          customerPhone: req.body.customerPhone || userPhone || '',
+          deliveryAddress: deliveryAddress || '',
           items,
           subtotal: calculatedSubtotal,
           deliveryCharge: calculatedDelivery,
@@ -142,8 +143,10 @@ async function handler(req, res) {
           customerMarkedPaid: req.body.customerMarkedPaid ?? true,
           transactionReference: req.body.transactionReference || null,
           status: req.body.orderStatus || 'payment_verification_pending',
-        }).catch((e) => console.warn('Mongoose Order Create Notice:', e.message))
-      }).catch((e) => console.warn('DB Connection Notice:', e.message))
+        })
+    } catch (mongoErr) {
+      console.warn('Mongoose Order Create Notice:', mongoErr.message)
+    }
 
     // Task 3.2: Overwrite the client's untrusted Firestore document with verified server data
     try {

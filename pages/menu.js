@@ -221,7 +221,8 @@ export default function MenuPage() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
           },
-          body: JSON.stringify(syncPayload)
+          body: JSON.stringify(syncPayload),
+          keepalive: true
         }).catch(e => console.warn('MongoDB sync notice:', e))
 
         const message = `🍛 *New Order — Biriyani Station*\n` +

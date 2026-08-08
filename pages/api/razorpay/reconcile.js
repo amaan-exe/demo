@@ -2,11 +2,10 @@ import Razorpay from 'razorpay'
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
 import PaymentTransaction from '../../../models/PaymentTransaction'
-import { withAuth } from '../../../lib/authMiddleware'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
 
-async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -179,4 +178,3 @@ async function handler(req, res) {
   }
 }
 
-export default withAuth(handler, false)
