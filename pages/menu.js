@@ -148,7 +148,71 @@ export default function MenuPage() {
 
     try {
       setCoLoading(true)
-      // Collision-resistant Order ID (Timestamp base-36 + 4-digit random)
+
+      // --- RAZORPAY PRE-CREATED ORDER: order already exists in Firestore ---
+      if (orderData.isRazorpay && orderData.preCreatedOrderId) {
+        const orderId = orderData.preCreatedOrderId
+        const discountValue = orderData.coupon ? orderData.coupon.discount : 0
+        const finalGrandTotal = Math.max(0, grandTotal - discountValue)
+
+        // MongoDB background sync
+        const syncPayload = {
+          orderId,
+          userId: user.uid,
+          userEmail: user.email,
+          customerName: finalName,
+          customerEmail: user.email,
+          customerPhone: finalPhone,
+          deliveryAddress: finalAddress,
+          items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
+          subtotal: cartTotal,
+          deliveryCharge: deliveryFee,
+          tax: 0,
+          discount: discountValue,
+          appliedCoupon: orderData.coupon ? orderData.coupon.code : null,
+          grandTotal: finalGrandTotal,
+          paymentMethod: 'RAZORPAY',
+          paymentStatus: 'paid',
+          orderStatus: 'confirmed',
+          customerMarkedPaid: true,
+          transactionReference: orderData.razorpayPaymentId || null,
+          razorpayPaymentId: orderData.razorpayPaymentId || null,
+          razorpayOrderId: orderData.razorpayOrderId || null,
+          razorpaySignature: orderData.razorpaySignature || null,
+          paymentVerifiedBy: 'CLIENT_VERIFY',
+        }
+
+        fetch('/api/orders/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(syncPayload)
+        }).catch(e => console.warn('MongoDB sync notice:', e))
+
+        const message = `🍛 *New Order — Biriyani Station*\n` +
+          `*Order ID:* ${orderId}\n` +
+          `*Customer:* ${finalName || user.displayName || user.email}\n` +
+          `*Phone:* ${finalPhone}\n` +
+          `*Address:* ${finalAddress}\n` +
+          `*Payment:* 💳 Razorpay (PAID ✅)\n\n` +
+          `*Items:*\n` +
+          cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
+          (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
+          `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
+
+        window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
+
+        setCartItems([])
+        setCheckoutOpen(false)
+        setCoPhone('')
+        setCoAddress('')
+        router.push('/my-orders')
+        return
+      }
+
+      // --- STANDARD FLOW (UPI / COD): create order from scratch ---
       const ts = Date.now().toString(36).toUpperCase()
       const rnd = Math.floor(1000 + Math.random() * 9000).toString()
       const orderId = `BS-PATNA-${ts}-${rnd}`
@@ -183,10 +247,8 @@ export default function MenuPage() {
         updatedAt: serverTimestamp()
       }
 
-      // Save to Firestore with proper wait and error handling
       await setDoc(doc(db, 'orders', orderId), payload)
 
-      // MongoDB background sync with retry logic
       const syncWithMongo = async (attempts = 3) => {
         for (let i = 0; i < attempts; i++) {
           try {
@@ -198,16 +260,15 @@ export default function MenuPage() {
               },
               body: JSON.stringify(payload)
             })
-            if (res.ok) return // Success
+            if (res.ok) return
           } catch (e) {
             if (i === attempts - 1) console.warn('MongoDB sync failed after retries:', e)
-            await new Promise(r => setTimeout(r, 1000 * (i + 1))) // Backoff
+            await new Promise(r => setTimeout(r, 1000 * (i + 1)))
           }
         }
       }
       syncWithMongo()
 
-      // WhatsApp redirection
       const message = `🍛 *New Order — Biriyani Station*\n` +
         `*Order ID:* ${orderId}\n` +
         `*Customer:* ${finalName || user.displayName || user.email}\n` +

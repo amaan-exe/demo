@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import UpiPaymentBox from './UpiPaymentBox'
+import RazorpayPaymentBox from './RazorpayPaymentBox'
 import { getDocs, query, collection, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useSettings } from '../context/SettingsContext'
@@ -23,7 +23,7 @@ export default function CheckoutModal({
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('UPI') // Sole payment method: UPI
+  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY') // Default payment method: Razorpay
   const [showItemSummary, setShowItemSummary] = useState(false)
 
   // Coupon State
@@ -256,6 +256,27 @@ export default function CheckoutModal({
       isUpi: paymentMethod === 'UPI',
       coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: discountAmount } : null
     }, utr)
+  }
+
+  const handleRazorpaySuccess = (rzpDetails) => {
+    if (settings?.isStoreOpen === false) {
+      alert('🔴 Restaurant is currently closed. We are not accepting online orders right now.')
+      return
+    }
+    const cleanPhone = phone.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10)
+    onPlaceOrder({
+      name: name.trim(),
+      phone: cleanPhone,
+      address: address.trim(),
+      paymentMethod: 'RAZORPAY',
+      isUpi: false,
+      isRazorpay: true,
+      preCreatedOrderId: rzpDetails.preCreatedOrderId || null,
+      razorpayPaymentId: rzpDetails.razorpay_payment_id,
+      razorpayOrderId: rzpDetails.razorpay_order_id,
+      razorpaySignature: rzpDetails.razorpay_signature,
+      coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: discountAmount } : null
+    })
   }
 
   const handleQuickAddress = (landmark) => {
@@ -526,27 +547,24 @@ export default function CheckoutModal({
                   <p className="delivering-to-text">Delivering to: <strong>{address}</strong></p>
                 </div>
 
-                {/* Exclusive UPI Payment Option Card */}
-                <div className="payment-options-grid">
-                  <div
-                    className="payment-card selected"
-                    style={{ cursor: 'default' }}
-                  >
-                    <span className="pm-icon">📲</span>
-                    <div className="pm-info">
-                      <strong>Instant UPI / QR Code Payment</strong>
-                      <span>Pay securely via GPay, PhonePe, Paytm or UPI QR</span>
-                    </div>
-                  </div>
-                </div>
-
-                <UpiPaymentBox
+                <RazorpayPaymentBox
                   grandTotal={finalTotal}
-                  amount={finalTotal}
-                  upiId={settings?.storeUpiId || 'electrohousejsr@okicici'}
+                  customerName={name}
+                  customerPhone={phone}
+                  customerEmail={user?.email || ''}
                   loading={coLoading}
-                  onConfirmPayment={(e, utr) => handleFinalOrderSubmit(e, utr)}
-                  onVerify={(utr) => handleFinalOrderSubmit(null, utr)}
+                  onPaymentSuccess={handleRazorpaySuccess}
+                  orderDetails={{
+                    userId: user?.uid || null,
+                    userEmail: user?.email || null,
+                    customerName: name.trim(),
+                    customerPhone: phone.replace(/[^0-9]/g, '').replace(/^91/, '').slice(0, 10),
+                    deliveryAddress: address.trim(),
+                    items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
+                    subtotal: cartTotal,
+                    deliveryCharge: deliveryFee,
+                    coupon: appliedCoupon ? { code: appliedCoupon.couponCode, discount: discountAmount } : null,
+                  }}
                 />
               </div>
             )}

@@ -8356,46 +8356,55 @@ html, body {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 20px 28px 16px 28px !important;
+  padding: 22px 28px 18px 28px !important;
   background: #ffffff !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-bottom: 1px solid #f1f5f9 !important;
 }
 
 .chk-brand-tag {
   font-size: 0.68rem !important;
   font-weight: 900 !important;
-  letter-spacing: 0.22em !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  letter-spacing: 0.18em !important;
+  color: #0d5a3a !important;
   text-transform: uppercase !important;
-  display: block !important;
-  margin-bottom: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-bottom: 4px !important;
+  background: #f0fdf4 !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(13, 90, 58, 0.15) !important;
 }
 
 .chk-title {
-  font-family: "Playfair Display", serif !important;
-  font-size: 1.8rem !important;
+  font-family: var(--font-sans, "Inter", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif) !important;
+  font-size: 1.65rem !important;
   font-weight: 900 !important;
-  color: var(--ink, #0c0c0b) !important;
+  color: #0f172a !important;
+  letter-spacing: -0.02em !important;
   margin: 0 !important;
 }
 
 .chk-close-btn {
-  background: rgba(0, 0, 0, 0.05) !important;
-  border: none !important;
-  width: 36px !important;
-  height: 36px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  width: 38px !important;
+  height: 38px !important;
   border-radius: 50% !important;
   display: grid !important;
   place-items: center !important;
-  font-size: 1.1rem !important;
-  color: var(--ink, #0c0c0b) !important;
+  font-size: 1rem !important;
+  color: #475569 !important;
   cursor: pointer !important;
-  transition: all 0.18s ease !important;
+  transition: all 0.2s ease !important;
 }
 
 .chk-close-btn:hover {
-  background: var(--deep-green, #0d5a3a) !important;
+  background: #0d5a3a !important;
   color: #ffffff !important;
+  border-color: #0d5a3a !important;
+  transform: rotate(90deg) !important;
 }
 
 /* 4. Stepper Bar */
@@ -8403,9 +8412,9 @@ html, body {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  background: #f9f8f3 !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-  padding: 10px 28px !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 12px 28px !important;
   gap: 12px !important;
 }
 
@@ -8413,28 +8422,30 @@ html, body {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  padding: 8px 16px !important;
-  border-radius: 999px !important;
-  color: var(--muted, #7a7a6f) !important;
-  font-family: "DM Sans", sans-serif !important;
-  font-size: 0.82rem !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 8px 18px !important;
+  border-radius: 12px !important;
+  color: #64748b !important;
+  font-family: var(--font-sans, system-ui, sans-serif) !important;
+  font-size: 0.83rem !important;
   font-weight: 700 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
 }
 
 .chk-step-tab.active {
-  background: var(--deep-green, #0d5a3a) !important;
+  background: #0d5a3a !important;
   color: #ffffff !important;
   font-weight: 800 !important;
+  border-color: #0d5a3a !important;
   box-shadow: 0 4px 14px rgba(13, 90, 58, 0.25) !important;
 }
 
 .chk-step-tab.completed {
-  background: rgba(13, 90, 58, 0.1) !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  background: #f0fdf4 !important;
+  border-color: rgba(13, 90, 58, 0.2) !important;
+  color: #0d5a3a !important;
   font-weight: 800 !important;
 }
 
@@ -8442,8 +8453,8 @@ html, body {
   width: 22px !important;
   height: 22px !important;
   border-radius: 50% !important;
-  background: rgba(0, 0, 0, 0.08) !important;
-  color: inherit !important;
+  background: #cbd5e1 !important;
+  color: #0f172a !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -8452,14 +8463,14 @@ html, body {
 }
 
 .chk-step-tab.active .step-number {
-  background: var(--yellow, #f5c842) !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  background: #34d399 !important;
+  color: #064e3b !important;
 }
 
 .step-line-divider {
   flex: 1 !important;
   height: 2px !important;
-  background: rgba(0, 0, 0, 0.08) !important;
+  background: #e2e8f0 !important;
 }
 
 /* 5. Main Body Grid */
@@ -8472,8 +8483,8 @@ html, body {
 
 /* Left Column: Summary */
 .chk-summary-col {
-  background: #fbfaf5 !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
   padding: 24px 28px !important;
 }
 
@@ -8489,12 +8500,12 @@ html, body {
   justify-content: space-between !important;
   width: 100% !important;
   background: #ffffff !important;
-  border: 1.5px solid rgba(13, 90, 58, 0.12) !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 16px !important;
   padding: 14px 18px !important;
   cursor: pointer !important;
-  color: var(--ink, #0c0c0b) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
 .toggle-left {
@@ -8511,7 +8522,7 @@ html, body {
 .toggle-price {
   display: block !important;
   font-size: 0.85rem !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #0d5a3a !important;
   font-weight: 800 !important;
 }
 
@@ -8534,15 +8545,16 @@ html, body {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  padding: 8px 10px !important;
+  padding: 10px 12px !important;
   background: #ffffff !important;
   border-radius: 14px !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #f1f5f9 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
 }
 
 .chk-item-thumb {
-  width: 44px !important;
-  height: 44px !important;
+  width: 46px !important;
+  height: 46px !important;
   border-radius: 10px !important;
   object-fit: cover !important;
 }
@@ -8554,20 +8566,20 @@ html, body {
 }
 
 .chk-item-title {
-  font-size: 0.84rem !important;
+  font-size: 0.86rem !important;
   font-weight: 800 !important;
-  color: var(--ink, #0c0c0b) !important;
+  color: #0f172a !important;
 }
 
 .chk-item-qty {
-  font-size: 0.74rem !important;
-  color: var(--muted, #7a7a6f) !important;
+  font-size: 0.76rem !important;
+  color: #64748b !important;
 }
 
 .chk-item-subtotal {
-  font-size: 0.88rem !important;
-  font-weight: 800 !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+  color: #0d5a3a !important;
 }
 
 /* Coupon Box */
@@ -8575,7 +8587,7 @@ html, body {
   background: #ffffff !important;
   border-radius: 16px !important;
   padding: 14px !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 .coupon-input-row {
@@ -8586,36 +8598,42 @@ html, body {
 .coupon-input {
   flex: 1 !important;
   padding: 10px 14px !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+  border: 1.5px solid #cbd5e1 !important;
   border-radius: 12px !important;
   font-size: 0.82rem !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   outline: none !important;
+  transition: border-color 0.2s ease !important;
 }
 
 .coupon-input:focus {
-  border-color: var(--deep-green, #0d5a3a) !important;
+  border-color: #0d5a3a !important;
 }
 
 .coupon-apply-btn {
-  background: var(--deep-green, #0d5a3a) !important;
+  background: #0d5a3a !important;
   color: #ffffff !important;
   border: none !important;
-  padding: 0 16px !important;
+  padding: 0 18px !important;
   border-radius: 12px !important;
   font-size: 0.78rem !important;
   font-weight: 800 !important;
-  letter-spacing: 0.1em !important;
+  letter-spacing: 0.08em !important;
   cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.coupon-apply-btn:hover {
+  background: #166534 !important;
 }
 
 .applied-coupon-pill {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  background: rgba(13, 90, 58, 0.08) !important;
-  border: 1px solid rgba(13, 90, 58, 0.2) !important;
+  background: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
   border-radius: 12px !important;
   padding: 10px 14px !important;
 }
@@ -8623,27 +8641,27 @@ html, body {
 .applied-code {
   font-size: 0.78rem !important;
   font-weight: 800 !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #064e3b !important;
   display: block !important;
 }
 
 .applied-savings {
   margin: 2px 0 0 0 !important;
   font-size: 0.72rem !important;
-  color: var(--muted) !important;
+  color: #166534 !important;
 }
 
 .coupon-remove-btn {
   background: transparent !important;
   border: none !important;
-  color: #dc3232 !important;
+  color: #ef4444 !important;
   font-size: 0.72rem !important;
   font-weight: 800 !important;
   cursor: pointer !important;
 }
 
 .coupon-err-msg {
-  color: #dc3232 !important;
+  color: #ef4444 !important;
   font-size: 0.75rem !important;
   margin: 8px 0 0 0 !important;
 }
@@ -8653,7 +8671,7 @@ html, body {
   background: #ffffff !important;
   border-radius: 16px !important;
   padding: 16px !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #e2e8f0 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important;
@@ -8663,32 +8681,32 @@ html, body {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  font-size: 0.82rem !important;
-  color: var(--muted, #7a7a6f) !important;
+  font-size: 0.84rem !important;
+  color: #64748b !important;
 }
 
 .bill-row.discount {
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #16a34a !important;
   font-weight: 800 !important;
 }
 
 .free-badge {
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #16a34a !important;
   font-weight: 900 !important;
 }
 
 .bill-row.total {
-  border-top: 1px dashed rgba(0, 0, 0, 0.12) !important;
-  padding-top: 10px !important;
+  border-top: 1px dashed #e2e8f0 !important;
+  padding-top: 12px !important;
   margin-top: 4px !important;
-  font-size: 1.05rem !important;
-  color: var(--ink, #0c0c0b) !important;
+  font-size: 1rem !important;
+  color: #0f172a !important;
   font-weight: 800 !important;
 }
 
 .bill-row.total strong {
-  font-size: 1.35rem !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  font-size: 1.4rem !important;
+  color: #0d5a3a !important;
   font-weight: 900 !important;
 }
 
@@ -8707,16 +8725,18 @@ html, body {
 }
 
 .step-intro h3 {
-  font-family: "Playfair Display", serif !important;
-  font-size: 1.35rem !important;
-  font-weight: 800 !important;
-  color: var(--ink, #0c0c0b) !important;
+  font-family: var(--font-sans, "Inter", "Plus Jakarta Sans", system-ui, sans-serif) !important;
+  font-size: 1.3rem !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.01em !important;
   margin: 4px 0 2px 0 !important;
+  text-transform: uppercase !important;
 }
 
 .step-intro p {
-  font-size: 0.82rem !important;
-  color: var(--muted, #7a7a6f) !important;
+  font-size: 0.83rem !important;
+  color: #64748b !important;
   margin: 0 !important;
 }
 
@@ -8724,24 +8744,25 @@ html, body {
   font-size: 0.65rem !important;
   font-weight: 900 !important;
   letter-spacing: 0.18em !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #0d5a3a !important;
 }
 
 .auth-prompt-banner {
-  background: #f7f6f0 !important;
-  border: 1px solid rgba(13, 90, 58, 0.12) !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 12px !important;
   padding: 10px 14px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   font-size: 0.8rem !important;
+  color: #475569 !important;
 }
 
 .auth-btn-link {
   background: transparent !important;
   border: none !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #0d5a3a !important;
   font-weight: 800 !important;
   cursor: pointer !important;
 }
@@ -8754,9 +8775,9 @@ html, body {
 }
 
 .chk-field-group label {
-  font-size: 0.76rem !important;
+  font-size: 0.74rem !important;
   font-weight: 800 !important;
-  color: var(--ink, #0c0c0b) !important;
+  color: #334155 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
 }
@@ -8778,12 +8799,12 @@ html, body {
 .input-wrap textarea {
   width: 100% !important;
   padding: 12px 14px 12px 42px !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+  border: 1.5px solid #cbd5e1 !important;
   border-radius: 14px !important;
   background: #ffffff !important;
-  color: var(--ink, #0c0c0b) !important;
-  font-family: "DM Sans", sans-serif !important;
-  font-size: 0.88rem !important;
+  color: #0f172a !important;
+  font-family: var(--font-sans, system-ui, sans-serif) !important;
+  font-size: 0.9rem !important;
   font-weight: 600 !important;
   outline: none !important;
   transition: all 0.18s ease !important;
@@ -8795,8 +8816,8 @@ html, body {
 
 .input-wrap input:focus,
 .input-wrap textarea:focus {
-  border-color: var(--deep-green, #0d5a3a) !important;
-  box-shadow: 0 0 0 3px rgba(13, 90, 58, 0.12) !important;
+  border-color: #0d5a3a !important;
+  box-shadow: 0 0 0 3.5px rgba(13, 90, 58, 0.15) !important;
 }
 
 /* Patna Chips */
@@ -8810,7 +8831,7 @@ html, body {
   font-size: 0.66rem !important;
   font-weight: 800 !important;
   letter-spacing: 0.12em !important;
-  color: var(--muted, #7a7a6f) !important;
+  color: #64748b !important;
 }
 
 .chips-row {
@@ -8820,87 +8841,38 @@ html, body {
 }
 
 .patna-chip {
-  background: #f4f2e6 !important;
-  border: 1px solid rgba(13, 90, 58, 0.15) !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 999px !important;
-  padding: 5px 12px !important;
-  font-size: 0.74rem !important;
+  padding: 6px 14px !important;
+  font-size: 0.76rem !important;
   font-weight: 700 !important;
-  color: var(--deep-green, #0d5a3a) !important;
+  color: #334155 !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.18s ease !important;
 }
 
 .patna-chip:hover,
 .patna-chip:active {
-  background: var(--deep-green, #0d5a3a) !important;
+  background: #0d5a3a !important;
   color: #ffffff !important;
-}
-
-/* Payment Method Cards */
-.payment-options-grid {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-}
-
-.payment-card {
-  display: flex !important;
-  align-items: center !important;
-  gap: 14px !important;
-  padding: 14px 16px !important;
-  background: #ffffff !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.1) !important;
-  border-radius: 16px !important;
-  cursor: pointer !important;
-  text-align: left !important;
-  transition: all 0.2s ease !important;
-}
-
-.payment-card.selected {
-  border-color: var(--deep-green, #0d5a3a) !important;
-  background: rgba(13, 90, 58, 0.04) !important;
-  box-shadow: 0 4px 16px rgba(13, 90, 58, 0.12) !important;
-}
-
-.pm-icon {
-  font-size: 1.6rem !important;
-}
-
-.pm-info strong {
-  display: block !important;
-  font-size: 0.88rem !important;
-  color: var(--ink, #0c0c0b) !important;
-}
-
-.pm-info span {
-  font-size: 0.74rem !important;
-  color: var(--muted, #7a7a6f) !important;
-}
-
-.cod-info-box {
-  background: rgba(13, 90, 58, 0.06) !important;
-  border: 1px solid rgba(13, 90, 58, 0.18) !important;
-  border-radius: 14px !important;
-  padding: 12px 14px !important;
-  font-size: 0.8rem !important;
-  color: var(--ink, #0c0c0b) !important;
+  border-color: #0d5a3a !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Submit Action Button */
 .chk-action-btn {
-  width: 100 !important;
   width: 100% !important;
-  padding: 15px 24px !important;
-  border-radius: 999px !important;
-  background: var(--deep-green, #0d5a3a) !important;
+  padding: 16px 24px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #0d5a3a 0%, #166534 100%) !important;
   color: #ffffff !important;
-  font-weight: 900 !important;
-  font-size: 0.88rem !important;
-  letter-spacing: 0.12em !important;
   border: none !important;
+  font-weight: 900 !important;
+  font-size: 0.95rem !important;
+  letter-spacing: 0.08em !important;
   cursor: pointer !important;
-  box-shadow: 0 10px 30px rgba(13, 90, 58, 0.3) !important;
+  box-shadow: 0 8px 20px rgba(13, 90, 58, 0.28) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -8911,7 +8883,7 @@ html, body {
 
 .chk-action-btn:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 14px 36px rgba(13, 90, 58, 0.4) !important;
+  box-shadow: 0 12px 28px rgba(13, 90, 58, 0.38) !important;
 }
 
 .chk-action-btn.whatsapp-submit {
@@ -10004,6 +9976,418 @@ html, body {
     font-size: 0.86rem;
     padding: 0 4px;
   }
+}
+
+/* ==========================================================================
+   ULTRA-MODERN CART DRAWER V2 & CHECKOUT OVERHAUL
+   ========================================================================== */
+
+/* 1. Cart Backdrop & Drawer Surface */
+.cart-backdrop-v2 {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: rgba(8, 20, 15, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.cart-backdrop-v2.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cart-drawer-v2 {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  width: min(440px, 92vw);
+  background: #ffffff;
+  box-shadow: -10px 0 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.cart-drawer-v2.open {
+  transform: translateX(0);
+}
+
+/* Header */
+.cd-header {
+  padding: 20px 24px 16px 24px;
+  background: #0d5a3a;
+  color: #ffffff;
+  position: relative;
+}
+.cd-header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.cd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a7f3d0;
+  margin-bottom: 6px;
+}
+.cd-badge-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+.cd-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin: 0;
+  line-height: 1.2;
+}
+.cd-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.cd-close-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: rotate(90deg);
+}
+
+/* Progress bar */
+.cd-progress-card {
+  margin-top: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+.cd-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  margin-bottom: 6px;
+  color: #ecfdf5;
+}
+.cd-progress-pct {
+  font-weight: 800;
+  color: #a7f3d0;
+}
+.cd-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.cd-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #f59e0b);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* Body & Items */
+.cd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.cd-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.cd-empty-emoji {
+  font-size: 3.5rem;
+  display: inline-block;
+  animation: floatBounce 3s infinite ease-in-out;
+}
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.cd-empty-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 12px 0 6px 0;
+}
+.cd-empty-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+.cd-empty-btn {
+  background: #0d5a3a;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cd-empty-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(13, 90, 58, 0.3);
+}
+
+.cd-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cd-item-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cd-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.cd-item-thumb-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+.cd-item-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cd-item-details {
+  flex: 1;
+  min-width: 0;
+}
+.cd-item-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-item-price {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.cd-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.cd-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 2px;
+}
+.cd-step-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: #ffffff;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #0f172a;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: background 0.15s ease;
+}
+.cd-step-btn:hover {
+  background: #e2e8f0;
+}
+.cd-step-qty {
+  padding: 0 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.cd-remove-btn {
+  background: none;
+  border: none;
+  font-size: 0.72rem;
+  color: #ef4444;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+.cd-remove-btn:hover {
+  opacity: 1;
+}
+.cd-item-subtotal {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0d5a3a;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.cd-footer {
+  padding: 16px 20px 24px 20px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.05);
+}
+.cd-bill-summary {
+  margin-bottom: 14px;
+}
+.cd-bill-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #334155;
+  margin-bottom: 4px;
+}
+.cd-bill-row.small {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+.cd-checkout-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #0d5a3a 0%, #166534 100%);
+  color: #ffffff;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 20px rgba(13, 90, 58, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cd-checkout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(13, 90, 58, 0.4);
+}
+.cd-btn-price {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+/* 2. Payment Method Selector Cards V2 */
+.chk-pm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.chk-pm-card {
+  position: relative;
+  border: 2px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+.chk-pm-card:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.chk-pm-card.active {
+  border-color: #0d5a3a;
+  background: #f0fdf4;
+  box-shadow: 0 4px 14px rgba(13, 90, 58, 0.12);
+}
+.chk-pm-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.chk-pm-card.active .chk-pm-radio {
+  border-color: #0d5a3a;
+}
+.chk-pm-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+}
+.chk-pm-card.active .chk-pm-dot {
+  background: #0d5a3a;
+}
+.chk-pm-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.chk-pm-meta strong {
+  display: block;
+  font-size: 0.86rem;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+.chk-pm-meta span {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.3;
+  display: block;
+}
+.chk-pm-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
 }
 
 

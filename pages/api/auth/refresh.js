@@ -7,8 +7,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const cookies = cookie.parse(req.headers.cookie || '')
-    const refreshToken = cookies.refreshToken
+    const parseFn = cookie.parseCookie || cookie.parse || cookie.default?.parseCookie || cookie.default?.parse
+    const parsedCookies = parseFn ? parseFn(req.headers.cookie || '') : {}
+    const cookies = req.cookies && Object.keys(req.cookies).length > 0 ? req.cookies : parsedCookies
+    const refreshToken = cookies?.refreshToken
 
     if (!refreshToken) {
       return res.status(401).json({ error: 'No refresh token provided' })

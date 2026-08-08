@@ -11,109 +11,148 @@ export default function CartDrawer({
   removeFromCart,
   onProceedToCheckout
 }) {
+  const totalItemCount = cartItems.reduce((sum, item) => sum + (item.qty || 0), 0)
+  const freeDeliveryThreshold = 499
+  const amountToFreeDelivery = Math.max(0, freeDeliveryThreshold - cartTotal)
+  const progressPercent = Math.min(100, Math.round((cartTotal / freeDeliveryThreshold) * 100))
+
   return (
     <>
       <aside
-        className={`cart-drawer ${isOpen ? 'open' : ''}`}
+        className={`cart-drawer-v2 ${isOpen ? 'open' : ''}`}
         aria-label="Shopping cart"
         aria-hidden={isOpen ? 'false' : 'true'}
       >
-        <div className="cart-hd">
-          <div className="cart-hd-left">
-            <span className="cart-hd-eyebrow">YOUR CART</span>
-            <h2 className="cart-hd-title">Fresh from<br />the Pot 🍲</h2>
-          </div>
-          <button type="button" className="cart-x" aria-label="Close cart" onClick={onClose}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M1 1l16 16M17 1L1 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="cart-body">
-          <AnnouncementBanner placement="cart" />
-          {cartItems.length === 0 ? (
-            <div className="cart-empty-state">
-              <div className="cart-empty-icon">🫙</div>
-              <p className="cart-empty-title">Nothing here yet</p>
-              <p className="cart-empty-sub">Add a dish to get the feast going.</p>
+        {/* Top Header */}
+        <div className="cd-header">
+          <div className="cd-header-content">
+            <div className="cd-title-wrap">
+              <span className="cd-badge">
+                <span className="cd-badge-pulse" />
+                YOUR SELECTION ({totalItemCount})
+              </span>
+              <h2 className="cd-title">Your Food Basket 🍲</h2>
             </div>
-          ) : (
-            cartItems.map((item) => (
-              <div className="citem" key={item.title}>
-                <div className="citem-img-wrap">
-                  <img src={item.image} alt={item.title} className="citem-img" />
-                </div>
-                <div className="citem-info">
-                  <p className="citem-name">{item.title}</p>
-                  <p className="citem-unit">₹{(item.price || 0).toFixed(0)} each</p>
-                  <div className="citem-stepper">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      onClick={() => updateCartQty(item.title, -1)}
-                      aria-label={`Decrease ${item.title}`}
-                    >
-                      <svg width="10" height="2" viewBox="0 0 10 2">
-                        <rect width="10" height="2" rx="1" fill="currentColor" />
-                      </svg>
-                    </button>
-                    <span className="stepper-qty">{item.qty}</span>
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      onClick={() => updateCartQty(item.title, 1)}
-                      aria-label={`Increase ${item.title}`}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10">
-                        <rect x="4" width="2" height="10" rx="1" fill="currentColor" />
-                        <rect y="4" width="10" height="2" rx="1" fill="currentColor" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div className="citem-right">
-                  <p className="citem-subtotal">₹{((item.price || 0) * item.qty).toFixed(0)}</p>
-                  <button
-                    type="button"
-                    className="citem-remove"
-                    onClick={() => removeFromCart(item.title)}
-                    aria-label={`Remove ${item.title}`}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12">
-                      <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
+            <button type="button" className="cd-close-btn" aria-label="Close cart" onClick={onClose}>
+              ✕
+            </button>
+          </div>
+
+          {/* Free Delivery Target Progress Bar */}
+          {cartItems.length > 0 && (
+            <div className="cd-progress-card">
+              <div className="cd-progress-info">
+                {amountToFreeDelivery > 0 ? (
+                  <span>Add <strong>₹{amountToFreeDelivery}</strong> more for <strong>FREE Delivery 🎉</strong></span>
+                ) : (
+                  <span className="cd-free-unlocked">🎉 Congratulations! You unlocked <strong>FREE Delivery!</strong></span>
+                )}
+                <span className="cd-progress-pct">{progressPercent}%</span>
               </div>
-            ))
+              <div className="cd-progress-track">
+                <div className="cd-progress-fill" style={{ width: `${progressPercent}%` }} />
+              </div>
+            </div>
           )}
         </div>
 
-        <div className="cart-foot">
-          <div className="cart-foot-row">
-            <span>Subtotal</span>
-            <strong>₹{cartTotal.toFixed(0)}</strong>
-          </div>
-          <p className="cart-foot-note">Delivery fee calculated at checkout</p>
-          <button
-            type="button"
-            className="cart-cta"
-            onClick={onProceedToCheckout}
-            disabled={cartItems.length === 0}
-          >
-            <span>Proceed to Checkout</span>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+        {/* Scrollable Body */}
+        <div className="cd-body">
+          <AnnouncementBanner placement="cart" />
+
+          {cartItems.length === 0 ? (
+            <div className="cd-empty-state">
+              <div className="cd-empty-illustration">
+                <span className="cd-empty-emoji">🍛</span>
+              </div>
+              <h3 className="cd-empty-title">Your basket is empty</h3>
+              <p className="cd-empty-sub">Explore our authentic Dum Biriyani & starters to start your feast.</p>
+              <button type="button" onClick={onClose} className="cd-empty-btn">
+                Browse Menu →
+              </button>
+            </div>
+          ) : (
+            <div className="cd-items-list">
+              {cartItems.map((item) => (
+                <div className="cd-item-card" key={item.title}>
+                  <div className="cd-item-thumb-wrap">
+                    <img src={item.image} alt={item.title} className="cd-item-thumb" />
+                  </div>
+                  <div className="cd-item-details">
+                    <h4 className="cd-item-name">{item.title}</h4>
+                    <span className="cd-item-price">₹{(item.price || 0).toFixed(0)}</span>
+
+                    <div className="cd-item-controls">
+                      <div className="cd-stepper">
+                        <button
+                          type="button"
+                          className="cd-step-btn"
+                          onClick={() => updateCartQty(item.title, -1)}
+                          aria-label={`Decrease ${item.title}`}
+                        >
+                          −
+                        </button>
+                        <span className="cd-step-qty">{item.qty}</span>
+                        <button
+                          type="button"
+                          className="cd-step-btn"
+                          onClick={() => updateCartQty(item.title, 1)}
+                          aria-label={`Increase ${item.title}`}
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="cd-remove-btn"
+                        onClick={() => removeFromCart(item.title)}
+                        aria-label={`Remove ${item.title}`}
+                      >
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="cd-item-subtotal">
+                    ₹{((item.price || 0) * item.qty).toFixed(0)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Sticky Footer */}
+        {cartItems.length > 0 && (
+          <div className="cd-footer">
+            <div className="cd-bill-summary">
+              <div className="cd-bill-row">
+                <span>Items Subtotal</span>
+                <strong>₹{cartTotal.toFixed(0)}</strong>
+              </div>
+              <div className="cd-bill-row small">
+                <span>Estimated Delivery</span>
+                <span>{amountToFreeDelivery === 0 ? <strong style={{ color: '#16a34a' }}>FREE</strong> : 'Calculated at checkout'}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="cd-checkout-btn"
+              onClick={onProceedToCheckout}
+              disabled={cartItems.length === 0}
+            >
+              <span>Proceed to Checkout</span>
+              <strong className="cd-btn-price">₹{cartTotal.toFixed(0)} →</strong>
+            </button>
+          </div>
+        )}
       </aside>
 
       {isOpen ? (
-        <button
-          type="button"
-          className="cart-backdrop"
+        <div
+          className={`cart-backdrop-v2 ${isOpen ? 'open' : ''}`}
           aria-label="Close cart overlay"
           onClick={onClose}
         />
