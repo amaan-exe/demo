@@ -41,103 +41,90 @@ export default async function handler(req, res) {
       })
     }
 
-    // --- Signature valid: Update order in Firestore & MongoDB ---
+    // --- Signature valid: Fast update order in Firestore & async MongoDB ---
     let firestoreUpdated = false
     if (orderId) {
-      // Firestore update with 1 retry
-      for (let attempt = 0; attempt < 2; attempt++) {
+      const orderRef = doc(db, 'orders', orderId)
+      const updatePayload = {
+        paymentStatus: 'paid',
+        orderStatus: 'confirmed',
+        customerMarkedPaid: true,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        razorpaySignature: razorpay_signature,
+        transactionReference: razorpay_payment_id,
+        paymentVerifiedBy: 'CLIENT_VERIFY',
+        paymentVerifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+
+      if (userId) updatePayload.userId = userId
+      if (userEmail) {
+        updatePayload.userEmail = userEmail
+        updatePayload.customerEmail = userEmail
+      }
+      if (customerName) updatePayload.customerName = customerName
+      if (customerPhone) updatePayload.customerPhone = customerPhone
+      if (deliveryAddress) updatePayload.deliveryAddress = deliveryAddress
+
+      // Fast Atomic Upsert to Firestore (~250ms)
+      try {
+        await setDoc(orderRef, updatePayload, { merge: true })
+        firestoreUpdated = true
+      } catch (fsErr) {
+        console.error('Firestore fast setDoc error in verify-payment:', fsErr)
+      }
+
+      // MongoDB Order & PaymentTransaction Sync in non-blocking background task
+      ;(async () => {
         try {
-          const orderRef = doc(db, 'orders', orderId)
-          const orderSnap = await getDoc(orderRef)
+          const { connectDb } = await import('../../../lib/db')
+          const Order = (await import('../../../models/Order')).default
+          const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
+          await connectDb()
 
-          if (orderSnap.exists()) {
-            const existingOrder = orderSnap.data()
-
-            const updatePayload = {
+          await Order.findOneAndUpdate(
+            { orderId },
+            {
               paymentStatus: 'paid',
               orderStatus: 'confirmed',
+              status: 'confirmed',
               customerMarkedPaid: true,
               razorpayPaymentId: razorpay_payment_id,
               razorpayOrderId: razorpay_order_id,
               razorpaySignature: razorpay_signature,
               transactionReference: razorpay_payment_id,
               paymentVerifiedBy: 'CLIENT_VERIFY',
-              paymentVerifiedAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
+              paymentVerifiedAt: new Date(),
+              updatedAt: new Date(),
             }
+          ).catch(() => {})
 
-            // Ensure userId and customer info are updated if they were missing or provided
-            if (userId && (!existingOrder.userId || existingOrder.userId === 'GUEST' || existingOrder.userId !== userId)) {
-              updatePayload.userId = userId
-            }
-            if (userEmail && (!existingOrder.userEmail || existingOrder.userEmail === 'guest@biriyanistation.in' || existingOrder.userEmail !== userEmail)) {
-              updatePayload.userEmail = userEmail
-              updatePayload.customerEmail = userEmail
-            }
-            if (customerName && !existingOrder.customerName) updatePayload.customerName = customerName
-            if (customerPhone && !existingOrder.customerPhone) updatePayload.customerPhone = customerPhone
-            if (deliveryAddress && !existingOrder.deliveryAddress) updatePayload.deliveryAddress = deliveryAddress
-
-            await updateDoc(orderRef, updatePayload)
-            firestoreUpdated = true
-            break // success, no need to retry
-          }
-        } catch (firestoreErr) {
-          console.error(`Firestore update error in verify-payment (attempt ${attempt + 1}):`, firestoreErr)
-          if (attempt === 0) {
-            await new Promise(r => setTimeout(r, 500)) // wait 500ms before retry
-          }
-        }
-      }
-
-      // MongoDB Order & PaymentTransaction Sync
-      try {
-        const { connectDb } = await import('../../../lib/db')
-        const Order = (await import('../../../models/Order')).default
-        const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
-        await connectDb()
-
-        await Order.findOneAndUpdate(
-          { orderId },
-          {
-            paymentStatus: 'paid',
-            orderStatus: 'confirmed',
-            status: 'confirmed',
-            customerMarkedPaid: true,
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_order_id,
-            razorpaySignature: razorpay_signature,
-            transactionReference: razorpay_payment_id,
-            paymentVerifiedBy: 'CLIENT_VERIFY',
-            paymentVerifiedAt: new Date(),
-            updatedAt: new Date(),
-          }
-        )
-
-        await PaymentTransaction.findOneAndUpdate(
-          { internalOrderId: orderId },
-          {
-            $set: {
-              paymentId: razorpay_payment_id,
-              razorpayOrderId: razorpay_order_id,
-              status: 'DONE',
-              razorpayStatus: 'captured',
-              capturedAt: new Date(),
-            },
-            $push: {
-              timeline: {
-                event: 'CLIENT_VERIFICATION_SUCCESS',
-                timestamp: new Date(),
-                notes: `Client payment response verified via HMAC-SHA256. Payment ID: ${razorpay_payment_id}`,
-                source: 'CLIENT_CHECKOUT'
+          await PaymentTransaction.findOneAndUpdate(
+            { internalOrderId: orderId },
+            {
+              $set: {
+                paymentId: razorpay_payment_id,
+                razorpayOrderId: razorpay_order_id,
+                status: 'DONE',
+                razorpayStatus: 'captured',
+                capturedAt: new Date(),
+              },
+              $push: {
+                timeline: {
+                  event: 'CLIENT_VERIFICATION_SUCCESS',
+                  timestamp: new Date(),
+                  notes: `Client payment response verified via HMAC-SHA256. Payment ID: ${razorpay_payment_id}`,
+                  source: 'CLIENT_CHECKOUT'
+                }
               }
-            }
-          },
-          { upsert: true, new: true }
-        )
-      } catch (mongoErr) {
-        console.warn('MongoDB sync error in verify-payment:', mongoErr.message)
-      }
+            },
+            { upsert: true, new: true }
+          ).catch(() => {})
+        } catch (mongoErr) {
+          console.warn('MongoDB bg sync error in verify-payment:', mongoErr.message)
+        }
+      })()
     }
 
     return res.status(200).json({
