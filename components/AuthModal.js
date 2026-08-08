@@ -10,6 +10,7 @@ export default function AuthModal() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [notice, setNotice] = useState('')
 
   if (!isAuthModalOpen) return null
 
@@ -29,8 +30,6 @@ export default function AuthModal() {
     }
     return err?.message?.replace(/Firebase:\s*/i, '').replace(/Error\s*\(/i, '').replace(/\)\.?/i, '').trim() || 'Authentication failed'
   }
-
-  const [notice, setNotice] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
