@@ -10,7 +10,7 @@ import StatusBadge from '../components/StatusBadge'
 import ToastNotification from '../components/ToastNotification'
 
 export default function MyOrdersPage() {
-  const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, accessToken } = useAuth()
+  const { user, isAdmin, openAuthModal, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [archivedOrders, setArchivedOrders] = useState([])
   const [loading, setLoading] = useState(true)

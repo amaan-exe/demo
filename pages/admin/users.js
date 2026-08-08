@@ -43,8 +43,6 @@ export default function AdminUsersDesk() {
     const r = (u.role || 'customer').toLowerCase()
     if (roleFilter !== 'all') {
       if (roleFilter === 'admin' && r !== 'admin') return false
-      if (roleFilter === 'staff' && r !== 'staff') return false
-      if (roleFilter === 'delivery' && r !== 'delivery') return false
       if (roleFilter === 'customer' && r !== 'customer') return false
       if (roleFilter === 'blocked' && !u.isBlocked) return false
     }
@@ -60,8 +58,6 @@ export default function AdminUsersDesk() {
   })
 
   const adminCount = usersList.filter(u => (u.role || '').toLowerCase() === 'admin').length
-  const staffCount = usersList.filter(u => (u.role || '').toLowerCase() === 'staff').length
-  const deliveryCount = usersList.filter(u => (u.role || '').toLowerCase() === 'delivery').length
   const customerCount = usersList.filter(u => !(u.role) || (u.role || '').toLowerCase() === 'customer').length
   const blockedCount = usersList.filter(u => u.isBlocked).length
 
@@ -119,22 +115,6 @@ export default function AdminUsersDesk() {
 
               <button
                 type="button"
-                className={`status-counter-btn ${roleFilter === 'staff' ? 'active' : ''}`}
-                onClick={() => setRoleFilter('staff')}
-              >
-                🍳 KITCHEN STAFF <span className="status-count-badge">{staffCount}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`status-counter-btn ${roleFilter === 'delivery' ? 'active' : ''}`}
-                onClick={() => setRoleFilter('delivery')}
-              >
-                🛵 DELIVERY PARTNERS <span className="status-count-badge">{deliveryCount}</span>
-              </button>
-
-              <button
-                type="button"
                 className={`status-counter-btn ${roleFilter === 'customer' ? 'active' : ''}`}
                 onClick={() => setRoleFilter('customer')}
               >
@@ -183,7 +163,7 @@ export default function AdminUsersDesk() {
                       </div>
 
                       <span className={`user-role-badge ${currentRole}`}>
-                        {currentRole === 'admin' ? '🛡️ Admin' : currentRole === 'staff' ? '🍳 Staff' : currentRole === 'delivery' ? '🛵 Delivery' : '👤 Customer'}
+                        {currentRole === 'admin' ? '🛡️ Admin' : '👤 Customer'}
                       </span>
                     </div>
 
@@ -192,7 +172,7 @@ export default function AdminUsersDesk() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--muted)' }}>Role:</span>
                         <select
-                          value={currentRole}
+                          value={currentRole === 'admin' ? 'admin' : 'customer'}
                           onChange={(e) => handleChangeUserRole(u, e.target.value)}
                           style={{
                             padding: '6px 10px',
@@ -206,8 +186,6 @@ export default function AdminUsersDesk() {
                           }}
                         >
                           <option value="customer">👤 Customer</option>
-                          <option value="staff">🍳 Staff (Kitchen)</option>
-                          <option value="delivery">🛵 Delivery Partner</option>
                           <option value="admin">🛡️ Admin</option>
                         </select>
                       </div>

@@ -6,7 +6,7 @@ import SiteNav from '../components/SiteNav'
 import MobileBottomBar from '../components/MobileBottomBar'
 
 export default function ProfilePage() {
-  const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, updateUserProfileData, logout, openAuthModal } = useAuth()
+  const { user, userProfile, isAdmin, updateUserProfileData, logout, openAuthModal } = useAuth()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')

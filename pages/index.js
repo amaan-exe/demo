@@ -19,7 +19,7 @@ const AnnouncementBanner = dynamic(() => import('../components/AnnouncementBanne
 
 export default function Home() {
   const router = useRouter()
-  const { user, userProfile, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, logout, accessToken } = useAuth()
+  const { user, userProfile, isAdmin, openAuthModal, logout, accessToken } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
