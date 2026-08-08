@@ -178,6 +178,39 @@ export default function Home() {
         const discountValue = orderData.coupon ? orderData.coupon.discount : 0
         const finalGrandTotal = Math.max(0, grandTotal - discountValue)
 
+        // Ensure Firestore document contains current userId and user details
+        try {
+          await updateDoc(doc(db, 'orders', orderId), {
+            userId: user.uid,
+            userEmail: user.email,
+            customerName: finalName,
+            customerEmail: user.email,
+            customerPhone: finalPhone,
+            deliveryAddress: finalAddress,
+            paymentStatus: 'paid',
+            orderStatus: 'confirmed',
+            customerMarkedPaid: true,
+            updatedAt: serverTimestamp()
+          }).catch(async () => {
+            await setDoc(doc(db, 'orders', orderId), {
+              userId: user.uid,
+              userEmail: user.email,
+              customerName: finalName,
+              customerEmail: user.email,
+              customerPhone: finalPhone,
+              deliveryAddress: finalAddress,
+              paymentStatus: 'paid',
+              orderStatus: 'confirmed',
+              customerMarkedPaid: true,
+              updatedAt: serverTimestamp()
+            }, { merge: true })
+          })
+        } catch (e) {
+          console.warn('Firestore order link warning:', e)
+        }
+
+        try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
+
         // MongoDB background sync
         const syncPayload = {
           orderId,

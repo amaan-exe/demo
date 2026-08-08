@@ -161,7 +161,7 @@ export default async function handler(req, res) {
           }
         )
 
-        // Update Firestore Order
+        // Update Firestore Order (with recovery fallback if doc does not exist)
         try {
           const orderRef = doc(db, 'orders', internalOrderId)
           const orderSnap = await getDoc(orderRef)
@@ -177,6 +177,25 @@ export default async function handler(req, res) {
               paymentVerifiedAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
             })
+          } else {
+            await setDoc(orderRef, {
+              orderId: internalOrderId,
+              customerName: payment.notes?.customerName || '',
+              customerPhone: payment.contact || payment.notes?.customerPhone || '',
+              customerEmail: payment.email || '',
+              grandTotal: amountInRupees,
+              paymentMethod: 'RAZORPAY',
+              paymentStatus: 'paid',
+              orderStatus: 'confirmed',
+              customerMarkedPaid: true,
+              razorpayPaymentId: razorpayPaymentId,
+              razorpayOrderId: razorpayOrderId,
+              transactionReference: razorpayPaymentId,
+              paymentVerifiedBy: 'RAZORPAY_WEBHOOK',
+              paymentVerifiedAt: serverTimestamp(),
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }, { merge: true })
           }
         } catch (fsErr) {
           console.warn('[Razorpay Webhook] Firestore sync warning:', fsErr.message)

@@ -2,8 +2,8 @@ import { useAuth } from '../context/AuthContext'
 import Link from 'next/link'
 import Head from 'next/head'
 
-export default function RouteGuard({ allowedRoles = [], children }) {
-  const { user, userRole, isAdmin, isStaff, isDelivery, loading, openAuthModal } = useAuth()
+export default function RouteGuard({ allowedRoles = ['admin'], children }) {
+  const { user, userRole, isAdmin, loading, openAuthModal } = useAuth()
 
   if (loading) {
     return (
@@ -18,15 +18,8 @@ export default function RouteGuard({ allowedRoles = [], children }) {
 
   // Check authorization
   let isAuthorized = false
-  if (user) {
-    if (isAdmin) {
-      isAuthorized = true
-    } else {
-      if (allowedRoles.includes('admin') && isAdmin) isAuthorized = true
-      if (allowedRoles.includes('staff') && isStaff) isAuthorized = true
-      if (allowedRoles.includes('delivery') && isDelivery) isAuthorized = true
-      if (allowedRoles.includes(userRole)) isAuthorized = true
-    }
+  if (user && (isAdmin || userRole === 'admin' || allowedRoles.includes(userRole))) {
+    isAuthorized = true
   }
 
   if (!isAuthorized) {

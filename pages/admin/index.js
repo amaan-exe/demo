@@ -45,19 +45,11 @@ export default function AdminDashboard() {
 
   const completedCount = allCombinedOrders.filter(o => (o.orderStatus || o.status || '').toLowerCase() === 'delivered').length
 
-  const grossRevenue = allCombinedOrders.filter(o => {
+  const totalRevenue = allCombinedOrders.filter(o => {
     const st = (o.orderStatus || o.status || '').toLowerCase()
     const paySt = (o.paymentStatus || '').toLowerCase()
-    return paySt === 'paid' || paySt === 'verified' || st === 'accepted' || st === 'confirmed' || st === 'delivered' || st === 'refunded'
+    return paySt === 'paid' || paySt === 'verified' || st === 'accepted' || st === 'confirmed' || st === 'delivered'
   }).reduce((sum, o) => sum + (o.grandTotal || o.amount || 0), 0)
-
-  const totalRefundAmount = allCombinedOrders.filter(o => {
-    const st = (o.orderStatus || o.status || '').toUpperCase()
-    const refSt = (o.refund?.status || '').toUpperCase()
-    return st === 'REFUNDED' || refSt === 'REFUNDED'
-  }).reduce((sum, o) => sum + (o.refund?.amount || o.grandTotal || 0), 0)
-
-  const netRevenue = grossRevenue - totalRefundAmount
 
   const totalOrderCount = allCombinedOrders.length
 
@@ -131,13 +123,10 @@ export default function AdminDashboard() {
 
             <div style={{ borderRadius: '12px', padding: '16px', background: 'var(--deep-green)', border: '1px solid var(--deep-green)', color: '#ffffff', boxShadow: '0 4px 14px rgba(13,90,58,0.2)' }}>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'rgba(255,255,255,0.8)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                💰 NET REVENUE
+                💰 TOTAL REVENUE
               </span>
               <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#ffffff', marginTop: '4px' }}>
-                ₹{netRevenue.toFixed(0)}
-              </div>
-              <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px' }}>
-                Gross ₹{grossRevenue.toFixed(0)} - Refund ₹{totalRefundAmount.toFixed(0)}
+                ₹{totalRevenue.toFixed(0)}
               </div>
             </div>
           </div>

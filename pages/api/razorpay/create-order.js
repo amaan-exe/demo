@@ -82,10 +82,11 @@ export default async function handler(req, res) {
       await setDoc(doc(db, 'orders', orderId), firestorePayload)
     }
 
-    // --- STEP 4: Record initial PENDING PaymentTransaction in MongoDB ---
+    // --- STEP 4: Record initial PENDING PaymentTransaction & Order in MongoDB ---
     try {
       const { connectDb } = await import('../../../lib/db')
       const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
+      const Order = (await import('../../../models/Order')).default
       await connectDb()
 
       await PaymentTransaction.findOneAndUpdate(
@@ -114,8 +115,43 @@ export default async function handler(req, res) {
         },
         { upsert: true, new: true }
       )
+
+      if (orderDetails) {
+        const discountValue = orderDetails.coupon ? orderDetails.coupon.discount : 0
+        await Order.findOneAndUpdate(
+          { orderId },
+          {
+            $set: {
+              orderId,
+              userId: orderDetails.userId || 'GUEST',
+              userEmail: orderDetails.userEmail || orderDetails.customerEmail || 'guest@biriyanistation.in',
+              customerEmail: orderDetails.userEmail || orderDetails.customerEmail || '',
+              userName: orderDetails.customerName || '',
+              customerName: orderDetails.customerName || '',
+              userPhone: orderDetails.customerPhone || '',
+              customerPhone: orderDetails.customerPhone || '',
+              deliveryAddress: orderDetails.deliveryAddress || '',
+              items: orderDetails.items || [],
+              subtotal: Number(orderDetails.subtotal) || 0,
+              deliveryCharge: Number(orderDetails.deliveryCharge) || 0,
+              tax: 0,
+              discount: discountValue,
+              appliedCoupon: orderDetails.coupon ? orderDetails.coupon.code : null,
+              grandTotal: Number(amount) || 0,
+              paymentMethod: 'RAZORPAY',
+              paymentStatus: 'awaiting_payment',
+              orderStatus: 'awaiting_payment',
+              status: 'awaiting_payment',
+              customerMarkedPaid: false,
+              razorpayOrderId: razorpayOrder.id,
+              updatedAt: new Date()
+            }
+          },
+          { upsert: true, new: true }
+        )
+      }
     } catch (ptErr) {
-      console.warn('PaymentTransaction init warning:', ptErr.message)
+      console.warn('PaymentTransaction/Order init warning:', ptErr.message)
     }
 
     return res.status(200).json({

@@ -3,13 +3,11 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAuth } from '../context/AuthContext'
-import { useOrdersContext } from '../context/OrdersContext'
 import AuthModal from './AuthModal'
 
 export default function AdminLayout({ children, activePage = 'dashboard', title = 'Admin Portal' }) {
   const router = useRouter()
   const { user, isAdmin, logout, openAuthModal } = useAuth()
-  const { pendingRefundCount = 0 } = useOrdersContext()
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -57,7 +55,6 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
     { key: 'orders', label: 'Live Orders', href: '/admin/orders', icon: '📦' },
     { key: 'payments', label: 'Razorpay Payments', href: '/admin/payments', icon: '💳' },
     { key: 'all-orders', label: 'All Orders', href: '/admin/all-orders', icon: '📋' },
-    { key: 'refunds', label: 'Refunds Desk', href: '/admin/refunds', icon: '💸' },
     { key: 'menu', label: 'Dish Menu', href: '/admin/menu', icon: '🍛' },
     { key: 'coupons', label: 'Coupons', href: '/admin/coupons', icon: '🎟️' },
     { key: 'users', label: 'Customers', href: '/admin/users', icon: '👤' },
@@ -143,20 +140,6 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
               >
                 <span className="link-icon">{item.icon}</span>
                 <span className="link-label">{item.label}</span>
-                {item.key === 'refunds' && pendingRefundCount > 0 && (
-                  <span style={{
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    fontSize: '0.72rem',
-                    fontWeight: 900,
-                    padding: '2px 7px',
-                    borderRadius: '999px',
-                    marginLeft: 'auto',
-                    boxShadow: '0 2px 6px rgba(220,38,38,0.4)'
-                  }}>
-                    {pendingRefundCount}
-                  </span>
-                )}
               </Link>
             ))}
           </nav>
@@ -197,9 +180,9 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
           <span className="adm-icon">📦</span>
           <span className="adm-label">Orders</span>
         </Link>
-        <Link href="/admin/refunds" className={`adm-tab ${activePage === 'refunds' ? 'active' : ''}`}>
-          <span className="adm-icon">💸</span>
-          <span className="adm-label">Refunds</span>
+        <Link href="/admin/payments" className={`adm-tab ${activePage === 'payments' ? 'active' : ''}`}>
+          <span className="adm-icon">💳</span>
+          <span className="adm-label">Payments</span>
         </Link>
         <Link href="/admin/menu" className={`adm-tab ${activePage === 'menu' ? 'active' : ''}`}>
           <span className="adm-icon">🍛</span>

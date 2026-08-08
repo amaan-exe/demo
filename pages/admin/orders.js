@@ -128,36 +128,23 @@ export default function AdminOrdersDesk() {
     const ordSt = (targetOrd?.orderStatus || targetOrd?.status || '').toLowerCase()
     const isPaid = paySt === 'paid' || paySt === 'verified' || ordSt === 'payment_verified' || ordSt === 'accepted' || ordSt === 'preparing'
 
-    if (newStatus === 'Cancelled' && isPaid) {
-      if (!confirm('Payment was already verified for this order. Cancelling will move it to the Refund Queue for customer refund. Proceed?')) return
+    if (newStatus === 'Cancelled') {
+      if (!confirm('Are you sure you want to cancel this order?')) return
 
       const cleanDocId = String(orderId).replace(/^#/, '').trim()
-      const grandTotal = targetOrd?.grandTotal || targetOrd?.amount || 0
-      const refundPayload = {
-        requested: true,
-        status: 'REFUND_PENDING',
-        requestedAt: new Date().toISOString(),
-        processingAt: null,
-        refundedAt: null,
-        refundedBy: null,
-        amount: grandTotal,
-        cancellationReason: 'Cancelled by Admin'
-      }
 
       try {
         const targetDoc = doc(db, 'orders', cleanDocId)
         await updateDoc(targetDoc, {
-          orderStatus: 'REFUND_PENDING',
-          status: 'REFUND_PENDING',
+          orderStatus: 'Cancelled',
+          status: 'Cancelled',
           updatedAt: serverTimestamp(),
-          refund: refundPayload
         }).catch(async () => {
           if (orderId !== cleanDocId) {
             await updateDoc(doc(db, 'orders', orderId), {
-              orderStatus: 'REFUND_PENDING',
-              status: 'REFUND_PENDING',
+              orderStatus: 'Cancelled',
+              status: 'Cancelled',
               updatedAt: serverTimestamp(),
-              refund: refundPayload
             }).catch(() => {})
           }
         })
@@ -171,10 +158,10 @@ export default function AdminOrdersDesk() {
           body: JSON.stringify({ orderId: cleanDocId, cancellationReason: 'Cancelled by Admin' })
         }).catch(() => {})
 
-        triggerFeedback('Order cancelled and submitted to Refund Queue.')
+        triggerFeedback('Order cancelled successfully.')
         return
       } catch (e) {
-        triggerFeedback('Error submitting refund: ' + e.message)
+        triggerFeedback('Error cancelling order: ' + e.message)
         return
       }
     }

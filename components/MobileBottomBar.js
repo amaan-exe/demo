@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
 
 export default function MobileBottomBar({ activeTab = 'home', cartCount = 0, onOpenCart }) {
-  const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal } = useAuth()
+  const { user, isAdmin, openAuthModal } = useAuth()
 
   return (
     <div className="mobile-bottom-bar">
@@ -34,18 +34,6 @@ export default function MobileBottomBar({ activeTab = 'home', cartCount = 0, onO
           <Link href="/admin" className={activeTab === 'admin' ? 'active' : ''} style={{ color: 'var(--deep-green)', fontWeight: 800 }}>
             <span className="tab-icon">🛡️</span>
             Admin
-          </Link>
-        )}
-        {user && isStaffOnly && (
-          <Link href="/kitchen" className={activeTab === 'kitchen' ? 'active' : ''} style={{ color: '#ea580c', fontWeight: 800 }}>
-            <span className="tab-icon">🍳</span>
-            Kitchen
-          </Link>
-        )}
-        {user && isDeliveryOnly && (
-          <Link href="/delivery" className={activeTab === 'delivery' ? 'active' : ''} style={{ color: '#0284c7', fontWeight: 800 }}>
-            <span className="tab-icon">🛵</span>
-            Delivery
           </Link>
         )}
         {user ? (

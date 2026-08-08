@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, userId, userEmail, customerName, customerPhone, deliveryAddress } = req.body
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
@@ -50,21 +50,32 @@ export default async function handler(req, res) {
         if (orderSnap.exists()) {
           const existingOrder = orderSnap.data()
 
-          // Idempotent: only update if not already paid
-          if (existingOrder.paymentStatus !== 'paid') {
-            await updateDoc(orderRef, {
-              paymentStatus: 'paid',
-              orderStatus: 'confirmed',
-              customerMarkedPaid: true,
-              razorpayPaymentId: razorpay_payment_id,
-              razorpayOrderId: razorpay_order_id,
-              razorpaySignature: razorpay_signature,
-              transactionReference: razorpay_payment_id,
-              paymentVerifiedBy: 'CLIENT_VERIFY',
-              paymentVerifiedAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            })
+          const updatePayload = {
+            paymentStatus: 'paid',
+            orderStatus: 'confirmed',
+            customerMarkedPaid: true,
+            razorpayPaymentId: razorpay_payment_id,
+            razorpayOrderId: razorpay_order_id,
+            razorpaySignature: razorpay_signature,
+            transactionReference: razorpay_payment_id,
+            paymentVerifiedBy: 'CLIENT_VERIFY',
+            paymentVerifiedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
           }
+
+          // Ensure userId and customer info are updated if they were missing or provided
+          if (userId && (!existingOrder.userId || existingOrder.userId !== userId)) {
+            updatePayload.userId = userId
+          }
+          if (userEmail && (!existingOrder.userEmail || existingOrder.userEmail !== userEmail)) {
+            updatePayload.userEmail = userEmail
+            updatePayload.customerEmail = userEmail
+          }
+          if (customerName && !existingOrder.customerName) updatePayload.customerName = customerName
+          if (customerPhone && !existingOrder.customerPhone) updatePayload.customerPhone = customerPhone
+          if (deliveryAddress && !existingOrder.deliveryAddress) updatePayload.deliveryAddress = deliveryAddress
+
+          await updateDoc(orderRef, updatePayload)
         }
       } catch (firestoreErr) {
         console.error('Firestore update error in verify-payment:', firestoreErr)

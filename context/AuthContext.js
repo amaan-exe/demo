@@ -98,16 +98,23 @@ export function AuthProvider({ children }) {
             photoURL: profileData.photoURL,
             role: profileData.role
           })
+
+          // Close auth modal and ensure backend JWT/cookie session is established
+          closeAuthModal()
+          syncWithBackend(fbUser)
         } catch (err) {
           console.warn('Firestore user sync notice:', err.message)
           const isAdminEmail = ADMIN_EMAILS.includes(fbUser.email?.toLowerCase())
-          setUser({
+          const fallbackUser = {
             uid: fbUser.uid,
             email: fbUser.email,
-            displayName: fbUser.displayName || fbUser.email?.split('@')[0],
+            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Foodie User',
             photoURL: fbUser.photoURL || '',
             role: isAdminEmail ? 'admin' : 'customer'
-          })
+          }
+          setUser(fallbackUser)
+          closeAuthModal()
+          syncWithBackend(fbUser)
         }
       } else {
         setUser(null)
@@ -137,13 +144,16 @@ export function AuthProvider({ children }) {
 
   // Sync token & user with backend API after Firebase login
   const syncWithBackend = async (firebaseUser) => {
+    if (!firebaseUser || !firebaseUser.uid) return
+
     // 1. Immediately set user state and close modal for instant UI response
-    setUser({
+    setUser(prev => ({
       uid: firebaseUser.uid,
       email: firebaseUser.email,
       displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Foodie User',
       photoURL: firebaseUser.photoURL || '',
-    })
+      role: prev?.role || 'customer'
+    }))
     closeAuthModal()
 
     // 2. Sync JWT & HttpOnly cookie with server in background
@@ -170,18 +180,10 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // 1. Google Sign-In with automatic Mobile Redirect support
+  // 1. Universal Google Sign-In supporting both Mobile and Desktop
   const loginWithGoogle = async () => {
-    const isMobile = typeof window !== 'undefined' && (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-      (window.innerWidth <= 768)
-    )
-
-    if (isMobile) {
-      return signInWithRedirect(auth, googleProvider)
-    }
-
     try {
+      // Primary: Attempt Popup-based OAuth (works seamlessly on Desktop & modern Mobile Chrome/Safari)
       const result = await signInWithPopup(auth, googleProvider)
       if (result?.user) {
         setUser({
@@ -197,10 +199,14 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.warn('Google Sign-In Popup Warning:', error)
       const code = error?.code || error?.message || ''
-      if (code.includes('popup-closed-by-user') || code.includes('user-cancelled')) {
+      if (code.includes('popup-closed-by-user') || code.includes('user-cancelled') || code.includes('cancelled-popup-request')) {
         return null
       }
-      return signInWithRedirect(auth, googleProvider)
+      // Fallback to redirect if popups are explicitly blocked by browser environment
+      if (code.includes('popup-blocked')) {
+        return signInWithRedirect(auth, googleProvider)
+      }
+      throw error
     }
   }
 
@@ -260,10 +266,6 @@ export function AuthProvider({ children }) {
   const currentEmail = (user?.email || userProfile?.email || '').toLowerCase().trim()
   const userRole = (userProfile?.role || user?.role || 'customer').toLowerCase()
   const isAdmin = Boolean(user && currentEmail && (userRole === 'admin' || ADMIN_EMAILS.includes(currentEmail)))
-  const isStaff = Boolean(user && (isAdmin || userRole === 'staff'))
-  const isDelivery = Boolean(user && (isAdmin || userRole === 'delivery'))
-  const isStaffOnly = Boolean(user && !isAdmin && userRole === 'staff')
-  const isDeliveryOnly = Boolean(user && !isAdmin && userRole === 'delivery')
 
   return (
     <AuthContext.Provider
@@ -272,10 +274,6 @@ export function AuthProvider({ children }) {
         userProfile,
         userRole: isAdmin ? 'admin' : userRole,
         isAdmin,
-        isStaff,
-        isDelivery,
-        isStaffOnly,
-        isDeliveryOnly,
         accessToken,
         loading,
         isAuthModalOpen,

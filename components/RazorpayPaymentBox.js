@@ -63,6 +63,22 @@ export default function RazorpayPaymentBox({
 
       const { order_id, key_id, amount, currency, orderId: internalOrderId } = data
 
+      // Save pending checkout metadata to sessionStorage for reload recovery
+      try {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('pending_razorpay_checkout', JSON.stringify({
+            internalOrderId,
+            razorpayOrderId: order_id,
+            amount: numericTotal,
+            userId: orderDetails?.userId || null,
+            userEmail: orderDetails?.userEmail || null,
+            customerName: customerName || orderDetails?.customerName || '',
+            customerPhone: customerPhone || orderDetails?.customerPhone || '',
+            createdAt: Date.now()
+          }))
+        }
+      } catch (e) {}
+
       // 3. Open Razorpay Checkout Modal
       const options = {
         key: key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -84,6 +100,11 @@ export default function RazorpayPaymentBox({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 orderId: internalOrderId,
+                userId: orderDetails?.userId || null,
+                userEmail: orderDetails?.userEmail || null,
+                customerName: customerName || orderDetails?.customerName || '',
+                customerPhone: customerPhone || orderDetails?.customerPhone || '',
+                deliveryAddress: orderDetails?.deliveryAddress || ''
               })
             })
 
@@ -92,6 +113,7 @@ export default function RazorpayPaymentBox({
             try { verifyData = JSON.parse(verifyText) } catch (e) { verifyData = { error: `Verification error (Status ${verifyRes.status})` } }
 
             if (verifyRes.ok && verifyData.success) {
+              try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
               if (typeof onPaymentSuccess === 'function') {
                 onPaymentSuccess({
                   razorpay_payment_id: response.razorpay_payment_id,

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
 
 export default function SiteNav({ activePage = 'home' }) {
-  const { user, isAdmin, isStaffOnly, isDeliveryOnly, openAuthModal, logout } = useAuth()
+  const { user, isAdmin, openAuthModal, logout } = useAuth()
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -36,16 +36,6 @@ export default function SiteNav({ activePage = 'home' }) {
         {user && isAdmin && (
           <Link href="/admin" className="admin-header-pill" style={pillStyle('var(--deep-green)', 'var(--yellow)', 'rgba(245,200,66,0.4)')}>
             🛡️ ADMIN
-          </Link>
-        )}
-        {user && isStaffOnly && (
-          <Link href="/kitchen" className="kitchen-header-pill" style={pillStyle('#ea580c', '#ffffff', 'rgba(255,255,255,0.4)')}>
-            🍳 KITCHEN
-          </Link>
-        )}
-        {user && isDeliveryOnly && (
-          <Link href="/delivery" className="delivery-header-pill" style={pillStyle('#0284c7', '#ffffff', 'rgba(255,255,255,0.4)')}>
-            🛵 DELIVERY
           </Link>
         )}
 
@@ -89,40 +79,6 @@ export default function SiteNav({ activePage = 'home' }) {
               }}
             >
               🛡️ ADMIN PORTAL
-            </Link>
-          )}
-          {isStaffOnly && (
-            <Link
-              href="/kitchen"
-              onClick={() => setIsNavOpen(false)}
-              style={{
-                color: '#ea580c',
-                fontWeight: '900',
-                letterSpacing: '0.08em',
-                background: 'rgba(234,88,12,0.15)',
-                padding: '6px 14px',
-                borderRadius: '999px',
-                border: '1px solid rgba(234,88,12,0.3)'
-              }}
-            >
-              🍳 KITCHEN PORTAL
-            </Link>
-          )}
-          {isDeliveryOnly && (
-            <Link
-              href="/delivery"
-              onClick={() => setIsNavOpen(false)}
-              style={{
-                color: '#0284c7',
-                fontWeight: '900',
-                letterSpacing: '0.08em',
-                background: 'rgba(2,132,199,0.15)',
-                padding: '6px 14px',
-                borderRadius: '999px',
-                border: '1px solid rgba(2,132,199,0.3)'
-              }}
-            >
-              🛵 DELIVERY PORTAL
             </Link>
           )}
           <a href="/#contact" onClick={() => setIsNavOpen(false)}>CONTACT</a>

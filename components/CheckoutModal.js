@@ -547,6 +547,15 @@ export default function CheckoutModal({
                   <p className="delivering-to-text">Delivering to: <strong>{address}</strong></p>
                 </div>
 
+                {!user && (
+                  <div className="auth-prompt-banner" style={{ marginBottom: '16px', background: '#fffbeb', border: '1px solid #fef3c7', padding: '12px', borderRadius: '12px' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#92400e', fontWeight: 600 }}>Please sign in so your order links to your account:</span>
+                    <button type="button" onClick={openAuthModal} className="auth-btn-link" style={{ marginTop: '4px', fontWeight: 700 }}>
+                      Sign In Now →
+                    </button>
+                  </div>
+                )}
+
                 <RazorpayPaymentBox
                   grandTotal={finalTotal}
                   customerName={name}

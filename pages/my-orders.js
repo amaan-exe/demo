@@ -76,6 +76,47 @@ export default function MyOrdersPage() {
     } catch (e) {}
   }, [user])
 
+  // Automatic reconciliation check for pending Razorpay payments (e.g. after page reload or app switch)
+  useEffect(() => {
+    if (!user) return
+    try {
+      const rawPending = typeof window !== 'undefined' ? sessionStorage.getItem('pending_razorpay_checkout') : null
+      if (rawPending) {
+        const pending = JSON.parse(rawPending)
+        const targetOrderId = pending.internalOrderId
+        if (targetOrderId) {
+          fetch('/api/razorpay/reconcile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              internalOrderId: targetOrderId,
+              razorpayOrderId: pending.razorpayOrderId
+            })
+          }).then(res => res.json()).then(async (data) => {
+            if (data.success && data.status === 'DONE') {
+              try {
+                await updateDoc(doc(db, 'orders', targetOrderId), {
+                  userId: user.uid,
+                  userEmail: user.email,
+                  paymentStatus: 'paid',
+                  orderStatus: 'confirmed',
+                  updatedAt: serverTimestamp()
+                })
+              } catch (fsErr) {}
+              sessionStorage.removeItem('pending_razorpay_checkout')
+              triggerToast('🎉 Your payment was verified successfully! Order is confirmed.')
+            } else if (data.status === 'FAILED') {
+              sessionStorage.removeItem('pending_razorpay_checkout')
+            }
+          }).catch(e => console.warn('Pending recovery check notice:', e))
+        }
+      }
+    } catch (e) {}
+  }, [user, accessToken])
+
   // 2. Realtime listener strictly for active orders of this user
   useEffect(() => {
     if (!user) {
