@@ -30,8 +30,64 @@ export default function RazorpayPaymentBox({
     })
   }
 
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false)
+  const [checkingNotice, setCheckingNotice] = useState('')
+
+  // Server-side payment reconciliation polling loop
+  const pollServerPaymentStatus = async (internalOrderId, razorpayOrderId) => {
+    setIsCheckingStatus(true)
+    setCheckingNotice("⏳ Checking payment status with Razorpay... Please don't pay again.")
+
+    const delays = [0, 2000, 4000, 7000]
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i] > 0) {
+        await new Promise((r) => setTimeout(r, delays[i]))
+      }
+
+      try {
+        const res = await fetch('/api/razorpay/reconcile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ internalOrderId, razorpayOrderId })
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.status === 'DONE') {
+            setIsCheckingStatus(false)
+            setPayLoading(false)
+            try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
+            if (typeof onPaymentSuccess === 'function') {
+              onPaymentSuccess({
+                razorpay_payment_id: data.payment?.id || 'VERIFIED',
+                razorpay_order_id: razorpayOrderId,
+                preCreatedOrderId: internalOrderId,
+              })
+            }
+            return true
+          } else if (data.status === 'FAILED') {
+            setIsCheckingStatus(false)
+            setPayLoading(false)
+            setPayError(data.transaction?.failureReason || 'Payment failed on gateway or was cancelled by user.')
+            return false
+          }
+        }
+      } catch (err) {
+        console.warn('Reconciliation poll notice:', err)
+      }
+    }
+
+    // Polling completed without definitive DONE or FAILED -> Payment remains pending on bank
+    setIsCheckingStatus(false)
+    setPayLoading(false)
+    setCheckingNotice('')
+    setPayError('We are still confirming your payment with your bank. Please check your Orders page shortly. Do not pay again.')
+    return false
+  }
+
   const handleInitiateRazorpay = async () => {
     setPayError('')
+    setCheckingNotice('')
     setPayLoading(true)
 
     try {
@@ -43,7 +99,7 @@ export default function RazorpayPaymentBox({
         return
       }
 
-      // 2. Call backend to create Razorpay order + pre-create Firestore order
+      // 2. Call backend to create Razorpay order + pre-create Firestore & MongoDB order
       const res = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -123,12 +179,12 @@ export default function RazorpayPaymentBox({
                 })
               }
             } else {
-              setPayError(verifyData.error || 'Payment verification failed. Please contact support if money was deducted.')
+              // Client verify didn't complete immediately — run server reconciliation poll
+              await pollServerPaymentStatus(internalOrderId, order_id)
             }
           } catch (err) {
             console.error('Razorpay verification error:', err)
-            // Even if client verification fails, webhook will catch it
-            setPayError('Verification timed out. Your payment is safe — the order will be confirmed automatically within 1 minute.')
+            await pollServerPaymentStatus(internalOrderId, order_id)
           } finally {
             setPayLoading(false)
           }
@@ -146,16 +202,24 @@ export default function RazorpayPaymentBox({
         },
         modal: {
           ondismiss: function () {
-            setPayLoading(false)
+            // User dismissed modal or switched apps — check server status before assuming cancelled
+            pollServerPaymentStatus(internalOrderId, order_id)
           }
         }
       }
 
       const rzp = new window.Razorpay(options)
       rzp.on('payment.failed', function (response) {
-        console.error('Razorpay Payment Failed:', response.error)
-        setPayError(response.error.description || 'Payment was unsuccessful. Please try again.')
-        setPayLoading(false)
+        console.warn('Razorpay payment notice / error event:', response.error)
+        const desc = response.error?.description || ''
+        
+        // If error is an ambiguous app launch/handoff error (e.g. "Can't open payment app"), DO NOT assume payment failed!
+        if (desc.includes("Can't open payment app") || desc.includes('app') || !desc) {
+          pollServerPaymentStatus(internalOrderId, order_id)
+        } else {
+          setPayError(desc || 'Payment was unsuccessful. Please try again.')
+          setPayLoading(false)
+        }
       })
       rzp.open()
 
@@ -166,7 +230,7 @@ export default function RazorpayPaymentBox({
     }
   }
 
-  const isBusy = payLoading || loading
+  const isBusy = payLoading || loading || isCheckingStatus
 
   return (
     <div style={{ background: '#faf9f5', border: '1.5px solid rgba(13,90,58,0.2)', borderRadius: '20px', padding: '20px', marginTop: '16px' }}>
@@ -197,6 +261,12 @@ export default function RazorpayPaymentBox({
           <span style={{ background: '#f0f4f1', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, color: '#0d5a3a' }}>👛 Wallets</span>
         </div>
       </div>
+
+      {checkingNotice && (
+        <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', color: '#92400e', padding: '12px 14px', borderRadius: '12px', fontSize: '0.84rem', marginBottom: '14px', fontWeight: 700, textAlign: 'center' }}>
+          {checkingNotice}
+        </div>
+      )}
 
       {payError && (
         <div style={{ background: '#fff5f5', border: '1px solid #feb2b2', color: '#c53030', padding: '10px 14px', borderRadius: '12px', fontSize: '0.82rem', marginBottom: '14px', fontWeight: 600 }}>

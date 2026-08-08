@@ -66,9 +66,11 @@ async function handler(req, res) {
     }
 
     if (!fetchedPayment && !fetchedOrder) {
-      return res.status(449).json({
-        success: false,
-        error: 'No payment transaction found on Razorpay for the given details'
+      return res.status(200).json({
+        success: true,
+        status: 'PENDING',
+        razorpayStatus: 'created',
+        message: 'No payment transaction captured on Razorpay yet. Payment remains pending.'
       })
     }
 
@@ -114,9 +116,9 @@ async function handler(req, res) {
           $set: updatePayload,
           $push: {
             timeline: {
-              event: 'ADMIN_RECONCILIATION',
+              event: 'RECONCILIATION_CHECK',
               timestamp: new Date(),
-              notes: `Manual reconciliation performed with Razorpay API. Status: ${rzpStatus} (App: ${appStatus})`,
+              notes: `Reconciliation check with Razorpay API. Status: ${rzpStatus} (App: ${appStatus})`,
               source: 'RECONCILIATION'
             }
           }
@@ -137,7 +139,7 @@ async function handler(req, res) {
           customerMarkedPaid: appStatus === 'DONE',
           razorpayPaymentId: fetchedPayment?.id || tx?.paymentId,
           razorpayOrderId: rzpOrderIdToFetch,
-          paymentVerifiedBy: 'ADMIN_RECONCILIATION',
+          paymentVerifiedBy: 'RECONCILIATION_CHECK',
           paymentVerifiedAt: new Date(),
           updatedAt: new Date(),
         }
@@ -153,7 +155,7 @@ async function handler(req, res) {
             customerMarkedPaid: appStatus === 'DONE',
             razorpayPaymentId: fetchedPayment?.id || tx?.paymentId,
             razorpayOrderId: rzpOrderIdToFetch,
-            paymentVerifiedBy: 'ADMIN_RECONCILIATION',
+            paymentVerifiedBy: 'RECONCILIATION_CHECK',
             paymentVerifiedAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           })
@@ -177,4 +179,4 @@ async function handler(req, res) {
   }
 }
 
-export default withAuth(handler, true)
+export default withAuth(handler, false)
