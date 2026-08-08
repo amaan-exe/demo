@@ -30,17 +30,31 @@ export default function AuthModal() {
     return err?.message?.replace(/Firebase:\s*/i, '').replace(/Error\s*\(/i, '').replace(/\)\.?/i, '').trim() || 'Authentication failed'
   }
 
+  const [notice, setNotice] = useState('')
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setNotice('')
     if (!identifier || !password) {
       setError('Please enter your User ID/Email and password')
       return
     }
 
+    if (isSignup) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+      if (!emailRegex.test(identifier.trim())) {
+        setError('Please enter a valid Google / Email address (e.g. name@gmail.com). Dummy IDs are not allowed.')
+        return
+      }
+    }
+
     try {
       setError('')
       setLoading(true)
-      await loginWithEmail(identifier, password, isSignup, name)
+      const res = await loginWithEmail(identifier, password, isSignup, name)
+      if (res?.emailVerifiedSent) {
+        setNotice('✉️ Account created! We sent a verification email to your inbox. Please verify your email.')
+      }
     } catch (err) {
       setError(formatAuthError(err) || 'Authentication failed')
     } finally {
@@ -98,7 +112,7 @@ export default function AuthModal() {
             {isSignup ? 'Create Account' : 'Welcome Back'}
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>
-            {isSignup ? 'Register with your ID & password for fast checkout.' : 'Sign in with your User ID or Email & Password.'}
+            {isSignup ? 'Register with your valid Google / Email account for fast checkout.' : 'Sign in with your User ID or Email & Password.'}
           </p>
         </div>
 
@@ -106,7 +120,7 @@ export default function AuthModal() {
         <div style={{ display: 'flex', background: '#f5f5f0', borderRadius: '14px', padding: '4px', marginBottom: '20px' }}>
           <button
             type="button"
-            onClick={() => { setIsSignup(false); setError('') }}
+            onClick={() => { setIsSignup(false); setError(''); setNotice('') }}
             style={{
               flex: 1,
               padding: '10px',
@@ -125,7 +139,7 @@ export default function AuthModal() {
           </button>
           <button
             type="button"
-            onClick={() => { setIsSignup(true); setError('') }}
+            onClick={() => { setIsSignup(true); setError(''); setNotice('') }}
             style={{
               flex: 1,
               padding: '10px',
@@ -144,6 +158,12 @@ export default function AuthModal() {
           </button>
         </div>
 
+        {notice && (
+          <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', fontSize: '0.84rem', marginBottom: '18px', textAlign: 'center', fontWeight: '600' }}>
+            {notice}
+          </div>
+        )}
+
         {error && (
           <div style={{ padding: '12px 16px', borderRadius: '12px', background: 'rgba(220,50,50,0.08)', border: '1px solid rgba(220,50,50,0.2)', color: '#dc3232', fontSize: '0.84rem', marginBottom: '18px', textAlign: 'center', fontWeight: '600' }}>
             ⚠️ {error}
@@ -154,23 +174,24 @@ export default function AuthModal() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {isSignup && (
             <div className="co-field">
-              <label htmlFor="auth-name">Full Name</label>
+              <label htmlFor="auth-name">Full Name *</label>
               <input
                 id="auth-name"
                 type="text"
                 placeholder="e.g. Muhammad Amanullah"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
           )}
 
           <div className="co-field">
-            <label htmlFor="auth-identifier">User ID / Email Address</label>
+            <label htmlFor="auth-identifier">{isSignup ? 'Google / Valid Email Address *' : 'User ID / Email Address'}</label>
             <input
               id="auth-identifier"
               type="text"
-              placeholder={isSignup ? "e.g. name@example.com" : "e.g. ADMIN or your@email.com"}
+              placeholder={isSignup ? "e.g. yourname@gmail.com" : "e.g. ADMIN or your@email.com"}
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required

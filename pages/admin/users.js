@@ -36,6 +36,49 @@ export default function AdminUsersDesk() {
     }
   }
 
+  const [purging, setPurging] = useState(false)
+
+  const handlePurgeNonAdminUsers = async () => {
+    const confirm1 = window.confirm('⚠️ Are you sure you want to PERMANENTLY REMOVE all non-admin user accounts?\n\nOnly ADMIN accounts will be retained.')
+    if (!confirm1) return
+
+    try {
+      setPurging(true)
+      const { deleteDoc, doc: firestoreDoc } = await import('firebase/firestore')
+
+      const adminEmails = [
+        'admin@biriyanistation.com',
+        'admin@biriyanistation.in',
+        'amaanullah2607@gmail.com',
+        'md.amanullahkhan1980@gmail.com',
+        'admin@gmail.com',
+        'admin@admin.com',
+        'admin'
+      ]
+
+      let deletedCount = 0
+      for (const u of usersList) {
+        const email = (u.email || '').toLowerCase().trim()
+        const role = (u.role || '').toLowerCase()
+        const isAdm = role === 'admin' || adminEmails.includes(email) || email.startsWith('admin') || u.id === 'ADMIN'
+
+        if (!isAdm) {
+          await deleteDoc(firestoreDoc(db, 'users', u.id)).catch(() => {})
+          deletedCount++
+        }
+      }
+
+      // Re-fetch users
+      const snap = await getDocs(collection(db, 'users'))
+      setUsersList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      alert(`🎉 Successfully purged ${deletedCount} non-admin user accounts!`)
+    } catch (err) {
+      alert('Error purging accounts: ' + err.message)
+    } finally {
+      setPurging(false)
+    }
+  }
+
   if (!user || !isAdmin) return null
 
   // Filter users by search and role
@@ -66,31 +109,55 @@ export default function AdminUsersDesk() {
       <div className="admin-page-container">
         {/* EXECUTIVE CONTROL CARD FOR USER DIRECTORY */}
         <div className="admin-control-hero-card">
-          <div className="admin-orders-header">
+          <div className="admin-orders-header" style={{ flexWrap: 'wrap', gap: '12px' }}>
             <div className="admin-title-area">
               <span className="admin-sync-pill">REGISTERED ACCOUNTS & ROLES</span>
               <h1>User & Role Directory</h1>
             </div>
 
-            {/* Search Input Box */}
-            <div className="admin-search-box">
-              <span className="admin-search-icon">🔍</span>
-              <input
-                type="text"
-                className="admin-search-input"
-                placeholder="Search user by name, email, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  className="admin-search-clear"
-                  onClick={() => setSearchQuery('')}
-                >
-                  ✕
-                </button>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handlePurgeNonAdminUsers}
+                disabled={purging}
+                style={{
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: purging ? 'wait' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(220,38,38,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {purging ? '🧹 Purging...' : '🧹 PURGE ALL NON-ADMIN USERS'}
+              </button>
+
+              {/* Search Input Box */}
+              <div className="admin-search-box">
+                <span className="admin-search-icon">🔍</span>
+                <input
+                  type="text"
+                  className="admin-search-input"
+                  placeholder="Search user by name, email, or phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="admin-search-clear"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

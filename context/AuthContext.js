@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth'
@@ -170,23 +171,44 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // ID & Password Auth (Login or Signup with ADMIN support)
+  // ID & Password Auth (Login or Signup with ADMIN support & Email Verification)
   const loginWithEmail = async (identifier, password, isSignup = false, displayName = '') => {
     let email = (identifier || '').trim()
     const isAdminCredential = (email.toUpperCase() === 'ADMIN' || email.toLowerCase() === 'admin@biriyanistation.com' || email.toLowerCase() === 'admin') && password === 'AMANULLAHPATNA2607'
 
     if (email.toUpperCase() === 'ADMIN' || email.toLowerCase() === 'admin') {
       email = 'admin@biriyanistation.com'
-    } else if (!email.includes('@')) {
-      email = `${email.toLowerCase()}@biriyanistation.com`
+    }
+
+    // Email format validation for signup
+    if (isSignup) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+      if (!emailRegex.test(email)) {
+        throw new Error('Invalid email address format. Please enter a valid Google / Email address (e.g. name@gmail.com).')
+      }
+    } else {
+      if (!email.includes('@') && email !== 'admin@biriyanistation.com') {
+        email = `${email.toLowerCase()}@biriyanistation.com`
+      }
     }
 
     try {
       let userCredential
+      let emailVerifiedSent = false
+
       if (isSignup) {
         userCredential = await createUserWithEmailAndPassword(auth, email, password)
         if (displayName && userCredential.user) {
           await updateProfile(userCredential.user, { displayName })
+        }
+        // Send Email Verification link to the user's Google / Email inbox
+        try {
+          if (userCredential.user) {
+            await sendEmailVerification(userCredential.user)
+            emailVerifiedSent = true
+          }
+        } catch (evErr) {
+          console.warn('Email verification send notice:', evErr.message)
         }
       } else {
         try {
@@ -218,6 +240,7 @@ export function AuthProvider({ children }) {
       if (displayName) fbUser.displayName = displayName
 
       await syncWithBackend(fbUser)
+      return { success: true, emailVerifiedSent }
     } catch (error) {
       console.error('ID / Password Auth Error:', error)
       throw error
