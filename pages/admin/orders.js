@@ -895,7 +895,7 @@ export default function AdminOrdersDesk() {
                       }}>
                         <div>
                           <div style={{ fontSize: '0.76rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            💳 {ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery'}
+                            💳 {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? 'Razorpay (Paid Online)' : (ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery')}
                           </div>
 
                           <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>

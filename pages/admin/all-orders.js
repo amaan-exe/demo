@@ -461,7 +461,7 @@ export default function AllOrdersPage() {
                           borderRadius: '10px', padding: '8px 10px', border: '1px solid rgba(0,0,0,0.04)'
                         }}>
                           <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--ink)' }}>
-                            💳 {ord.paymentMethod === 'UPI' ? 'UPI' : 'COD'}
+                            💳 {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? 'Razorpay Online' : (ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery')}
                           </div>
                           <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
                             {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Pending'}

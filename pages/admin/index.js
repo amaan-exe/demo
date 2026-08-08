@@ -201,7 +201,7 @@ export default function AdminDashboard() {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed rgba(0,0,0,0.08)', paddingTop: '8px' }}>
                       <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--muted)' }}>
-                        {ord.isUpi || ord.paymentMethod === 'UPI' ? '💳 UPI Online' : '💵 Cash on Delivery'}
+                        {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? '💳 Razorpay Online' : (ord.isUpi || ord.paymentMethod === 'UPI' ? '💳 UPI Online' : '💵 Cash on Delivery')}
                       </span>
                       <strong style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--deep-green)' }}>
                         ₹{(ord.grandTotal || 0).toFixed(0)}
