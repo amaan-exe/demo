@@ -577,7 +577,8 @@ export default function AdminOrdersDesk() {
             filteredOrders.map((ord) => {
               const isDelivered = ord.orderStatus === 'Delivered' || ord.orderStatus === 'delivered'
               const isCancelled = ord.orderStatus === 'Cancelled' || ord.orderStatus === 'cancelled' || ord.orderStatus === 'rejected' || ord.orderStatus === 'Payment Failed' || ord.paymentStatus === 'rejected' || ord.paymentStatus === 'Payment Failed'
-              const isLocked = isDelivered || isCancelled
+              const isRefunded = ord.orderStatus === 'Refunded' || ord.orderStatus === 'refunded' || ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || (ord.refund?.status || '').toUpperCase() === 'REFUNDED'
+              const isLocked = isDelivered || isCancelled || isRefunded
               const customerName = ord.customerName || ord.userName || 'Customer'
               const initials = getInitials(customerName)
               const rawPhone = (ord.customerPhone || ord.userPhone || '').replace(/[^0-9]/g, '')

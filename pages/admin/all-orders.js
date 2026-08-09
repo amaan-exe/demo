@@ -349,6 +349,7 @@ export default function AllOrdersPage() {
               filteredOrders.map((ord) => {
                 const isDelivered = (ord.orderStatus || '').toLowerCase() === 'delivered'
                 const isCancelled = ['cancelled', 'rejected', 'payment failed'].includes((ord.orderStatus || '').toLowerCase()) || (ord.paymentStatus || '').toLowerCase() === 'rejected'
+                const isRefunded = (ord.orderStatus || '').toLowerCase() === 'refunded' || (ord.paymentStatus || '').toLowerCase() === 'refunded' || (ord.refund?.status || '').toUpperCase() === 'REFUNDED'
                 const customerName = ord.customerName || ord.userName || 'Customer'
                 const initials = getInitials(customerName)
                 const statusMeta = getStatusMeta(ord.orderStatus, isDelivered, isCancelled)
