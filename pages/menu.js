@@ -213,24 +213,6 @@ export default function MenuPage() {
         setCoAddress('')
         router.push(`/my-orders?orderId=${orderId}&success=1`)
 
-        // WhatsApp notification (safe async trigger)
-        try {
-          const message = `🍛 *New Order — Biriyani Station*\n` +
-            `*Order ID:* ${orderId}\n` +
-            `*Customer:* ${finalName || user?.displayName || user?.email}\n` +
-            `*Phone:* ${finalPhone}\n` +
-            `*Address:* ${finalAddress}\n` +
-            `*Payment:* 💳 Razorpay (PAID ✅)\n\n` +
-            `*Items:*\n` +
-            cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
-            (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
-            `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
-
-          window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
-        } catch (waErr) {
-          console.warn('WhatsApp window open notice:', waErr)
-        }
-
         return
       }
 
@@ -298,24 +280,11 @@ export default function MenuPage() {
       }
       syncWithMongo()
 
-      const message = `🍛 *New Order — Biriyani Station*\n` +
-        `*Order ID:* ${orderId}\n` +
-        `*Customer:* ${finalName || user.displayName || user.email}\n` +
-        `*Phone:* ${finalPhone}\n` +
-        `*Address:* ${finalAddress}\n` +
-        `*Payment Method:* ${isUpi ? '📲 Pay via UPI (Verification Pending)' : '💵 Cash on Delivery (COD)'}\n\n` +
-        `*Items:*\n` +
-        cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
-        (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
-        `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
-
-      window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
-
       setCartItems([])
       setCheckoutOpen(false)
       setCoPhone('')
       setCoAddress('')
-      router.push('/my-orders')
+      router.push(`/my-orders?orderId=${orderId}&success=1`)
     } catch (err) {
       console.error('Order Error:', err)
       alert('Order placed! Redirecting to tracking...')
