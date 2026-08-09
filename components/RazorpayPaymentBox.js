@@ -98,6 +98,47 @@ export default function RazorpayPaymentBox({
     return false
   }, [onPaymentSuccess])
 
+  // Fast single-pass check when user explicitly dismisses or cancels payment modal
+  const checkDismissedOrCancelledStatus = useCallback(async (internalOrderId, razorpayOrderId) => {
+    setIsCheckingStatus(true)
+    setCheckingNotice("⏳ Checking payment status...")
+    try {
+      const res = await fetch('/api/razorpay/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ internalOrderId, razorpayOrderId })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.status === 'DONE') {
+          setIsCheckingStatus(false)
+          setPayLoading(false)
+          setCheckingNotice('')
+          reconcileRunningRef.current = false
+          pendingCheckoutRef.current = null
+          try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
+          if (typeof onPaymentSuccess === 'function') {
+            onPaymentSuccess({
+              razorpay_payment_id: data.payment?.id || 'VERIFIED',
+              razorpay_order_id: razorpayOrderId,
+              preCreatedOrderId: internalOrderId,
+            })
+          }
+          return true
+        }
+      }
+    } catch (e) {}
+
+    // Not paid -> User dismissed modal or cancelled
+    setIsCheckingStatus(false)
+    setPayLoading(false)
+    setCheckingNotice('')
+    reconcileRunningRef.current = false
+    pendingCheckoutRef.current = null
+    setPayError('Payment was cancelled or closed. You can try paying again whenever you are ready.')
+    return false
+  }, [onPaymentSuccess])
+
   // R1: Auto-reconcile when user returns from UPI app (visibilitychange)
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -251,8 +292,8 @@ export default function RazorpayPaymentBox({
         },
         modal: {
           ondismiss: function () {
-            // User dismissed modal or switched apps — check server status before assuming cancelled
-            pollServerPaymentStatus(internalOrderId, order_id)
+            // User dismissed modal or cancelled payment
+            checkDismissedOrCancelledStatus(internalOrderId, order_id)
           }
         }
       }
@@ -263,22 +304,18 @@ export default function RazorpayPaymentBox({
         const desc = response.error?.description || ''
         const reason = response.error?.reason || ''
         
-        // BUG 7 FIX: Only treat specific mobile app-launch handoff errors as ambiguous.
-        // Previously desc.includes('app') was too broad, matching legitimate failures like "declined by application".
+        // Fast single-pass check to see if user cancelled vs app handoff
         const isMobileHandoffError = (
           desc.includes("Can't open payment app") ||
           desc.includes('Unable to open') ||
           desc.includes('payment app is not installed') ||
-          reason === 'payment_cancelled' ||
-          !desc // empty description = ambiguous
+          !desc
         )
 
         if (isMobileHandoffError) {
           pollServerPaymentStatus(internalOrderId, order_id)
         } else {
-          pendingCheckoutRef.current = null
-          setPayError(desc || 'Payment was unsuccessful. Please try again.')
-          setPayLoading(false)
+          checkDismissedOrCancelledStatus(internalOrderId, order_id)
         }
       })
       rzp.open()

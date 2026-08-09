@@ -284,7 +284,7 @@ export default function MyOrdersPage() {
         <meta name="description" content="Track your Biriyani Station Patna orders live from kitchen preparation to delivery." />
       </Head>
 
-      <ToastNotification message={toast} />
+      <ToastNotification toast={toast} />
 
       <SiteNav activeTab="orders" isNavOpen={isNavOpen} setIsNavOpen={setIsNavOpen} />
 
@@ -417,7 +417,7 @@ export default function MyOrdersPage() {
                         {order.items?.length || 0} item{(order.items?.length || 0) === 1 ? '' : 's'} · Tap for receipt
                       </span>
                       <strong style={{ fontSize: '1.2rem', color: 'var(--deep-green)', fontFamily: "'Outfit', sans-serif" }}>
-                        ₹{(order.grandTotal || 0).toFixed(0)}
+                        ₹{(Number(order.grandTotal) || 0).toFixed(0)}
                       </strong>
                     </div>
                   </div>
@@ -453,14 +453,14 @@ export default function MyOrdersPage() {
               {selectedOrder.items?.map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.92rem', padding: '12px 16px', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: '12px', color: '#1f2937' }}>
                   <span style={{ color: '#1f2937' }}>{item.title || item.name} <strong style={{ color: 'var(--deep-green)' }}>x{item.qty || item.quantity}</strong></span>
-                  <strong style={{ color: '#111827' }}>₹{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(0)}</strong>
+                  <strong style={{ color: '#111827' }}>₹{((Number(item.price) || 0) * (Number(item.qty || item.quantity) || 1)).toFixed(0)}</strong>
                 </div>
               ))}
             </div>
 
             <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '800', color: '#111827' }}>
               <span>Total Paid</span>
-              <span style={{ color: 'var(--deep-green)' }}>₹{(selectedOrder.grandTotal || 0).toFixed(0)}</span>
+              <span style={{ color: 'var(--deep-green)' }}>₹{(Number(selectedOrder.grandTotal) || 0).toFixed(0)}</span>
             </div>
           </div>
         </div>

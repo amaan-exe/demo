@@ -669,8 +669,8 @@ export default function AdminOrdersDesk() {
                       {/* Items List with Formatted Separation */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
                         {ord.items?.map((item, idx) => {
-                          const qty = item.qty || item.quantity || 1
-                          const unitPrice = item.price || 0
+                          const qty = Number(item.qty || item.quantity || 1)
+                          const unitPrice = Number(item.price || 0)
                           const itemTotal = (unitPrice * qty).toFixed(0)
 
                           return (
@@ -759,7 +759,7 @@ export default function AdminOrdersDesk() {
                           </span>
                         </div>
                         <strong style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--deep-green)', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: "'Outfit', sans-serif" }}>
-                          ₹{(ord.grandTotal || 0).toFixed(0)}
+                          ₹{(Number(ord.grandTotal) || 0).toFixed(0)}
                         </strong>
                       </div>
                     </div>
