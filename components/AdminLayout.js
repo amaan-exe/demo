@@ -15,7 +15,16 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
     setMounted(true)
   }, [])
 
-  if (!mounted) return null
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#faf9f5', display: 'grid', placeItems: 'center', color: '#0d5a3a', fontFamily: "'Outfit', sans-serif" }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⏳</div>
+          <p style={{ fontWeight: 800, fontSize: '0.95rem' }}>Loading Admin Portal...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!user || !isAdmin) {
     return (

@@ -7,12 +7,12 @@ import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
 
 const getInitials = (nameStr) => {
-  if (!nameStr) return 'CU'
+  if (!nameStr || typeof nameStr !== 'string') return 'CU'
   const parts = nameStr.trim().split(/\s+/)
-  if (parts.length >= 2) {
+  if (parts.length >= 2 && parts[0] && parts[1]) {
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
   }
-  return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0] || 'CU').slice(0, 2).toUpperCase()
 }
 
 const getStatusMeta = (status, isDelivered, isCancelled) => {
@@ -76,12 +76,19 @@ export default function AdminOrdersDesk() {
     const unsub = onSnapshot(collection(db, 'orders'), (snapshot) => {
       setFirestoreError(null)
       const fetched = snapshot.docs.map((d) => {
-        const data = d.data()
+        const data = d.data() || {}
         let dateObj = new Date()
-        if (data.createdAt?.toDate) {
-          dateObj = data.createdAt.toDate()
-        } else if (data.createdAtSeconds) {
-          dateObj = new Date(data.createdAtSeconds * 1000)
+        try {
+          if (data.createdAt?.toDate) {
+            dateObj = data.createdAt.toDate()
+          } else if (data.createdAtSeconds) {
+            dateObj = new Date(data.createdAtSeconds * 1000)
+          } else if (data.createdAt && typeof data.createdAt === 'string') {
+            dateObj = new Date(data.createdAt)
+          }
+          if (isNaN(dateObj.getTime())) dateObj = new Date()
+        } catch (e) {
+          dateObj = new Date()
         }
 
         const createdAtFormatted = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) +
@@ -281,8 +288,6 @@ export default function AdminOrdersDesk() {
 
     return true
   })
-
-  if (!user || !isAdmin) return null
 
   return (
     <AdminLayout activePage="orders" title="Orders Dashboard">
@@ -576,7 +581,8 @@ export default function AdminOrdersDesk() {
               const customerName = ord.customerName || ord.userName || 'Customer'
               const initials = getInitials(customerName)
               const rawPhone = (ord.customerPhone || ord.userPhone || '').replace(/[^0-9]/g, '')
-              const waMessage = encodeURIComponent(`Hi ${customerName}, updating you regarding your Biriyani Station Patna Order #${ord.orderId || ord.id.slice(0, 8)} (Status: ${ord.orderStatus || 'Confirmed'}).`)
+              const displayId = ord.orderId || ord.id?.slice(0, 8) || 'UNKNOWN'
+              const waMessage = encodeURIComponent(`Hi ${customerName}, updating you regarding your Biriyani Station Patna Order #${displayId} (Status: ${ord.orderStatus || 'Confirmed'}).`)
               const statusMeta = getStatusMeta(ord.orderStatus, isDelivered, isCancelled)
 
               return (
@@ -632,7 +638,7 @@ export default function AdminOrdersDesk() {
                       }}>
                         <span style={{ fontSize: '0.62rem', fontWeight: 900, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>ID:</span>
                         <span style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--deep-green)', letterSpacing: '0.06em', fontFamily: "'JetBrains Mono', monospace" }}>
-                          #{ord.orderId || ord.id.slice(0, 8)}
+                          #{ord.orderId || ord.id?.slice(0, 8) || 'UNKNOWN'}
                         </span>
                       </div>
                     </div>

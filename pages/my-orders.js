@@ -19,7 +19,12 @@ export default function MyOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [toast, setToast] = useState(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const confirmationShownRef = useRef(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const triggerToast = (msg) => {
     setToast(msg)
@@ -28,6 +33,7 @@ export default function MyOrdersPage() {
 
   // Handle post-payment confirmation redirect parameters (fires once)
   useEffect(() => {
+    if (!router.isReady) return
     if (confirmationShownRef.current) return
     if (!router.query?.success || !router.query?.orderId) return
 
@@ -44,8 +50,10 @@ export default function MyOrdersPage() {
     }
 
     // Clean the URL to prevent re-triggering on refresh
-    router.replace('/my-orders', undefined, { shallow: true })
-  }, [router.query, orders])
+    try {
+      router.replace('/my-orders', undefined, { shallow: true }).catch(() => {})
+    } catch (e) {}
+  }, [router.isReady, router.query, orders])
 
   // 1. One-time fetch for archived completed orders of this user
   useEffect(() => {

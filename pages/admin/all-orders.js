@@ -7,12 +7,12 @@ import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
 
 const getInitials = (nameStr) => {
-  if (!nameStr) return 'CU'
+  if (!nameStr || typeof nameStr !== 'string') return 'CU'
   const parts = nameStr.trim().split(/\s+/)
-  if (parts.length >= 2) {
+  if (parts.length >= 2 && parts[0] && parts[1]) {
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
   }
-  return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0] || 'CU').slice(0, 2).toUpperCase()
 }
 
 const getStatusMeta = (status, isDelivered, isCancelled) => {
@@ -145,7 +145,6 @@ export default function AllOrdersPage() {
     .filter(o => (o.orderStatus || '').toLowerCase() === 'delivered' || (o.paymentStatus || '').toLowerCase() === 'paid')
     .reduce((sum, o) => sum + (o.grandTotal || 0), 0)
 
-  if (!user || !isAdmin) return null
 
   return (
     <AdminLayout activePage="all-orders" title="All Orders">
@@ -405,7 +404,7 @@ export default function AllOrdersPage() {
                         }}>
                           <span style={{ fontSize: '0.58rem', fontWeight: 900, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'Outfit', sans-serif" }}>ID:</span>
                           <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--deep-green)', letterSpacing: '0.04em', fontFamily: "'JetBrains Mono', monospace" }}>
-                            #{ord.orderId || ord.id.slice(0, 8)}
+                            #{ord.orderId || ord.id?.slice(0, 8) || 'UNKNOWN'}
                           </span>
                         </div>
                       </div>

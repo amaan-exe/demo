@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                         padding: '3px 8px',
                         borderRadius: '6px'
                       }}>
-                        #{ord.orderId || ord.id.slice(0, 6)}
+                        #{ord.orderId || ord.id?.slice(0, 6) || 'UNKNOWN'}
                       </span>
 
                       <span style={{
