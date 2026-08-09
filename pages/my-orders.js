@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
@@ -10,6 +11,7 @@ import StatusBadge from '../components/StatusBadge'
 import ToastNotification from '../components/ToastNotification'
 
 export default function MyOrdersPage() {
+  const router = useRouter()
   const { user, isAdmin, openAuthModal, accessToken } = useAuth()
   const [orders, setOrders] = useState([])
   const [archivedOrders, setArchivedOrders] = useState([])
@@ -17,11 +19,33 @@ export default function MyOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [toast, setToast] = useState(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const confirmationShownRef = useRef(false)
 
   const triggerToast = (msg) => {
     setToast(msg)
-    setTimeout(() => setToast(null), 3500)
+    setTimeout(() => setToast(null), 4500)
   }
+
+  // Handle post-payment confirmation redirect parameters (fires once)
+  useEffect(() => {
+    if (confirmationShownRef.current) return
+    if (!router.query?.success || !router.query?.orderId) return
+
+    const targetId = router.query.orderId
+    confirmationShownRef.current = true
+
+    // Show success toast
+    triggerToast(`🎉 Payment confirmed! Order #${targetId} placed successfully.`)
+
+    // Auto-select the order receipt modal
+    const matchingOrder = orders.find(o => o.orderId === targetId || o.id === targetId)
+    if (matchingOrder && !selectedOrder) {
+      setSelectedOrder(matchingOrder)
+    }
+
+    // Clean the URL to prevent re-triggering on refresh
+    router.replace('/my-orders', undefined, { shallow: true })
+  }, [router.query, orders])
 
   // 1. One-time fetch for archived completed orders of this user
   useEffect(() => {

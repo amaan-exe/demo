@@ -122,6 +122,9 @@ export default function RazorpayPaymentBox({
     setPayError('')
     setCheckingNotice('')
     setPayLoading(true)
+    // Reset stale reconciliation state from any previous attempt
+    reconcileRunningRef.current = false
+    pendingCheckoutRef.current = null
 
     try {
       // 1. Load SDK
@@ -205,14 +208,19 @@ export default function RazorpayPaymentBox({
             try { verifyData = JSON.parse(verifyText) } catch (e) { verifyData = { error: `Verification error (Status ${verifyRes.status})` } }
 
             if (verifyRes.ok && verifyData.success) {
-              try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
-              if (typeof onPaymentSuccess === 'function') {
-                onPaymentSuccess({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature,
-                  preCreatedOrderId: internalOrderId,
-                })
+              // If orderId was missing on server side, trigger reconciliation as backup
+              if (verifyData.orderUpdateSkipped) {
+                await pollServerPaymentStatus(internalOrderId, order_id)
+              } else {
+                try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
+                if (typeof onPaymentSuccess === 'function') {
+                  onPaymentSuccess({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature,
+                    preCreatedOrderId: internalOrderId,
+                  })
+                }
               }
             } else {
               // Client verify didn't complete immediately — run server reconciliation poll

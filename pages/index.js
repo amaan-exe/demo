@@ -159,10 +159,9 @@ export default function Home() {
     const finalAddress = orderData.address || coAddress
     const isUpi = orderData.isUpi !== undefined ? orderData.isUpi : paymentMethod === 'UPI'
 
-    if (!user) {
-      openAuthModal()
-      return
-    }
+    // For Razorpay pre-paid orders: payment is already debited and verified server-side.
+    // We MUST complete the order flow even if user auth state is stale/missing.
+    // The !user guard only applies to non-Razorpay flows below.
 
     if (!finalPhone || !finalAddress) {
       alert('Please enter your phone number and delivery address.')
@@ -180,10 +179,10 @@ export default function Home() {
 
         // Non-blocking background Firestore order update (verify-payment.js already updated Firestore)
         setDoc(doc(db, 'orders', orderId), {
-          userId: user.uid,
-          userEmail: user.email,
+          userId: user?.uid || 'GUEST',
+          userEmail: user?.email || 'guest@biriyanistation.in',
           customerName: finalName,
-          customerEmail: user.email,
+          customerEmail: user?.email || 'guest@biriyanistation.in',
           customerPhone: finalPhone,
           deliveryAddress: finalAddress,
           paymentStatus: 'paid',
@@ -197,10 +196,10 @@ export default function Home() {
         // MongoDB background sync
         const syncPayload = {
           orderId,
-          userId: user.uid,
-          userEmail: user.email,
+          userId: user?.uid || 'GUEST',
+          userEmail: user?.email || 'guest@biriyanistation.in',
           customerName: finalName,
-          customerEmail: user.email,
+          customerEmail: user?.email || 'guest@biriyanistation.in',
           customerPhone: finalPhone,
           deliveryAddress: finalAddress,
           items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
@@ -226,35 +225,47 @@ export default function Home() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken || ''}`
           },
           body: JSON.stringify(syncPayload),
           keepalive: true
         }).catch(e => console.warn('MongoDB sync notice:', e))
 
-        // WhatsApp notification
-        const message = `🍛 *New Order — Biriyani Station*\n` +
-          `*Order ID:* ${orderId}\n` +
-          `*Customer:* ${finalName || user.displayName || user.email}\n` +
-          `*Phone:* ${finalPhone}\n` +
-          `*Address:* ${finalAddress}\n` +
-          `*Payment:* 💳 Razorpay (PAID ✅)\n\n` +
-          `*Items:*\n` +
-          cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
-          (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
-          `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
-
-        window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
-
         setCartItems([])
         setCheckoutOpen(false)
         setCoPhone('')
         setCoAddress('')
-        router.push('/my-orders')
+        router.push(`/my-orders?orderId=${orderId}&success=1`)
+
+        // WhatsApp notification (safe async trigger)
+        try {
+          const message = `🍛 *New Order — Biriyani Station*\n` +
+            `*Order ID:* ${orderId}\n` +
+            `*Customer:* ${finalName || user?.displayName || user?.email}\n` +
+            `*Phone:* ${finalPhone}\n` +
+            `*Address:* ${finalAddress}\n` +
+            `*Payment:* 💳 Razorpay (PAID ✅)\n\n` +
+            `*Items:*\n` +
+            cartItems.map(i => `• ${i.title} x${i.qty} — ₹${(i.price * i.qty).toFixed(0)}`).join('\n') +
+            (orderData.coupon ? `\n\n*Coupon Applied:* ${orderData.coupon.code} (-₹${orderData.coupon.discount})` : '') +
+            `\n\n*Total: ₹${finalGrandTotal.toFixed(0)}*`
+
+          window.open(`https://wa.me/919102985148?text=${encodeURIComponent(message)}`, '_blank')
+        } catch (waErr) {
+          console.warn('WhatsApp window open notice:', waErr)
+        }
+
         return
       }
 
       // --- STANDARD FLOW (UPI / COD): create order from scratch ---
+      // User auth IS required for non-Razorpay orders
+      if (!user) {
+        openAuthModal()
+        setCoLoading(false)
+        return
+      }
+
       const ts = Date.now().toString(36).toUpperCase()
       const rnd = Math.floor(1000 + Math.random() * 9000).toString()
       const orderId = `BS-PATNA-${ts}-${rnd}`

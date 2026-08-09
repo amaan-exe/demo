@@ -2,7 +2,7 @@ import Razorpay from 'razorpay'
 import { connectDb } from '../../../lib/db'
 import Order from '../../../models/Order'
 import PaymentTransaction from '../../../models/PaymentTransaction'
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../../lib/firebase'
 
 export default async function handler(req, res) {
@@ -146,19 +146,16 @@ export default async function handler(req, res) {
 
       try {
         const orderRef = doc(db, 'orders', targetOrderId)
-        const orderSnap = await getDoc(orderRef)
-        if (orderSnap.exists()) {
-          await updateDoc(orderRef, {
-            paymentStatus: orderPaymentStatus,
-            orderStatus: orderStatus,
-            customerMarkedPaid: appStatus === 'DONE',
-            razorpayPaymentId: fetchedPayment?.id || tx?.paymentId,
-            razorpayOrderId: rzpOrderIdToFetch,
-            paymentVerifiedBy: 'RECONCILIATION_CHECK',
-            paymentVerifiedAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          })
-        }
+        await setDoc(orderRef, {
+          paymentStatus: orderPaymentStatus,
+          orderStatus: orderStatus,
+          customerMarkedPaid: appStatus === 'DONE',
+          razorpayPaymentId: fetchedPayment?.id || tx?.paymentId,
+          razorpayOrderId: rzpOrderIdToFetch,
+          paymentVerifiedBy: 'RECONCILIATION_CHECK',
+          paymentVerifiedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }, { merge: true })
       } catch (fsErr) {
         console.warn('Reconcile Firestore update warning:', fsErr.message)
       }
