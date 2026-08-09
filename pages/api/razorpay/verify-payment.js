@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, userId, userEmail, customerName, customerPhone, deliveryAddress } = req.body
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, userId, userEmail, customerName, customerPhone, deliveryAddress, items, subtotal, deliveryCharge, grandTotal, coupon } = req.body
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
@@ -80,6 +80,11 @@ export default async function handler(req, res) {
     if (customerName) updatePayload.customerName = customerName
     if (customerPhone) updatePayload.customerPhone = customerPhone
     if (deliveryAddress) updatePayload.deliveryAddress = deliveryAddress
+    if (Array.isArray(items) && items.length > 0) updatePayload.items = items
+    if (typeof subtotal === 'number') updatePayload.subtotal = subtotal
+    if (typeof deliveryCharge === 'number') updatePayload.deliveryCharge = deliveryCharge
+    if (typeof grandTotal === 'number' && grandTotal > 0) updatePayload.grandTotal = grandTotal
+    if (coupon) updatePayload.appliedCoupon = typeof coupon === 'object' ? coupon.code : coupon
 
     try {
       await setDoc(orderRef, updatePayload, { merge: true })
@@ -96,21 +101,28 @@ export default async function handler(req, res) {
         const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
         await connectDb()
 
+        const mongoOrderUpdate = {
+          paymentStatus: 'paid',
+          orderStatus: 'confirmed',
+          status: 'confirmed',
+          customerMarkedPaid: true,
+          razorpayPaymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
+          razorpaySignature: razorpay_signature,
+          transactionReference: razorpay_payment_id,
+          paymentVerifiedBy: 'CLIENT_VERIFY',
+          paymentVerifiedAt: new Date(),
+          updatedAt: new Date(),
+        }
+
+        if (Array.isArray(items) && items.length > 0) mongoOrderUpdate.items = items
+        if (typeof subtotal === 'number') mongoOrderUpdate.subtotal = subtotal
+        if (typeof deliveryCharge === 'number') mongoOrderUpdate.deliveryCharge = deliveryCharge
+        if (typeof grandTotal === 'number' && grandTotal > 0) mongoOrderUpdate.grandTotal = grandTotal
+
         await Order.findOneAndUpdate(
           { orderId },
-          {
-            paymentStatus: 'paid',
-            orderStatus: 'confirmed',
-            status: 'confirmed',
-            customerMarkedPaid: true,
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_order_id,
-            razorpaySignature: razorpay_signature,
-            transactionReference: razorpay_payment_id,
-            paymentVerifiedBy: 'CLIENT_VERIFY',
-            paymentVerifiedAt: new Date(),
-            updatedAt: new Date(),
-          }
+          mongoOrderUpdate
         ).catch(() => {})
 
         await PaymentTransaction.findOneAndUpdate(

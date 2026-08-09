@@ -177,7 +177,7 @@ export default function Home() {
         const discountValue = orderData.coupon ? orderData.coupon.discount : 0
         const finalGrandTotal = Math.max(0, grandTotal - discountValue)
 
-        // Non-blocking background Firestore order update (verify-payment.js already updated Firestore)
+        // Fast Firestore order update with full items & grandTotal details
         setDoc(doc(db, 'orders', orderId), {
           userId: user?.uid || 'GUEST',
           userEmail: user?.email || 'guest@biriyanistation.in',
@@ -185,6 +185,14 @@ export default function Home() {
           customerEmail: user?.email || 'guest@biriyanistation.in',
           customerPhone: finalPhone,
           deliveryAddress: finalAddress,
+          items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
+          subtotal: cartTotal,
+          deliveryCharge: deliveryFee,
+          tax: 0,
+          discount: discountValue,
+          appliedCoupon: orderData.coupon ? orderData.coupon.code : null,
+          grandTotal: finalGrandTotal,
+          paymentMethod: 'RAZORPAY',
           paymentStatus: 'paid',
           orderStatus: 'confirmed',
           customerMarkedPaid: true,

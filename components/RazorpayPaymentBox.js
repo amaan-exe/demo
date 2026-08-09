@@ -199,7 +199,12 @@ export default function RazorpayPaymentBox({
                 userEmail: orderDetails?.userEmail || null,
                 customerName: customerName || orderDetails?.customerName || '',
                 customerPhone: customerPhone || orderDetails?.customerPhone || '',
-                deliveryAddress: orderDetails?.deliveryAddress || ''
+                deliveryAddress: orderDetails?.deliveryAddress || '',
+                items: orderDetails?.items || [],
+                subtotal: orderDetails?.subtotal || 0,
+                deliveryCharge: orderDetails?.deliveryCharge || 0,
+                grandTotal: numericTotal,
+                coupon: orderDetails?.coupon || null,
               })
             })
 
