@@ -836,50 +836,55 @@ export default function AdminOrdersDesk() {
                       </div>
 
                       {/* Payment Card */}
-                      <div style={{
-                        background: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#e6f4ea' : isCancelled ? '#fce8e6' : '#fef3c7',
-                        borderRadius: '12px',
-                        padding: '10px 12px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justify: 'space-between',
-                        border: '1px solid rgba(0,0,0,0.05)'
-                      }}>
-                        <div>
-                          <div style={{ fontSize: '0.76rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            💳 {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? 'Razorpay (Paid Online)' : (ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery')}
-                          </div>
+                      {(() => {
+                        const isPaymentPaid = ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid' || Boolean(ord.razorpayPaymentId) || ord.paymentVerifiedBy === 'CLIENT_VERIFY'
+                        return (
+                          <div style={{
+                            background: isPaymentPaid ? '#e6f4ea' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#fff7ed' : isCancelled ? '#fce8e6' : '#fef3c7',
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justify: 'space-between',
+                            border: '1px solid rgba(0,0,0,0.05)'
+                          }}>
+                            <div>
+                              <div style={{ fontSize: '0.76rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                💳 {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? 'Razorpay Online' : (ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery')}
+                              </div>
 
-                          <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
-                            {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Verification Pending'}
-                          </div>
+                              <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: isPaymentPaid ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
+                                {isPaymentPaid ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Verification Pending'}
+                              </div>
 
-                          {ord.transactionReference && (
-                            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              Ref: {ord.transactionReference}
+                              {ord.transactionReference && (
+                                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--ink)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  Ref: {ord.transactionReference}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        {!isLocked && (ord.paymentStatus === 'verification_pending' || ord.paymentStatus === 'Verification Pending' || ord.orderStatus === 'payment_verification_pending') && (
-                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleApprovePayment(ord.id)}
-                              style={{ background: 'var(--deep-green)', color: '#ffffff', border: 'none', padding: '5px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer', width: '100%' }}
-                            >
-                              Approve ✅
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRejectPayment(ord.id)}
-                              style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '5px 8px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
-                            >
-                              ✕
-                            </button>
+                            {!isLocked && !isPaymentPaid && (ord.paymentStatus === 'verification_pending' || ord.paymentStatus === 'Verification Pending' || ord.orderStatus === 'payment_verification_pending') && (
+                              <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleApprovePayment(ord.id)}
+                                  style={{ background: 'var(--deep-green)', color: '#ffffff', border: 'none', padding: '5px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer', width: '100%' }}
+                                >
+                                  Approve ✅
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectPayment(ord.id)}
+                                  style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '5px 8px', borderRadius: '6px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+                        )
+                      })()}
                     </div>
 
                     {/* SHAPED AROUND #2: Delivery Location Strip */}

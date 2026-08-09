@@ -453,17 +453,22 @@ export default function AllOrdersPage() {
                           </div>
                         </div>
 
-                        <div style={{
-                          background: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#e6f4ea' : isCancelled ? '#fce8e6' : '#fef3c7',
-                          borderRadius: '10px', padding: '8px 10px', border: '1px solid rgba(0,0,0,0.04)'
-                        }}>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--ink)' }}>
-                            💳 {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? 'Razorpay Online' : (ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery')}
-                          </div>
-                          <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: (ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
-                            {(ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid') ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Pending'}
-                          </div>
-                        </div>
+                        {(() => {
+                          const isPaymentPaid = ord.paymentStatus === 'paid' || ord.paymentStatus === 'Paid' || Boolean(ord.razorpayPaymentId) || ord.paymentVerifiedBy === 'CLIENT_VERIFY'
+                          return (
+                            <div style={{
+                              background: isPaymentPaid ? '#e6f4ea' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#fff7ed' : isCancelled ? '#fce8e6' : '#fef3c7',
+                              borderRadius: '10px', padding: '8px 10px', border: '1px solid rgba(0,0,0,0.04)'
+                            }}>
+                              <div style={{ fontSize: '0.72rem', fontWeight: 900, color: 'var(--ink)' }}>
+                                💳 {ord.paymentMethod === 'RAZORPAY' || ord.isRazorpay || ord.razorpayPaymentId ? 'Razorpay Online' : (ord.paymentMethod === 'UPI' ? 'UPI Online' : 'Cash on Delivery')}
+                              </div>
+                              <div style={{ fontSize: '0.76rem', fontWeight: 900, marginTop: '2px', color: isPaymentPaid ? '#047857' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '#d97706' : isCancelled ? '#dc2626' : '#b45309' }}>
+                                {isPaymentPaid ? '🟢 Paid' : (ord.paymentStatus === 'refunded' || ord.paymentStatus === 'Refunded' || isRefunded) ? '💸 Refunded' : isCancelled ? '🔴 Rejected' : '🟡 Verification Pending'}
+                              </div>
+                            </div>
+                          )
+                        })()}
                       </div>
 
                       {/* Address */}
