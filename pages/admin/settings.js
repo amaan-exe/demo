@@ -147,6 +147,29 @@ export default function AdminSettingsDesk() {
   const handleTestPushNotification = async () => {
     try {
       setTestPushing(true)
+      // Play chime sound chime on test
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext
+        if (AudioCtx) {
+          const ctx = new AudioCtx()
+          const now = ctx.currentTime
+          const notes = [523.25, 659.25, 783.99, 1046.50]
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator()
+            const noteGain = ctx.createGain()
+            osc.type = 'sine'
+            osc.frequency.value = freq
+            const startTime = now + idx * 0.12
+            noteGain.gain.setValueAtTime(0.9, startTime)
+            noteGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5)
+            osc.connect(noteGain)
+            noteGain.connect(ctx.destination)
+            osc.start(startTime)
+            osc.stop(startTime + 0.5)
+          })
+        }
+      } catch (e) {}
+
       const res = await fetch('/api/admin/notifications/test-push', {
         method: 'POST',
         headers: {
