@@ -143,6 +143,9 @@ export default function AdminSettingsDesk() {
     }
   }
 
+  const [testPushing, setTestPushing] = useState(false)
+  const [testTelegramming, setTestTelegramming] = useState(false)
+
   const handleTestPushNotification = async () => {
     try {
       setTestPushing(true)
@@ -160,6 +163,26 @@ export default function AdminSettingsDesk() {
       alert('Error testing push notification: ' + err.message)
     } finally {
       setTestPushing(false)
+    }
+  }
+
+  const handleTestTelegramNotification = async () => {
+    try {
+      setTestTelegramming(true)
+      const res = await fetch('/api/admin/notifications/test-telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        }
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Telegram test failed')
+      alert(data.message || 'Telegram test message sent successfully!')
+    } catch (err) {
+      alert('Telegram Test Error: ' + err.message)
+    } finally {
+      setTestTelegramming(false)
     }
   }
 
@@ -484,6 +507,23 @@ export default function AdminSettingsDesk() {
                 }}
               >
                 🔊 TEST ORDER SOUND
+              </button>
+              <button
+                type="button"
+                onClick={handleTestTelegramNotification}
+                disabled={testTelegramming}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #2563eb',
+                  background: '#ffffff',
+                  color: '#2563eb',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {testTelegramming ? 'TESTING TELEGRAM...' : '✈️ TEST TELEGRAM BOT'}
               </button>
             </div>
           </div>
