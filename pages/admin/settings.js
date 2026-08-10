@@ -5,8 +5,19 @@ import { useAuth } from '../../context/AuthContext'
 import AdminLayout from '../../components/AdminLayout'
 import AnnouncementBanner from '../../components/AnnouncementBanner'
 
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
+}
+
 export default function AdminSettingsDesk() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, accessToken } = useAuth()
   const [restaurantName, setRestaurantName] = useState('Biriyani Station Patna')
   const [isStoreOpen, setIsStoreOpen] = useState(true)
   const [deliveryCharge, setDeliveryCharge] = useState('40')
@@ -23,8 +34,160 @@ export default function AdminSettingsDesk() {
   const [announcementType, setAnnouncementType] = useState('info')
   const [announcementError, setAnnouncementError] = useState('')
 
+  // Admin Order Notification & Sound State
+  const [pushEnabled, setPushEnabled] = useState(true)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [soundVolume, setSoundVolume] = useState(90)
+  const [repeatAlert, setRepeatAlert] = useState(false)
+  const [soundTheme, setSoundTheme] = useState('chime')
+  const [permissionStatus, setPermissionStatus] = useState('default')
+  const [subscribing, setSubscribing] = useState(false)
+  const [testPushing, setTestPushing] = useState(false)
+  const [notifMessage, setNotifMessage] = useState('')
+
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPermissionStatus(Notification.permission)
+    }
+    try {
+      setPushEnabled(localStorage.getItem('bs_admin_push_enabled') !== 'false')
+      setSoundEnabled(localStorage.getItem('bs_admin_notif_sound') !== 'false')
+      setSoundVolume(Number(localStorage.getItem('bs_admin_notif_volume')) ? Number(localStorage.getItem('bs_admin_notif_volume')) * 100 : 90)
+      setRepeatAlert(localStorage.getItem('bs_admin_notif_repeat') === 'true')
+      setSoundTheme(localStorage.getItem('bs_admin_notif_theme') || 'chime')
+    } catch (e) {}
+  }, [])
+
+  const saveNotificationPreferences = (newSettings) => {
+    try {
+      if (newSettings.soundEnabled !== undefined) {
+        localStorage.setItem('bs_admin_notif_sound', String(newSettings.soundEnabled))
+      }
+      if (newSettings.soundVolume !== undefined) {
+        localStorage.setItem('bs_admin_notif_volume', String(newSettings.soundVolume / 100))
+      }
+      if (newSettings.repeatAlert !== undefined) {
+        localStorage.setItem('bs_admin_notif_repeat', String(newSettings.repeatAlert))
+      }
+      if (newSettings.soundTheme !== undefined) {
+        localStorage.setItem('bs_admin_notif_theme', newSettings.soundTheme)
+      }
+      if (newSettings.pushEnabled !== undefined) {
+        localStorage.setItem('bs_admin_push_enabled', String(newSettings.pushEnabled))
+      }
+      window.dispatchEvent(new Event('bs-settings-updated'))
+    } catch (e) {}
+  }
+
+  const handleEnablePushNotifications = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Web Push notifications are not supported on this browser.')
+      return
+    }
+
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (!vapidPublicKey) {
+      alert('VAPID Public Key not found in environment variables (NEXT_PUBLIC_VAPID_PUBLIC_KEY). Please add it to your .env.local file.')
+      return
+    }
+
+    try {
+      setSubscribing(true)
+      const permission = await Notification.requestPermission()
+      setPermissionStatus(permission)
+
+      if (permission !== 'granted') {
+        alert('Notification permission was blocked or dismissed.')
+        return
+      }
+
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      await navigator.serviceWorker.ready
+
+      let subscription = await registration.pushManager.getSubscription()
+      if (!subscription) {
+        const convertedKey = urlBase64ToUint8Array(vapidPublicKey)
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedKey
+        })
+      }
+
+      const subJson = subscription.toJSON()
+      const res = await fetch('/api/admin/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          subscription: subJson,
+          userAgent: navigator.userAgent
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Subscription failed')
+
+      setPushEnabled(true)
+      saveNotificationPreferences({ pushEnabled: true })
+      setNotifMessage('✅ Web Push notifications enabled successfully on this device!')
+      setTimeout(() => setNotifMessage(''), 4500)
+    } catch (err) {
+      alert('Failed to enable push notifications: ' + err.message)
+    } finally {
+      setSubscribing(false)
+    }
+  }
+
+  const handleTestPushNotification = async () => {
+    try {
+      setTestPushing(true)
+      const res = await fetch('/api/admin/notifications/test-push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        }
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Test push failed')
+      alert(data.message || 'Test push notification sent successfully!')
+    } catch (err) {
+      alert('Error testing push notification: ' + err.message)
+    } finally {
+      setTestPushing(false)
+    }
+  }
+
+  const handleTestOrderSound = () => {
+    try {
+      const vol = soundVolume / 100
+      const audio = new Audio('/sounds/new-order.mp3')
+      audio.volume = vol
+      audio.play().catch(() => {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext
+        if (AudioCtx) {
+          const ctx = new AudioCtx()
+          const now = ctx.currentTime
+          const gain = ctx.createGain()
+          gain.gain.value = vol
+          gain.connect(ctx.destination)
+          const notes = [523.25, 659.25, 783.99, 1046.50]
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator()
+            osc.frequency.value = freq
+            osc.connect(gain)
+            osc.start(now + idx * 0.12)
+            osc.stop(now + idx * 0.12 + 0.4)
+          })
+        }
+      })
+    } catch (e) {}
+  }
 
   useEffect(() => {
     if (!user) return
@@ -119,6 +282,212 @@ export default function AdminSettingsDesk() {
         )}
 
         <form onSubmit={handleSaveSettings} className="settings-form">
+          {/* ORDER NOTIFICATIONS & REALTIME SOUND CONTROL PANEL */}
+          <div className="adm-section-card" style={{ border: '2px solid #047857', borderRadius: '20px', padding: '24px', marginBottom: '28px', background: '#ffffff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <span className="admin-sub-tag" style={{ color: '#047857' }}>ADMIN ALERT ENGINE</span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '4px 0 0 0', color: 'var(--ink)' }}>
+                  🔔 Order Notifications & Sound Controls
+                </h3>
+              </div>
+
+              {/* Permission Status Pill */}
+              <span style={{
+                padding: '6px 14px',
+                borderRadius: '999px',
+                fontSize: '0.78rem',
+                fontWeight: 900,
+                background: permissionStatus === 'granted' ? '#d1fae5' : (permissionStatus === 'denied' ? '#fee2e2' : '#fef3c7'),
+                color: permissionStatus === 'granted' ? '#047857' : (permissionStatus === 'denied' ? '#dc2626' : '#b45309'),
+              }}>
+                {permissionStatus === 'granted' ? '🟢 PUSH PERMISSION GRANTED' : (permissionStatus === 'denied' ? '🔴 PUSH PERMISSION BLOCKED' : '🟡 NOTIFICATION NOT ENABLED YET')}
+              </span>
+            </div>
+
+            <p style={{ fontSize: '0.86rem', color: 'var(--muted)', marginBottom: '20px', lineHeight: '1.5' }}>
+              Receive instant Web Push notifications on Desktop & Mobile phone (Android Chrome) when an order is verified, plus loud realtime audio alerts when the admin dashboard is open.
+            </p>
+
+            {notifMessage && (
+              <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', fontWeight: 800, fontSize: '0.84rem', marginBottom: '18px' }}>
+                {notifMessage}
+              </div>
+            )}
+
+            {/* Push Setup Action Banner */}
+            {permissionStatus !== 'granted' && (
+              <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '16px', padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 900, color: '#166534' }}>
+                    📱 Enable Order Push Notifications
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#15803d' }}>
+                    Allow this device to receive order alerts even when the browser or admin tab is closed.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleEnablePushNotifications}
+                  disabled={subscribing}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #0d5a3a 0%, #047857 100%)',
+                    color: '#ffffff',
+                    fontWeight: 900,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(4,120,87,0.3)'
+                  }}
+                >
+                  {subscribing ? 'ENABLING...' : '🔔 ENABLE NOTIFICATIONS'}
+                </button>
+              </div>
+            )}
+
+            {/* Notification & Sound Toggles */}
+            <div className="adm-grid-2" style={{ marginBottom: '20px' }}>
+              {/* Push Checkbox */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '14px', border: '1px solid #e5e7eb', background: '#f9fafb', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={pushEnabled}
+                  onChange={(e) => {
+                    setPushEnabled(e.target.checked)
+                    saveNotificationPreferences({ pushEnabled: e.target.checked })
+                  }}
+                  style={{ width: '18px', height: '18px', accentColor: '#0d5a3a' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#1f2937' }}>Push Notifications</div>
+                  <div style={{ fontSize: '0.76rem', color: '#6b7280' }}>Background alerts when browser is closed</div>
+                </div>
+              </label>
+
+              {/* Sound Checkbox */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '14px', border: '1px solid #e5e7eb', background: '#f9fafb', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={soundEnabled}
+                  onChange={(e) => {
+                    setSoundEnabled(e.target.checked)
+                    saveNotificationPreferences({ soundEnabled: e.target.checked })
+                  }}
+                  style={{ width: '18px', height: '18px', accentColor: '#0d5a3a' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#1f2937' }}>New Order Sound</div>
+                  <div style={{ fontSize: '0.76rem', color: '#6b7280' }}>Play loud alert sound on dashboard</div>
+                </div>
+              </label>
+            </div>
+
+            {/* Sound Theme & Volume Controls */}
+            <div className="adm-grid-2" style={{ marginBottom: '20px' }}>
+              {/* Sound Theme Dropdown */}
+              <div className="adm-field">
+                <label style={{ fontWeight: 800, fontSize: '0.78rem', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>
+                  ALERT SOUND THEME
+                </label>
+                <select
+                  value={soundTheme}
+                  onChange={(e) => {
+                    setSoundTheme(e.target.value)
+                    saveNotificationPreferences({ soundTheme: e.target.value })
+                  }}
+                  className="adm-input"
+                  style={{ width: '100%', padding: '10px 14px', fontSize: '0.88rem' }}
+                >
+                  <option value="chime">🎵 Default New Order Chime</option>
+                  <option value="siren">🚨 Kitchen Siren Alert</option>
+                  <option value="bell">🔔 High Bell Ring</option>
+                </select>
+              </div>
+
+              {/* Volume Slider */}
+              <div className="adm-field">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontWeight: 800, fontSize: '0.78rem', letterSpacing: '0.08em' }}>
+                    ALERT VOLUME
+                  </label>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#0d5a3a' }}>
+                    {soundVolume}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={soundVolume}
+                  onChange={(e) => {
+                    const val = Number(e.target.value)
+                    setSoundVolume(val)
+                    saveNotificationPreferences({ soundVolume: val })
+                  }}
+                  style={{ width: '100%', accentColor: '#0d5a3a' }}
+                />
+              </div>
+            </div>
+
+            {/* Repeat Alert Toggle */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', borderRadius: '14px', border: '1px solid #e5e7eb', background: '#ffffff', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={repeatAlert}
+                  onChange={(e) => {
+                    setRepeatAlert(e.target.checked)
+                    saveNotificationPreferences({ repeatAlert: e.target.checked })
+                  }}
+                  style={{ width: '18px', height: '18px', accentColor: '#0d5a3a' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#1f2937' }}>Repeat Alert Until Acknowledged</div>
+                  <div style={{ fontSize: '0.76rem', color: '#6b7280' }}>Continuously repeat chime every 4s until admin taps Acknowledge</div>
+                </div>
+              </label>
+            </div>
+
+            {/* Test Action Buttons */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '16px', borderTop: '1px dashed #e5e7eb' }}>
+              <button
+                type="button"
+                onClick={handleTestPushNotification}
+                disabled={testPushing}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #0d5a3a',
+                  background: '#ffffff',
+                  color: '#0d5a3a',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {testPushing ? 'TESTING PUSH...' : '📲 TEST PUSH NOTIFICATION'}
+              </button>
+              <button
+                type="button"
+                onClick={handleTestOrderSound}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #047857',
+                  background: '#ffffff',
+                  color: '#047857',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer'
+                }}
+              >
+                🔊 TEST ORDER SOUND
+              </button>
+            </div>
+          </div>
+
           {/* GLOBAL ANNOUNCEMENT BANNER CONTROL PANEL */}
           <div className="adm-section-card" style={{ border: '2px solid var(--deep-green, #0d5a3a)', borderRadius: '20px', padding: '24px', marginBottom: '28px', background: '#ffffff' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>

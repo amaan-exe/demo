@@ -146,6 +146,16 @@ export default async function handler(req, res) {
           },
           { upsert: true, new: true }
         ).catch(() => {})
+
+        // Dispatch admin push notification (idempotent, background safe)
+        const { sendOrderNotification } = await import('../../../lib/orderNotification')
+        await sendOrderNotification({
+          orderId,
+          grandTotal: grandTotal || 0,
+          items: items || [],
+          customerName: customerName || '',
+          userName: customerName || ''
+        }).catch(err => console.warn('[verify-payment] Order notification notice:', err.message))
       } catch (mongoErr) {
         console.warn('MongoDB bg sync error in verify-payment:', mongoErr.message)
       }

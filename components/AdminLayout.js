@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAuth } from '../context/AuthContext'
 import AuthModal from './AuthModal'
+import AdminNotificationListener from './AdminNotificationListener'
 
 export default function AdminLayout({ children, activePage = 'dashboard', title = 'Admin Portal' }) {
   const router = useRouter()
@@ -198,6 +199,9 @@ export default function AdminLayout({ children, activePage = 'dashboard', title 
           <span className="adm-label">Menu</span>
         </Link>
       </nav>
+
+      {/* Global Realtime Admin Order Notification Listener */}
+      <AdminNotificationListener />
     </div>
   )
 }

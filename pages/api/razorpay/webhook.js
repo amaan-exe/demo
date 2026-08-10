@@ -200,6 +200,21 @@ export default async function handler(req, res) {
         } catch (fsErr) {
           console.warn('[Razorpay Webhook] Firestore sync warning:', fsErr.message)
         }
+
+        // Trigger admin push notification (idempotent, background safe)
+        try {
+          const { sendOrderNotification } = await import('../../../lib/orderNotification')
+          const orderDoc = await Order.findOne({ orderId: internalOrderId }).lean()
+          await sendOrderNotification({
+            orderId: internalOrderId,
+            grandTotal: orderDoc?.grandTotal || amountInRupees || 0,
+            items: orderDoc?.items || [],
+            customerName: payment.notes?.customerName || orderDoc?.customerName || '',
+            userName: payment.notes?.customerName || orderDoc?.userName || ''
+          })
+        } catch (notifErr) {
+          console.warn('[Razorpay Webhook] Notification dispatch notice:', notifErr.message)
+        }
       }
     } else if (eventType === 'payment.authorized') {
       const payment = event.payload?.payment?.entity

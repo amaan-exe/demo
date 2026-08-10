@@ -159,6 +159,22 @@ export default async function handler(req, res) {
       } catch (fsErr) {
         console.warn('Reconcile Firestore update warning:', fsErr.message)
       }
+
+      if (appStatus === 'DONE' && targetOrderId) {
+        try {
+          const { sendOrderNotification } = await import('../../../lib/orderNotification')
+          const orderDoc = await Order.findOne({ orderId: targetOrderId }).lean()
+          await sendOrderNotification({
+            orderId: targetOrderId,
+            grandTotal: orderDoc?.grandTotal || (fetchedPayment ? fetchedPayment.amount / 100 : 0),
+            items: orderDoc?.items || [],
+            customerName: orderDoc?.customerName || orderDoc?.userName || '',
+            userName: orderDoc?.userName || ''
+          })
+        } catch (notifErr) {
+          console.warn('[Reconcile] Notification dispatch notice:', notifErr.message)
+        }
+      }
     }
 
     return res.status(200).json({

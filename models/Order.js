@@ -66,6 +66,10 @@ const OrderSchema = new mongoose.Schema({
   paymentVerifiedBy: String,
   paymentVerifiedAt: Date,
   rejectionReason: String,
+  notificationSent: {
+    type: Boolean,
+    default: false,
+  },
   refund: {
     requested: { type: Boolean, default: false },
     status: { type: String, default: 'NONE' },
