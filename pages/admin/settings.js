@@ -43,6 +43,7 @@ export default function AdminSettingsDesk() {
   const [permissionStatus, setPermissionStatus] = useState('default')
   const [subscribing, setSubscribing] = useState(false)
   const [testPushing, setTestPushing] = useState(false)
+  const [testTelegramming, setTestTelegramming] = useState(false)
   const [notifMessage, setNotifMessage] = useState('')
 
   const [saving, setSaving] = useState(false)
@@ -142,9 +143,6 @@ export default function AdminSettingsDesk() {
       setSubscribing(false)
     }
   }
-
-  const [testPushing, setTestPushing] = useState(false)
-  const [testTelegramming, setTestTelegramming] = useState(false)
 
   const handleTestPushNotification = async () => {
     try {
