@@ -201,7 +201,7 @@ export default async function handler(req, res) {
           console.warn('[Razorpay Webhook] Firestore sync warning:', fsErr.message)
         }
 
-        // Trigger admin push notification (idempotent, background safe)
+        // Trigger admin push & Telegram notification (idempotent, background safe)
         try {
           const { sendOrderNotification } = await import('../../../lib/orderNotification')
           const orderDoc = await Order.findOne({ orderId: internalOrderId }).lean()
@@ -210,7 +210,11 @@ export default async function handler(req, res) {
             grandTotal: orderDoc?.grandTotal || amountInRupees || 0,
             items: orderDoc?.items || [],
             customerName: payment.notes?.customerName || orderDoc?.customerName || '',
-            userName: payment.notes?.customerName || orderDoc?.userName || ''
+            userName: payment.notes?.customerName || orderDoc?.userName || '',
+            customerPhone: payment.contact || orderDoc?.customerPhone || orderDoc?.userPhone || '',
+            deliveryAddress: orderDoc?.deliveryAddress || '',
+            paymentMethod: method || 'Razorpay Webhook',
+            paymentStatus: 'paid'
           })
         } catch (notifErr) {
           console.warn('[Razorpay Webhook] Notification dispatch notice:', notifErr.message)

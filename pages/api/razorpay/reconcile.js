@@ -169,7 +169,11 @@ export default async function handler(req, res) {
             grandTotal: orderDoc?.grandTotal || (fetchedPayment ? fetchedPayment.amount / 100 : 0),
             items: orderDoc?.items || [],
             customerName: orderDoc?.customerName || orderDoc?.userName || '',
-            userName: orderDoc?.userName || ''
+            userName: orderDoc?.userName || '',
+            customerPhone: orderDoc?.customerPhone || orderDoc?.userPhone || '',
+            deliveryAddress: orderDoc?.deliveryAddress || '',
+            paymentMethod: 'Razorpay (Reconciled)',
+            paymentStatus: 'paid'
           })
         } catch (notifErr) {
           console.warn('[Reconcile] Notification dispatch notice:', notifErr.message)
