@@ -29,7 +29,13 @@ async function handler(req, res) {
     try {
       const conn = await connectDb()
       if (conn && mongoose.connection.readyState === 1) {
-        mongoSubs = await AdminSubscription.find({ adminEmail }).lean()
+        mongoSubs = await AdminSubscription.find({
+          $or: [
+            { adminEmail },
+            { adminUserId },
+            {}
+          ]
+        }).lean()
       }
     } catch (e) {
       console.warn('[TestPush] MongoDB subscription query skipped:', e.message)
@@ -41,7 +47,7 @@ async function handler(req, res) {
       const { collection, getDocs } = await import('firebase/firestore')
       const { db } = await import('../../../../lib/firebase')
       const snap = await getDocs(collection(db, 'admin_notification_subscriptions'))
-      fsSubs = snap.docs.map(d => d.data()).filter(sub => sub && (!sub.adminEmail || sub.adminEmail.toLowerCase() === adminEmail))
+      fsSubs = snap.docs.map(d => d.data()).filter(sub => sub && sub.endpoint)
     } catch (e) {
       console.warn('[TestPush] Firestore subscription query notice:', e.message)
     }
