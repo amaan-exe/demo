@@ -24,8 +24,41 @@ async function handler(req, res) {
 
     webpush.setVapidDetails(subject, publicKey, privateKey)
 
-    await connectDb()
-    const subscriptions = await AdminSubscription.find({ adminEmail }).lean()
+    // Fetch subscriptions from MongoDB if connected
+    let mongoSubs = []
+    try {
+      const conn = await connectDb()
+      if (conn && mongoose.connection.readyState === 1) {
+        mongoSubs = await AdminSubscription.find({ adminEmail }).lean()
+      }
+    } catch (e) {
+      console.warn('[TestPush] MongoDB subscription query skipped:', e.message)
+    }
+
+    // Fetch subscriptions from Firestore as fallback/sync
+    let fsSubs = []
+    try {
+      const { collection, getDocs } = await import('firebase/firestore')
+      const { db } = await import('../../../../lib/firebase')
+      const snap = await getDocs(collection(db, 'admin_notification_subscriptions'))
+      fsSubs = snap.docs.map(d => d.data()).filter(sub => sub && (!sub.adminEmail || sub.adminEmail.toLowerCase() === adminEmail))
+    } catch (e) {
+      console.warn('[TestPush] Firestore subscription query notice:', e.message)
+    }
+
+    // Deduplicate subscriptions by endpoint
+    const subMap = new Map()
+    for (const sub of [...mongoSubs, ...fsSubs]) {
+      if (sub && sub.endpoint && sub.p256dh && sub.auth) {
+        subMap.set(sub.endpoint, {
+          endpoint: sub.endpoint,
+          p256dh: sub.p256dh,
+          auth: sub.auth
+        })
+      }
+    }
+
+    const subscriptions = Array.from(subMap.values())
 
     if (!subscriptions || subscriptions.length === 0) {
       return res.status(404).json({
@@ -64,7 +97,18 @@ async function handler(req, res) {
           console.warn('[TestPush] Error sending push to device:', err.message)
           failureCount++
           if (err.statusCode === 404 || err.statusCode === 410) {
-            await AdminSubscription.deleteOne({ endpoint: sub.endpoint }).catch(() => {})
+            try {
+              const conn = await connectDb()
+              if (conn && mongoose.connection.readyState === 1) {
+                await AdminSubscription.deleteOne({ endpoint: sub.endpoint }).catch(() => {})
+              }
+            } catch (e) {}
+            try {
+              const { doc, deleteDoc } = await import('firebase/firestore')
+              const { db } = await import('../../../../lib/firebase')
+              const fsSubId = Buffer.from(sub.endpoint).toString('base64').replace(/\//g, '_').replace(/\+/g, '-').substring(0, 60)
+              await deleteDoc(doc(db, 'admin_notification_subscriptions', fsSubId)).catch(() => {})
+            } catch (e) {}
           }
         }
       })

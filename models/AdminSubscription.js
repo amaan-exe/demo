@@ -41,6 +41,8 @@ const AdminSubscriptionSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+}, {
+  bufferCommands: false,
 })
 
 AdminSubscriptionSchema.pre('save', function (next) {

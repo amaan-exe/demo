@@ -16,9 +16,15 @@ async function handler(req, res) {
       return res.status(400).json({ error: 'Missing endpoint to unsubscribe' })
     }
 
-    // 1. Remove from MongoDB
-    await connectDb()
-    await AdminSubscription.deleteOne({ endpoint })
+    // 1. Remove from MongoDB (if connected)
+    try {
+      const conn = await connectDb()
+      if (conn && mongoose.connection.readyState === 1) {
+        await AdminSubscription.deleteOne({ endpoint })
+      }
+    } catch (mongoErr) {
+      console.warn('MongoDB AdminSubscription delete warning:', mongoErr.message)
+    }
 
     // 2. Remove from Firestore
     try {
