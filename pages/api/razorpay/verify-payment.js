@@ -93,77 +93,79 @@ export default async function handler(req, res) {
       console.error('Firestore setDoc error in verify-payment:', fsErr)
     }
 
-    // MongoDB Order & PaymentTransaction Sync (non-blocking background)
-    ;(async () => {
-      try {
-        const { connectDb } = await import('../../../lib/db')
-        const Order = (await import('../../../models/Order')).default
-        const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
-        await connectDb()
+    // 1. MongoDB Order & PaymentTransaction Sync (optional fallback)
+    try {
+      const { connectDb } = await import('../../../lib/db')
+      const Order = (await import('../../../models/Order')).default
+      const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
+      await connectDb()
 
-        const mongoOrderUpdate = {
-          paymentStatus: 'paid',
-          orderStatus: 'confirmed',
-          status: 'confirmed',
-          customerMarkedPaid: true,
-          razorpayPaymentId: razorpay_payment_id,
-          razorpayOrderId: razorpay_order_id,
-          razorpaySignature: razorpay_signature,
-          transactionReference: razorpay_payment_id,
-          paymentVerifiedBy: 'CLIENT_VERIFY',
-          paymentVerifiedAt: new Date(),
-          updatedAt: new Date(),
-        }
-
-        if (Array.isArray(items) && items.length > 0) mongoOrderUpdate.items = items
-        if (typeof subtotal === 'number') mongoOrderUpdate.subtotal = subtotal
-        if (typeof deliveryCharge === 'number') mongoOrderUpdate.deliveryCharge = deliveryCharge
-        if (typeof grandTotal === 'number' && grandTotal > 0) mongoOrderUpdate.grandTotal = grandTotal
-
-        await Order.findOneAndUpdate(
-          { orderId },
-          mongoOrderUpdate
-        ).catch(() => {})
-
-        await PaymentTransaction.findOneAndUpdate(
-          { internalOrderId: orderId },
-          {
-            $set: {
-              paymentId: razorpay_payment_id,
-              razorpayOrderId: razorpay_order_id,
-              status: 'DONE',
-              razorpayStatus: 'captured',
-              capturedAt: new Date(),
-            },
-            $push: {
-              timeline: {
-                event: 'CLIENT_VERIFICATION_SUCCESS',
-                timestamp: new Date(),
-                notes: `Client payment response verified via HMAC-SHA256. Payment ID: ${razorpay_payment_id}`,
-                source: 'CLIENT_CHECKOUT'
-              }
-            }
-          },
-          { upsert: true, new: true }
-        ).catch(() => {})
-
-        // Dispatch admin push & Telegram notification (idempotent, background safe)
-        const { sendOrderNotification } = await import('../../../lib/orderNotification')
-        await sendOrderNotification({
-          orderId,
-          grandTotal: grandTotal || 0,
-          items: items || [],
-          customerName: customerName || '',
-          userName: customerName || '',
-          customerPhone: customerPhone || '',
-          deliveryAddress: typeof deliveryAddress === 'string' ? deliveryAddress : (deliveryAddress?.fullAddress || ''),
-          paymentMethod: 'Razorpay Online',
-          paymentStatus: 'paid'
-        }).catch(err => console.warn('[verify-payment] Order notification notice:', err.message))
-      } catch (mongoErr) {
-        console.warn('MongoDB bg sync error in verify-payment:', mongoErr.message)
+      const mongoOrderUpdate = {
+        paymentStatus: 'paid',
+        orderStatus: 'confirmed',
+        status: 'confirmed',
+        customerMarkedPaid: true,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        razorpaySignature: razorpay_signature,
+        transactionReference: razorpay_payment_id,
+        paymentVerifiedBy: 'CLIENT_VERIFY',
+        paymentVerifiedAt: new Date(),
+        updatedAt: new Date(),
       }
-    })()
+
+      if (Array.isArray(items) && items.length > 0) mongoOrderUpdate.items = items
+      if (typeof subtotal === 'number') mongoOrderUpdate.subtotal = subtotal
+      if (typeof deliveryCharge === 'number') mongoOrderUpdate.deliveryCharge = deliveryCharge
+      if (typeof grandTotal === 'number' && grandTotal > 0) mongoOrderUpdate.grandTotal = grandTotal
+
+      await Order.findOneAndUpdate(
+        { orderId },
+        mongoOrderUpdate
+      ).catch(() => {})
+
+      await PaymentTransaction.findOneAndUpdate(
+        { internalOrderId: orderId },
+        {
+          $set: {
+            paymentId: razorpay_payment_id,
+            razorpayOrderId: razorpay_order_id,
+            status: 'DONE',
+            razorpayStatus: 'captured',
+            capturedAt: new Date(),
+          },
+          $push: {
+            timeline: {
+              event: 'CLIENT_VERIFICATION_SUCCESS',
+              timestamp: new Date(),
+              notes: `Client payment response verified via HMAC-SHA256. Payment ID: ${razorpay_payment_id}`,
+              source: 'CLIENT_CHECKOUT'
+            }
+          }
+        },
+        { upsert: true, new: true }
+      ).catch(() => {})
+    } catch (mongoErr) {
+      console.warn('MongoDB bg sync notice in verify-payment:', mongoErr.message)
+    }
+
+    // 2. Dispatch admin Web Push & Telegram notification (AWAITED for serverless reliability)
+    try {
+      const { sendOrderNotification } = await import('../../../lib/orderNotification')
+      await sendOrderNotification({
+        orderId,
+        grandTotal: grandTotal || 0,
+        items: items || [],
+        customerName: customerName || '',
+        userName: customerName || '',
+        customerPhone: customerPhone || '',
+        deliveryAddress: typeof deliveryAddress === 'string' ? deliveryAddress : (deliveryAddress?.fullAddress || ''),
+        paymentMethod: 'Razorpay Online',
+        paymentStatus: 'paid'
+      }).catch(err => console.warn('[verify-payment] Order notification notice:', err.message))
+    } catch (notifErr) {
+      console.warn('[verify-payment] Order notification dispatch error:', notifErr.message)
+    }
 
     return res.status(200).json({
       success: true,
