@@ -86,8 +86,80 @@ export default async function handler(req, res) {
       }
     }
 
-    // --- STEP 4: Return response for popup ---
-    res.status(200).json({
+    // --- STEP 4: Background MongoDB pre-creation (AWAITED FOR VERCEL STABILITY) ---
+    try {
+      const { connectDb } = await import('../../../lib/db')
+      const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
+      const Order = (await import('../../../models/Order')).default
+      await connectDb()
+
+      await PaymentTransaction.findOneAndUpdate(
+        { internalOrderId: orderId },
+        {
+          $set: {
+            internalOrderId: orderId,
+            razorpayOrderId: razorpayOrder.id,
+            amount: Number(amount) || 0,
+            currency: currency || 'INR',
+            status: 'PENDING',
+            razorpayStatus: 'created',
+            paymentMethod: 'RAZORPAY',
+            customerName: orderDetails?.customerName || '',
+            customerEmail: orderDetails?.userEmail || '',
+            customerPhone: orderDetails?.customerPhone || '',
+          },
+          $push: {
+            timeline: {
+              event: 'ORDER_CREATED',
+              timestamp: new Date(),
+              notes: `Razorpay Order Created (${razorpayOrder.id}) for ₹${amount}`,
+              source: 'CLIENT_CHECKOUT'
+            }
+          }
+        },
+        { upsert: true, new: true }
+      ).catch(() => {})
+
+      if (orderDetails) {
+        const discountValue = orderDetails.coupon ? orderDetails.coupon.discount : 0
+        await Order.findOneAndUpdate(
+          { orderId },
+          {
+            $set: {
+              orderId,
+              userId: orderDetails.userId || 'GUEST',
+              userEmail: orderDetails.userEmail || orderDetails.customerEmail || 'guest@biriyanistation.in',
+              customerEmail: orderDetails.userEmail || orderDetails.customerEmail || '',
+              userName: orderDetails.customerName || '',
+              customerName: orderDetails.customerName || '',
+              userPhone: orderDetails.customerPhone || '',
+              customerPhone: orderDetails.customerPhone || '',
+              deliveryAddress: orderDetails.deliveryAddress || '',
+              items: orderDetails.items || [],
+              subtotal: Number(orderDetails.subtotal) || 0,
+              deliveryCharge: Number(orderDetails.deliveryCharge) || 0,
+              tax: 0,
+              discount: discountValue,
+              appliedCoupon: orderDetails.coupon ? orderDetails.coupon.code : null,
+              grandTotal: Number(amount) || 0,
+              paymentMethod: 'RAZORPAY',
+              paymentStatus: 'awaiting_payment',
+              orderStatus: 'awaiting_payment',
+              status: 'awaiting_payment',
+              customerMarkedPaid: false,
+              razorpayOrderId: razorpayOrder.id,
+              updatedAt: new Date()
+            }
+          },
+          { upsert: true, new: true }
+        ).catch(() => {})
+      }
+    } catch (ptErr) {
+      console.warn('PaymentTransaction/Order init warning:', ptErr.message)
+    }
+
+    // --- STEP 5: Return response for popup ---
+    return res.status(200).json({
       success: true,
       order_id: razorpayOrder.id,
       amount: razorpayOrder.amount,
@@ -95,80 +167,6 @@ export default async function handler(req, res) {
       key_id,
       orderId, // internal order ID for the frontend
     })
-
-    // --- STEP 5: Background MongoDB pre-creation ---
-    ;(async () => {
-      try {
-        const { connectDb } = await import('../../../lib/db')
-        const PaymentTransaction = (await import('../../../models/PaymentTransaction')).default
-        const Order = (await import('../../../models/Order')).default
-        await connectDb()
-
-        await PaymentTransaction.findOneAndUpdate(
-          { internalOrderId: orderId },
-          {
-            $set: {
-              internalOrderId: orderId,
-              razorpayOrderId: razorpayOrder.id,
-              amount: Number(amount) || 0,
-              currency: currency || 'INR',
-              status: 'PENDING',
-              razorpayStatus: 'created',
-              paymentMethod: 'RAZORPAY',
-              customerName: orderDetails?.customerName || '',
-              customerEmail: orderDetails?.userEmail || '',
-              customerPhone: orderDetails?.customerPhone || '',
-            },
-            $push: {
-              timeline: {
-                event: 'ORDER_CREATED',
-                timestamp: new Date(),
-                notes: `Razorpay Order Created (${razorpayOrder.id}) for ₹${amount}`,
-                source: 'CLIENT_CHECKOUT'
-              }
-            }
-          },
-          { upsert: true, new: true }
-        ).catch(() => {})
-
-        if (orderDetails) {
-          const discountValue = orderDetails.coupon ? orderDetails.coupon.discount : 0
-          await Order.findOneAndUpdate(
-            { orderId },
-            {
-              $set: {
-                orderId,
-                userId: orderDetails.userId || 'GUEST',
-                userEmail: orderDetails.userEmail || orderDetails.customerEmail || 'guest@biriyanistation.in',
-                customerEmail: orderDetails.userEmail || orderDetails.customerEmail || '',
-                userName: orderDetails.customerName || '',
-                customerName: orderDetails.customerName || '',
-                userPhone: orderDetails.customerPhone || '',
-                customerPhone: orderDetails.customerPhone || '',
-                deliveryAddress: orderDetails.deliveryAddress || '',
-                items: orderDetails.items || [],
-                subtotal: Number(orderDetails.subtotal) || 0,
-                deliveryCharge: Number(orderDetails.deliveryCharge) || 0,
-                tax: 0,
-                discount: discountValue,
-                appliedCoupon: orderDetails.coupon ? orderDetails.coupon.code : null,
-                grandTotal: Number(amount) || 0,
-                paymentMethod: 'RAZORPAY',
-                paymentStatus: 'awaiting_payment',
-                orderStatus: 'awaiting_payment',
-                status: 'awaiting_payment',
-                customerMarkedPaid: false,
-                razorpayOrderId: razorpayOrder.id,
-                updatedAt: new Date()
-              }
-            },
-            { upsert: true, new: true }
-          ).catch(() => {})
-        }
-      } catch (ptErr) {
-        console.warn('PaymentTransaction/Order bg init warning:', ptErr.message)
-      }
-    })()
   } catch (error) {
     console.error('Razorpay Create Order Error:', error)
 

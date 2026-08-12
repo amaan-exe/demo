@@ -155,26 +155,30 @@ export default function MenuPage() {
         const finalGrandTotal = Math.max(0, grandTotal - discountValue)
 
         // Fast Firestore order update with full items & grandTotal details
-        setDoc(doc(db, 'orders', orderId), {
-          userId: user?.uid || 'GUEST',
-          userEmail: user?.email || 'guest@biriyanistation.in',
-          customerName: finalName,
-          customerEmail: user?.email || 'guest@biriyanistation.in',
-          customerPhone: finalPhone,
-          deliveryAddress: finalAddress,
-          items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
-          subtotal: cartTotal,
-          deliveryCharge: deliveryFee,
-          tax: 0,
-          discount: discountValue,
-          appliedCoupon: orderData.coupon ? orderData.coupon.code : null,
-          grandTotal: finalGrandTotal,
-          paymentMethod: 'RAZORPAY',
-          paymentStatus: 'paid',
-          orderStatus: 'confirmed',
-          customerMarkedPaid: true,
-          updatedAt: serverTimestamp()
-        }, { merge: true }).catch(e => console.warn('Firestore bg link warning:', e))
+        try {
+          await setDoc(doc(db, 'orders', orderId), {
+            userId: user?.uid || 'GUEST',
+            userEmail: user?.email || 'guest@biriyanistation.in',
+            customerName: finalName,
+            customerEmail: user?.email || 'guest@biriyanistation.in',
+            customerPhone: finalPhone,
+            deliveryAddress: finalAddress,
+            items: cartItems.map(i => ({ title: i.title, qty: i.qty, price: i.price, image: i.image })),
+            subtotal: cartTotal,
+            deliveryCharge: deliveryFee,
+            tax: 0,
+            discount: discountValue,
+            appliedCoupon: orderData.coupon ? orderData.coupon.code : null,
+            grandTotal: finalGrandTotal,
+            paymentMethod: 'RAZORPAY',
+            paymentStatus: 'paid',
+            orderStatus: 'confirmed',
+            customerMarkedPaid: true,
+            updatedAt: serverTimestamp()
+          }, { merge: true })
+        } catch (e) {
+          console.warn('Firestore bg link warning:', e)
+        }
 
         try { sessionStorage.removeItem('pending_razorpay_checkout') } catch (e) {}
 
@@ -205,15 +209,19 @@ export default function MenuPage() {
           paymentVerifiedBy: 'CLIENT_VERIFY',
         }
 
-        fetch('/api/orders/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken || ''}`
-          },
-          body: JSON.stringify(syncPayload),
-          keepalive: true
-        }).catch(e => console.warn('MongoDB sync notice:', e))
+        try {
+          await fetch('/api/orders/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken || ''}`
+            },
+            body: JSON.stringify(syncPayload),
+            keepalive: true
+          })
+        } catch (e) {
+          console.warn('MongoDB sync notice:', e)
+        }
 
         setCartItems([])
         setCheckoutOpen(false)

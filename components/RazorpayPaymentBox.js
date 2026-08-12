@@ -44,7 +44,7 @@ export default function RazorpayPaymentBox({
     setIsCheckingStatus(true)
     setCheckingNotice("⏳ Checking payment status with Razorpay... Please don't pay again.")
 
-    const delays = [0, 2500, 5000, 8000, 12000]
+    const delays = [0, 1500, 3000, 5000, 8000, 12000]
     for (let i = 0; i < delays.length; i++) {
       if (delays[i] > 0) {
         await new Promise((r) => setTimeout(r, delays[i]))

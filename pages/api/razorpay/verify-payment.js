@@ -122,7 +122,7 @@ export default async function handler(req, res) {
       await Order.findOneAndUpdate(
         { orderId },
         mongoOrderUpdate
-      ).catch(() => {})
+      )
 
       await PaymentTransaction.findOneAndUpdate(
         { internalOrderId: orderId },
@@ -144,7 +144,7 @@ export default async function handler(req, res) {
           }
         },
         { upsert: true, new: true }
-      ).catch(() => {})
+      )
     } catch (mongoErr) {
       console.warn('MongoDB bg sync notice in verify-payment:', mongoErr.message)
     }
