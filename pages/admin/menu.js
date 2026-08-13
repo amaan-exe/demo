@@ -245,16 +245,18 @@ export default function AdminMenuDesk() {
               <div className="status-filter-wrapped" role="tablist">
                 {[
                   { id: 'all', label: '🍱 ALL DISHES' },
-                  { id: 'kawab', label: '🔥 KAWABS' },
-                  { id: 'biryani', label: '🍛 BIRYANIS' },
-                  { id: 'gravy', label: '🍲 GRAVIES' },
-                  { id: 'bread', label: '𫓓 BREADS' },
-                  { id: 'beverage', label: '🥤 BEVERAGES' }
+                  { id: 'biryani', label: `🍛 BIRYANI` },
+                  { id: 'starters', label: `🍗 STARTERS` },
+                  { id: 'main_course', label: `🍲 MAIN COURSE` },
+                  { id: 'breads', label: `𫓓 BREADS` },
+                  { id: 'rolls', label: `🌯 ROLLS` },
+                  { id: 'beverages', label: `🥤 BEVERAGES` },
+                  { id: 'combos', label: `🎁 COMBOS` }
                 ].map((tab) => {
                   const itemsList = menuItems.length > 0 ? menuItems : ALL_MENU_ITEMS
                   const count = tab.id === 'all'
                     ? itemsList.length
-                    : itemsList.filter(i => (i.category || '').toLowerCase() === tab.id).length
+                    : itemsList.filter(i => (i.category || '').toLowerCase().includes(tab.id)).length
 
                   return (
                     <button
@@ -289,7 +291,7 @@ export default function AdminMenuDesk() {
               <tbody>
                 {(menuItems.length > 0 ? menuItems : ALL_MENU_ITEMS)
                   .filter(item => {
-                    if (categoryFilter !== 'all' && (item.category || '').toLowerCase() !== categoryFilter.toLowerCase()) return false
+                    if (categoryFilter !== 'all' && !(item.category || '').toLowerCase().includes(categoryFilter.toLowerCase())) return false
                     if (searchQuery.trim()) {
                       const q = searchQuery.toLowerCase().trim()
                       const titleMatch = (item.name || item.title || '').toLowerCase().includes(q)
@@ -299,92 +301,87 @@ export default function AdminMenuDesk() {
                     }
                     return true
                   })
-                  .map((item) => (
-                    <tr key={item.id || item.title} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  .map((dish) => (
+                    <tr key={dish.id || dish.title} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <img src={item.image} alt={item.name || item.title} style={{ width: '46px', height: '46px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
+                          <img src={dish.image} alt={dish.name || dish.title} style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
                           <div>
-                            <strong style={{ color: 'var(--ink)', display: 'block', fontSize: '0.92rem' }}>{item.name || item.title}</strong>
-                            <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{item.preparationTime || item.time || '20 mins'}</span>
+                            <strong style={{ display: 'block', color: 'var(--ink)' }}>{dish.name || dish.title}</strong>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{dish.portion || dish.preparationTime || '20-25 mins'}</span>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '12px 14px', textTransform: 'capitalize', fontWeight: 600 }}>{item.category}</td>
-                      <td style={{ padding: '12px 14px', fontWeight: 900, color: 'var(--deep-green)', fontSize: '0.95rem' }}>₹{item.price}</td>
                       <td style={{ padding: '12px 14px' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 900, padding: '4px 10px', borderRadius: '6px', whiteSpace: 'nowrap', background: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: (item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '#16a34a' : '#dc2626' }}>
-                          {(item.vegNonVeg === 'veg' || (item.title || item.name || '').toLowerCase().includes('paneer') || (item.category || '').toLowerCase().includes('bread')) ? '🟢 VEG' : '🔴 NON-VEG'}
+                        <span style={{ padding: '4px 10px', borderRadius: '99px', background: 'rgba(13,90,58,0.08)', color: 'var(--deep-green)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                          {dish.categoryName || dish.category}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 14px', fontWeight: 700 }}>₹{dish.price}</td>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, background: dish.vegNonVeg === 'veg' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: dish.vegNonVeg === 'veg' ? '#16a34a' : '#dc2626' }}>
+                          {dish.vegNonVeg === 'veg' ? '🟢 VEG' : '🔴 NON-VEG'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
                         <button
-                          onClick={() => item.id && handleToggleAvailability(item)}
-                          style={{
-                            border: 'none',
-                            padding: '4px 12px',
-                            borderRadius: '999px',
-                            fontWeight: 800,
-                            fontSize: '0.75rem',
-                            whiteSpace: 'nowrap',
-                            cursor: 'pointer',
-                            background: item.available !== false ? 'rgba(13,90,58,0.12)' : 'rgba(0,0,0,0.08)',
-                            color: item.available !== false ? 'var(--deep-green)' : '#888'
-                          }}
+                          onClick={() => dish.id && handleToggleAvailability(dish)}
+                          style={{ border: 'none', background: dish.available ? 'rgba(34,197,94,0.15)' : 'rgba(0,0,0,0.08)', color: dish.available ? '#15803d' : '#666', padding: '4px 10px', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                         >
-                          {item.available !== false ? '● Available' : '○ Unavailable'}
+                          {dish.available ? '✓ AVAILABLE' : '✕ OFF-AIR'}
                         </button>
                       </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <button onClick={() => item.id ? handleOpenEdit(item) : alert('Click SEED INITIAL 19 DISHES to manage in Firestore')} style={{ background: 'none', border: 'none', color: '#1a73e8', fontWeight: 800, cursor: 'pointer', marginRight: '12px' }}>Edit</button>
-                        {item.id && <button onClick={() => handleDeleteItem(item.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontWeight: 800, cursor: 'pointer' }}>Delete</button>}
+                      <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => dish.id ? handleOpenEdit(dish) : alert('Click SEED INITIAL 19 DISHES to manage in Firestore')} style={{ border: 'none', background: 'rgba(13,90,58,0.1)', color: 'var(--deep-green)', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                          {dish.id && <button onClick={() => handleDeleteItem(dish.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#dc2626', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Delete</button>}
+                        </div>
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Add / Edit Food Modal */}
-      {showModal && (
-        <div className="co-overlay" aria-hidden="false" style={{ opacity: 1, visibility: 'visible', zIndex: 3000 }}>
-          <button type="button" className="co-backdrop" onClick={() => setShowModal(false)} />
-          <div className="auth-modal-panel" style={{ width: 'min(560px, 94vw)', background: '#ffffff', borderRadius: '28px', padding: '32px', position: 'relative', zIndex: 100, boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ink)', margin: 0 }}>
-                {editingItem ? 'Edit Food Item' : 'Add New Food Item'}
-              </h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="co-field">
-                <label>Food Name</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Chicken Tandoori Kawab" required />
+        {/* Modal for Add / Edit Dish */}
+        {showModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', zIndex: 9999, padding: '20px' }}>
+            <div style={{ background: '#ffffff', borderRadius: '24px', padding: '28px', maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>{editingItem ? 'Edit Dish' : 'Add New Dish'}</h3>
+                <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
               </div>
 
-              <div className="co-field">
-                <label>Description</label>
-                <textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Char-grilled at 500°C..." required />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div className="co-field">
-                  <label>Price (₹)</label>
-                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="299" required />
+                  <label>Food Name</label>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Chicken Biryani [2 pc chicken]" required />
                 </div>
+
                 <div className="co-field">
-                  <label>Category</label>
-                  <select value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.9rem' }}>
-                    <option value="kawab">Kawab</option>
-                    <option value="biryani">Biryani</option>
-                    <option value="gravy">Gravy</option>
-                    <option value="bread">Bread</option>
-                  </select>
+                  <label>Description</label>
+                  <textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Fragrant long-grain Dum basmati rice..." required />
                 </div>
-              </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="co-field">
+                    <label>Price (₹)</label>
+                    <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="220" required />
+                  </div>
+                  <div className="co-field">
+                    <label>Category</label>
+                    <select value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '0.9rem' }}>
+                      <option value="biryani">Biryani</option>
+                      <option value="starters">Starters</option>
+                      <option value="main_course">Main Course</option>
+                      <option value="breads">Indian Breads</option>
+                      <option value="rolls">Rolls</option>
+                      <option value="beverages">Beverages</option>
+                      <option value="combos">Super Saver Combos</option>
+                    </select>
+                  </div>
+                </div>
 
               <div className="co-field">
                 <label>Food Image</label>
@@ -436,6 +433,8 @@ export default function AdminMenuDesk() {
           </div>
         </div>
       )}
+      </div>
     </AdminLayout>
   )
 }
+

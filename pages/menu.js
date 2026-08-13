@@ -325,22 +325,37 @@ export default function MenuPage() {
   // Real-time Firestore sync for Menu
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'menu'), (snapshot) => {
-      const docs = snapshot.docs.map(d => {
-        const data = d.data()
+      const docs = snapshot.docs.map(docSnap => {
+        const data = docSnap.data()
+        const codeItem = ALL_MENU_ITEMS.find(i => i.id === docSnap.id || i.title === (data.name || data.title))
+
+        // Background update Firestore if image in DB is stale/old
+        if (codeItem && codeItem.image && data.image !== codeItem.image) {
+          try {
+            setDoc(doc(db, 'menu', docSnap.id), {
+              image: codeItem.image,
+              category: codeItem.category,
+              categoryName: codeItem.categoryName,
+              vegNonVeg: codeItem.vegNonVeg || 'veg',
+              updatedAt: serverTimestamp()
+            }, { merge: true })
+          } catch (e) {}
+        }
+
         return {
-          id: d.id,
+          id: docSnap.id,
           ...data,
-          title: data.name || data.title || 'Unknown Item',
-          priceLabel: `₹${data.price || 0}`,
-          price: data.price || 0,
-          category: data.category || 'kawab',
-          categoryName: data.categoryName || (data.category === 'biryani' ? 'Biryani' : data.category === 'kawab' ? 'Kawabs' : 'Dishes'),
-          tags: data.tags || (data.popular ? ['Bestseller'] : []),
-          spice: data.spice || 'Medium',
-          time: data.preparationTime || '20-25 min',
-          portion: data.portion || 'Serves 1-2',
-          description: data.description || '',
-          image: data.image || '/menu/Chicken tandoori kawab.jpeg'
+          title: data.name || data.title || codeItem?.title || 'Unknown Item',
+          priceLabel: `₹${data.price || codeItem?.price || 0}`,
+          price: data.price || codeItem?.price || 0,
+          category: codeItem?.category || data.category || 'biryani',
+          categoryName: codeItem?.categoryName || data.categoryName || 'Dishes',
+          tags: codeItem?.tags || data.tags || (data.popular ? ['Bestseller'] : []),
+          spice: codeItem?.spice || data.spice || 'Medium',
+          time: codeItem?.time || data.preparationTime || '20-25 min',
+          portion: codeItem?.portion || data.portion || 'Serves 1-2',
+          description: codeItem?.description || data.description || '',
+          image: codeItem?.image || data.image || '/generated_menu/baby_corn_chilli.png'
         }
       })
 
@@ -365,7 +380,7 @@ export default function MenuPage() {
               rating: item.rating || 4.8,
               preparationTime: item.time || '20-25 min',
               popular: (item.category || '').includes('bestseller'),
-              vegNonVeg: (item.title.toLowerCase().includes('paneer') || item.title.toLowerCase().includes('mushroom') || item.title.toLowerCase().includes('mashroom') || item.title.toLowerCase().includes('matar') || item.title.toLowerCase().includes('mix veg') || item.title.toLowerCase().includes('palak') || item.category.toLowerCase().includes('bread') || item.category.toLowerCase().includes('veg')) ? 'veg' : 'non-veg',
+              vegNonVeg: item.vegNonVeg || 'non-veg',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp()
             }, { merge: true })
@@ -375,7 +390,12 @@ export default function MenuPage() {
         })
       }
 
-      const fullList = [...docs, ...missingFromCode].filter(item => item.available !== false)
+      // Keep items from current menu definition or valid Firestore entries
+      const codeItemTitles = new Set(ALL_MENU_ITEMS.map(i => i.title))
+      const codeItemIds = new Set(ALL_MENU_ITEMS.map(i => i.id))
+      const validDocs = docs.filter(d => codeItemIds.has(d.id) || codeItemTitles.has(d.title) || codeItemTitles.has(d.name))
+
+      const fullList = [...validDocs, ...missingFromCode].filter(item => item.available !== false)
       setLiveMenu(fullList.length > 0 ? fullList : ALL_MENU_ITEMS)
       setLoadingMenu(false)
     }, (err) => {
@@ -387,15 +407,18 @@ export default function MenuPage() {
     return () => unsub()
   }, [])
 
-  // Category counts
+  // Category counts calculation for restructured 7 categories
   const categoryCounts = useMemo(() => {
     const source = liveMenu.length > 0 ? liveMenu : ALL_MENU_ITEMS
     return {
       all: source.length,
-      kawab: source.filter(d => (d.category || '').includes('kawab') && !(d.category || '').includes('biryani')).length,
       biryani: source.filter(d => (d.category || '').includes('biryani')).length,
-      gravy: source.filter(d => (d.category || '').includes('gravy')).length,
-      bread: source.filter(d => (d.category || '').includes('bread')).length,
+      starters: source.filter(d => (d.category || '').includes('starters') || (d.category || '').includes('kawab')).length,
+      main_course: source.filter(d => (d.category || '').includes('main_course') || (d.category || '').includes('gravy')).length,
+      breads: source.filter(d => (d.category || '').includes('breads') || (d.category || '').includes('bread')).length,
+      rolls: source.filter(d => (d.category || '').includes('rolls') || (d.category || '').includes('roll')).length,
+      beverages: source.filter(d => (d.category || '').includes('beverages') || (d.category || '').includes('bev')).length,
+      combos: source.filter(d => (d.category || '').includes('combos') || (d.category || '').includes('combo')).length,
       bestseller: source.filter(d => (d.category || '').includes('bestseller') || d.popular).length
     }
   }, [liveMenu])
@@ -414,10 +437,13 @@ export default function MenuPage() {
       if (!matchesSearch) return false
 
       if (activeFilter === 'all') return true
-      if (activeFilter === 'kawab') return (dish.category || '').includes('kawab') && !(dish.category || '').includes('biryani')
       if (activeFilter === 'biryani') return (dish.category || '').includes('biryani')
-      if (activeFilter === 'gravy') return (dish.category || '').includes('gravy')
-      if (activeFilter === 'bread') return (dish.category || '').includes('bread')
+      if (activeFilter === 'starters') return (dish.category || '').includes('starters') || (dish.category || '').includes('kawab')
+      if (activeFilter === 'main_course') return (dish.category || '').includes('main_course') || (dish.category || '').includes('gravy')
+      if (activeFilter === 'breads') return (dish.category || '').includes('breads') || (dish.category || '').includes('bread')
+      if (activeFilter === 'rolls') return (dish.category || '').includes('rolls') || (dish.category || '').includes('roll')
+      if (activeFilter === 'beverages') return (dish.category || '').includes('beverages') || (dish.category || '').includes('bev')
+      if (activeFilter === 'combos') return (dish.category || '').includes('combos') || (dish.category || '').includes('combo')
       if (activeFilter === 'bestseller') return (dish.category || '').includes('bestseller') || dish.popular
       return true
     })
@@ -427,22 +453,22 @@ export default function MenuPage() {
     <>
       <Head>
         <title>Menu & Online Ordering | Biriyani Station Patna</title>
-        <meta name="description" content={`Explore our complete menu of authentic charcoal tandoori kawabs, kawab biryanis, and fresh tandoori breads at Biriyani Station Patna.`} />
-        <meta name="keywords" content="Biryani Menu, Tandoori Kawabs, Order Online Patna, Best Biryani Patna Menu, Chicken Dum Biryani, Mutton Kawab" />
+        <meta name="description" content={`Explore our complete menu of Biryani, Starters, Main Course, Indian Breads, Rolls, Beverages, and Super Saver Combos at Biriyani Station Patna.`} />
+        <meta name="keywords" content="Biryani Menu, Starters, Main Course, Indian Breads, Rolls, Beverages, Super Saver Combos, Order Online Patna" />
         <link rel="canonical" href="https://www.biriyanistation.in/menu" />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.biriyanistation.in/menu" />
         <meta property="og:title" content="Menu & Online Ordering | Biriyani Station Patna" />
-        <meta property="og:description" content="Explore our complete menu of authentic charcoal tandoori kawabs, kawab biryanis, and fresh tandoori breads at Biriyani Station Patna." />
+        <meta property="og:description" content="Explore our complete menu of Biryani, Starters, Main Course, Indian Breads, Rolls, Beverages, and Super Saver Combos at Biriyani Station Patna." />
         <meta property="og:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://www.biriyanistation.in/menu" />
         <meta property="twitter:title" content="Menu & Online Ordering | Biriyani Station Patna" />
-        <meta property="twitter:description" content="Explore our complete menu of authentic charcoal tandoori kawabs, kawab biryanis, and fresh tandoori breads at Biriyani Station Patna." />
+        <meta property="twitter:description" content="Explore our complete menu of Biryani, Starters, Main Course, Indian Breads, Rolls, Beverages, and Super Saver Combos at Biriyani Station Patna." />
         <meta property="twitter:image" content="https://www.biriyanistation.in/images/og-image.jpg" />
       </Head>
 
@@ -482,7 +508,7 @@ export default function MenuPage() {
             {/* Main Headline */}
             <div style={{ textAlign: 'center', maxWidth: '840px', margin: '0 auto' }}>
               <p className="section-label" style={{ marginBottom: '12px', letterSpacing: '0.3em', color: 'var(--deep-green)' }}>
-                HANDCRAFTED DUM & TANDOOR
+                HANDCRAFTED DUM & SPECIALITIES
               </p>
 
               <h1 className="display" style={{
@@ -494,7 +520,7 @@ export default function MenuPage() {
                 fontWeight: 900
               }}>
                 THE COMPLETE <br />
-                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>AUTHENTIC DUM & TANDOOR</span> MENU.
+                <span className="highlight-italic" style={{ color: 'var(--deep-green)' }}>AUTHENTIC PATNA</span> MENU.
               </h1>
 
               <p style={{
@@ -504,7 +530,7 @@ export default function MenuPage() {
                 maxWidth: '680px',
                 margin: '0 auto 32px auto'
               }}>
-                Smoky clay-oven charcoal kawabs, royal dum kawab biryanis, rich Punjabi butter gravies, and fresh tandoori rotis cooked over live fire.
+                Authentic Dum Biryanis, Sizzling Starters, Rich Main Courses, Fresh Indian Breads, Flavorful Rolls, Refreshing Beverages, and Super Saver Combos.
               </p>
 
               {/* Quick stats pills */}
@@ -512,7 +538,7 @@ export default function MenuPage() {
                 display: 'inline-flex',
                 flexWrap: 'wrap',
                 justifyContent: 'center',
-                gap: '12px',
+                gap: '10px',
                 padding: '12px 24px',
                 background: 'rgba(255, 255, 255, 0.75)',
                 backdropFilter: 'blur(8px)',
@@ -520,13 +546,19 @@ export default function MenuPage() {
                 border: '1px solid rgba(13,90,58,0.12)',
                 boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
               }}>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🔥 {categoryCounts.kawab} Kawabs & Starters</span>
-                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
                 <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍛 {categoryCounts.biryani} Biryanis</span>
                 <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍲 {categoryCounts.gravy} Gravies & Curries</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍗 {categoryCounts.starters} Starters</span>
                 <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🫓 {categoryCounts.bread} Breads</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🍲 {categoryCounts.main_course} Main Course</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🫓 {categoryCounts.breads} Breads</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🌯 {categoryCounts.rolls} Rolls</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🥤 {categoryCounts.beverages} Drinks</span>
+                <span style={{ color: 'rgba(0,0,0,0.2)' }}>•</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--deep-green)' }}>🎁 {categoryCounts.combos} Combos</span>
               </div>
             </div>
           </div>
@@ -535,8 +567,8 @@ export default function MenuPage() {
         {/* Ticker marquee strip */}
         <section className="marquee marquee-one" aria-label="Menu ticker" style={{ marginBlock: '20px' }}>
           <div className="marquee-track reverse">
-            <span>TANDOORI KAWABS · DUM KAWAB BIRYANI · CHICKEN DEHATI · PANEER BUTTER MASALA · BUTTER NAAN ·</span>
-            <span>TANDOORI KAWABS · DUM KAWAB BIRYANI · CHICKEN DEHATI · PANEER BUTTER MASALA · BUTTER NAAN ·</span>
+            <span>CHICKEN BIRYANI · CHILLI PANEER · CHICKEN BUTTER MASALA · LACCHA PARATHA · EGG ROLLS · SUPER SAVER COMBOS ·</span>
+            <span>CHICKEN BIRYANI · CHILLI PANEER · CHICKEN BUTTER MASALA · LACCHA PARATHA · EGG ROLLS · SUPER SAVER COMBOS ·</span>
           </div>
         </section>
 
@@ -558,7 +590,7 @@ export default function MenuPage() {
               <div className="search-bar-container" style={{ width: '100%', maxWidth: '580px', position: 'relative' }}>
                 <input
                   type="text"
-                  placeholder="Search kawabs, biryani, chicken dehati, naan..."
+                  placeholder="Search biryani, starters, chicken curry, naan, rolls, combos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
@@ -603,10 +635,13 @@ export default function MenuPage() {
               <div className="menu-chips mobile-scroll-chips" role="tablist" style={{ justifyContent: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 {[
                   { id: 'all', label: `All (${categoryCounts.all})` },
-                  { id: 'kawab', label: `Kawabs (${categoryCounts.kawab})` },
-                  { id: 'biryani', label: `Kawab Biryanis (${categoryCounts.biryani})` },
-                  { id: 'gravy', label: `Gravies (${categoryCounts.gravy})` },
-                  { id: 'bread', label: `Breads (${categoryCounts.bread})` },
+                  { id: 'biryani', label: `Biryani (${categoryCounts.biryani})` },
+                  { id: 'starters', label: `Starters (${categoryCounts.starters})` },
+                  { id: 'main_course', label: `Main Course (${categoryCounts.main_course})` },
+                  { id: 'breads', label: `Indian Breads (${categoryCounts.breads})` },
+                  { id: 'rolls', label: `Rolls (${categoryCounts.rolls})` },
+                  { id: 'beverages', label: `Beverages (${categoryCounts.beverages})` },
+                  { id: 'combos', label: `Super Saver Combos (${categoryCounts.combos})` },
                   { id: 'bestseller', label: `⭐ Bestsellers (${categoryCounts.bestseller})` }
                 ].map((tab) => (
                   <button
